@@ -1,0 +1,23 @@
+ARG ALPINE_VERSION=3.21
+FROM alpine:${ALPINE_VERSION}
+
+ARG KIND_VERSION=v0.26.0
+ADD https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64 /usr/bin/kind
+
+RUN apk update --no-cache \
+    && apk upgrade --no-cache --available \
+    && apk add --no-cache \
+      dumb-init \
+    && chmod +x /usr/bin/kind \
+    && addgroup kind \
+    && adduser -D -G kind kind \
+    && mkdir /kind \
+    && chown -R kind:kind /kind
+
+USER kind
+WORKDIR /kind
+
+VOLUME ["/kind"]
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["/usr/bin/kind"]

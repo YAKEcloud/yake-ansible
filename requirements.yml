@@ -1,0 +1,4 @@
+---
+collections:
+  - name: osism.services
+    source: https://galaxy.ansible.com

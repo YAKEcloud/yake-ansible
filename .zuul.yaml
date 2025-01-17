@@ -5,8 +5,10 @@
     check:
       jobs:
         - ansible-lint
+        - hadolint
         - yamllint
     periodic-daily:
       jobs:
         - ansible-lint
+        - hadolint
         - yamllint

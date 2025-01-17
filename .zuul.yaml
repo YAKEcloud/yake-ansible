@@ -1,0 +1,12 @@
+---
+- project:
+    merge-mode: squash-merge
+    default-branch: main
+    check:
+      jobs:
+        - ansible-lint
+        - yamllint
+    periodic-daily:
+      jobs:
+        - ansible-lint
+        - yamllint

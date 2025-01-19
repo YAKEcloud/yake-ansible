@@ -33,7 +33,7 @@ jobs:
         uses: docker/login-action@v3
         with:
           registry: ghcr.io
-          username: $
+          username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
         if: github.repository == 'YAKEcloud/yake-ansible' && github.ref == 'refs/heads/main'
 
@@ -42,7 +42,7 @@ jobs:
         with:
           context: images/kind
           push: false
-          tags: kind:latest
+          tags: ghcr.io/yakecloud/kind:latest
         if: github.repository == 'YAKEcloud/yake-ansible' && github.ref != 'refs/heads/main'
 
       - name: Build and push container image
@@ -50,5 +50,5 @@ jobs:
         with:
           context: images/kind
           push: true
-          tags: kind:latest
+          tags: ghcr.io/yakecloud/kind:latest
         if: github.repository == 'YAKEcloud/yake-ansible' && github.ref == 'refs/heads/main'

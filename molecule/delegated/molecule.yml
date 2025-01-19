@@ -1,0 +1,40 @@
+---
+dependency:
+  name: galaxy
+  options:
+    requirements-file: molecule/delegated/collections.yml
+driver:
+  name: default
+  options:
+    managed: false
+    ansible_connection_options:
+      ansible_connection: local
+platforms:
+  - name: "molecule-${ANSIBLE_ROLE}"
+provisioner:
+  name: ansible
+  env:
+    ANSIBLE_LIBRARY: ../../plugins
+    ANSIBLE_ROLES_PATH: ../../roles
+  inventory:
+    group_vars:
+      all:
+        molecule_role: "${ANSIBLE_ROLE}"
+verifier:
+  name: testinfra
+  options:
+    v: 2
+  additional_files_or_dirs:
+    - "${ANSIBLE_ROLE}.py"
+    - "${ANSIBLE_ROLE}/*.py"
+  env:
+    ROLE_NAME: "${ANSIBLE_ROLE}"
+scenario:
+  name: delegated
+  test_sequence:
+    - dependency
+    - create
+    - prepare
+    - converge
+    - verify
+    - destroy

@@ -1,14 +1,53 @@
 ---
+- job:
+    name: abstract-yake-ansible-molecule
+    parent: ansible-molecule
+    abstract: true
+    nodeset:
+      nodes:
+        - name: debian-bookworm
+          label: debian-bookworm
+        - name: ubuntu-noble
+          label: ubuntu-noble
+    vars:
+      ansible_molecule_ansible_version: "10.7.0"
+    files:
+      - '^\.zuul\.yaml$'
+      - '^molecule\/requirements\.txt$'
+      - '^molecule\/delegated\/[^\/]*yml$'
+
+# - job:
+#     name: yake-ansible-molecule-molecule-clusterctl
+#     parent: abstract-yake-ansible-molecule
+#     vars:
+#       ansible_role: clusterctl
+#     files:
+#       - '^roles\/clusterctl\/.*$'
+#       - '^molecule\/delegated\/tests\/clusterctl.*$'
+
+# - job:
+#     name: yake-ansible-molecule-molecule-kind
+#     parent: abstract-yake-ansible-molecule
+#     vars:
+#       ansible_role: kind
+#     files:
+#       - '^roles\/kind\/.*$'
+#       - '^molecule\/delegated\/tests\/kind.*$'
+
 - project:
     merge-mode: squash-merge
     default-branch: main
     check:
       jobs:
         - ansible-lint
+        - flake8
         - hadolint
+        - python-black
         - yamllint
     periodic-daily:
       jobs:
         - ansible-lint
+        - flake8
         - hadolint
+        - python-black
         - yamllint

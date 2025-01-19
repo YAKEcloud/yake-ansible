@@ -1,0 +1,17 @@
+---
+namespace: yake
+name: yake
+version: 999.0.0
+readme: README.md
+authors:
+  - YAKE community <info@yake.cloud>
+description: YAKE roles
+license_file: LICENSE
+tags:
+  - cloud
+  - kubernetes
+dependencies: {}
+repository: https://github.com/YAKEcloud/yake-ansible.git
+documentation: https://github.com/YAKEcloud/yake-ansible
+homepage: https://yake.cloud
+issues: https://github.com/YAKEcloud/yake-ansible/issues

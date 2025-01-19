@@ -1,0 +1,4 @@
+---
+kind_install_container_registry: ghcr.io
+kind_install_container_image: yakecloud/kind
+kind_install_container_tag: latest

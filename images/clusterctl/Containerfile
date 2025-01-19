@@ -1,0 +1,23 @@
+ARG ALPINE_VERSION=3.21
+FROM alpine:${ALPINE_VERSION}
+
+ARG CLUSTERCTL_VERSION=v1.9.3
+ADD https://github.com/kubernetes-sigs/cluster-api/releases/download/${CLUSTERCTL_VERSION}/clusterctl-linux-amd64 /usr/bin/clusterctl
+
+RUN apk update --no-cache \
+    && apk upgrade --no-cache --available \
+    && apk add --no-cache \
+      dumb-init \
+    && chmod +x /usr/bin/clusterctl \
+    && addgroup clusterctl \
+    && adduser -D -G clusterctl clusterctl \
+    && mkdir /clusterctl \
+    && chown -R clusterctl:clusterctl /clusterctl
+
+USER clusterctl
+WORKDIR /clusterctl
+
+VOLUME ["/clusterctl"]
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["/usr/bin/clusterctl"]

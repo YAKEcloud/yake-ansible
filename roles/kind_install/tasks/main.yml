@@ -1,0 +1,17 @@
+---
+- name: Run kind container
+  community.docker.docker_container:
+    name: kind
+    image: "{{ kind_install_container_registry }}/{{ kind_install_container_image }}:{{ kind_install_container_tag }}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    state: present
+
+- name: Copy kind script
+  become: true
+  ansible.builtin.copy:
+    src: kind
+    dest: /usr/local/bin/kind
+    mode: 0755
+    owner: root
+    group: root

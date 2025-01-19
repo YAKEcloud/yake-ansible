@@ -1,0 +1,6 @@
+---
+- name: Install kind
+  hosts: "{{ hosts_kind_install | default('all') }}"
+
+  roles:
+    - role: kind_install

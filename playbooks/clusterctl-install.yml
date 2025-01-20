@@ -1,0 +1,6 @@
+---
+- name: Install clusterctl
+  hosts: "{{ hosts_clusterctl_install | default('all') }}"
+
+  roles:
+    - role: clusterctl_install

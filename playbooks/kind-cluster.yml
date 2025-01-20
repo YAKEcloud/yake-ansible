@@ -1,0 +1,6 @@
+---
+- name: Create kind cluster
+  hosts: "{{ hosts_kind_cluster | default('all') }}"
+
+  roles:
+    - role: kind_cluster

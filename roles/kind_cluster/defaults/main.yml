@@ -1,0 +1,7 @@
+---
+kind_cluster_state: present
+kind_cluster_become: false
+kind_cluster_name: yake
+kind_cluster_version: v1.32.0
+kind_cluster_image: "kindest/node:{{ kind_cluster_version }}"
+kind_cluster_kubeconfig: "/kind/kubeconfig.{{ kind_cluster_name }}"

@@ -26,6 +26,15 @@
       - '^molecule\/delegated\/tests\/clusterctl_installl.*$'
 
 - job:
+    name: yake-ansible-molecule-molecule-kind-cluster
+    parent: abstract-yake-ansible-molecule
+    vars:
+      ansible_role: kind_cluster
+    files:
+      - '^roles\/kind_cluster\/.*$'
+      - '^molecule\/delegated\/tests\/kind_cluster.*$'
+
+- job:
     name: yake-ansible-molecule-molecule-kind-install
     parent: abstract-yake-ansible-molecule
     vars:
@@ -43,6 +52,8 @@
         - flake8
         - hadolint
         - python-black
+        - yake-ansible-molecule-molecule-clusterctl-install
+        - yake-ansible-molecule-molecule-kind-cluster
         - yake-ansible-molecule-molecule-kind-install
         - yamllint
     periodic-daily:
@@ -51,5 +62,7 @@
         - flake8
         - hadolint
         - python-black
+        - yake-ansible-molecule-molecule-clusterctl-install
+        - yake-ansible-molecule-molecule-kind-cluster
         - yake-ansible-molecule-molecule-kind-install
         - yamllint

@@ -1,11 +1,13 @@
 ---
 - name: Run kind container
+  become: "{{ kind_install_become }}"
   community.docker.docker_container:
     name: kind
+    command: sleep infinity
     image: "{{ kind_install_container_registry }}/{{ kind_install_container_image }}:{{ kind_install_container_tag }}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
-    state: present
+    state: started
 
 - name: Copy kind script
   become: true

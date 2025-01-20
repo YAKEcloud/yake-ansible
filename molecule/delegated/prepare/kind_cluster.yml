@@ -1,0 +1,17 @@
+---
+- name: Ensure docker
+  ansible.builtin.include_role:
+    name: osism.services.docker
+  vars:
+    docker_user: zuul
+    docker_group: zuul
+    docker_python_install: false
+
+- name: Ensure kind
+  ansible.builtin.include_role:
+    name: kind_install
+  vars:
+    kind_install_become: true
+
+- name: Reset connection
+  ansible.builtin.meta: reset_connection

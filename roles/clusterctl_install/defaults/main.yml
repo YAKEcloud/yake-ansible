@@ -2,3 +2,5 @@
 clusterctl_install_container_registry: ghcr.io
 clusterctl_install_container_image: yakecloud/clusterctl
 clusterctl_install_container_tag: latest
+clusterctl_install_uid: "{{ ansible_facts.user_uid }}"
+clusterctl_install_gid: "{{ ansible_facts.user_gid }}"

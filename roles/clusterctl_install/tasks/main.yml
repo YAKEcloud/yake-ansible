@@ -1,12 +1,23 @@
 ---
+- name: Create /var/lib/yake directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/yake
+    owner: "{{ clusterctl_install_uid }}"
+    group: "{{ clusterctl_install_gid }}"
+    mode: 0755
+    state: directory
+
 - name: Run clusterctl container
   community.docker.docker_container:
     name: clusterctl
     command: sleep infinity
     image: "{{ clusterctl_install_container_registry }}/{{ clusterctl_install_container_image }}:{{ clusterctl_install_container_tag }}"
     env:
-      USER_ID: "{{ ansible_facts.user_uid }}"
-      GROUP_ID: "{{ ansible_facts.user_gid }}"
+      USER_ID: "{{ clusterctl_install_uid }}"
+      GROUP_ID: "{{ clusterctl_install_gid }}"
+    volumes:
+      - /var/lib/yake:/clusterctl
     state: started
 
 - name: Copy clusterctl script

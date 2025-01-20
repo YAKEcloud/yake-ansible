@@ -1,4 +1,13 @@
 ---
+- name: Create /var/lib/yake directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/yake
+    owner: "{{ kind_install_uid }}"
+    group: "{{ kind_install_gid }}"
+    mode: 0755
+    state: directory
+
 - name: Run kind container
   become: "{{ kind_install_become }}"
   community.docker.docker_container:
@@ -6,9 +15,10 @@
     command: sleep infinity
     image: "{{ kind_install_container_registry }}/{{ kind_install_container_image }}:{{ kind_install_container_tag }}"
     env:
-      USER_ID: "{{ ansible_facts.user_uid }}"
-      GROUP_ID: "{{ ansible_facts.user_gid }}"
+      USER_ID: "{{ kind_install_uid }}"
+      GROUP_ID: "{{ kind_install_gid }}"
     volumes:
+      - /var/lib/yake:/kind
       - /var/run/docker.sock:/var/run/docker.sock
     state: started
 

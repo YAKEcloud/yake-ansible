@@ -43,6 +43,15 @@
       - '^roles\/kind_install\/.*$'
       - '^molecule\/delegated\/tests\/kind_install.*$'
 
+- job:
+    name: yake-ansible-molecule-molecule-kubectl-install
+    parent: abstract-yake-ansible-molecule
+    vars:
+      ansible_role: kubectl_install
+    files:
+      - '^roles\/kubectl_install\/.*$'
+      - '^molecule\/delegated\/tests\/kubectl_installl.*$'
+
 - project:
     merge-mode: squash-merge
     default-branch: main
@@ -55,6 +64,7 @@
         - yake-ansible-molecule-molecule-clusterctl-install
         - yake-ansible-molecule-molecule-kind-cluster
         - yake-ansible-molecule-molecule-kind-install
+        - yake-ansible-molecule-molecule-kubectl-install
         - yamllint
     periodic-daily:
       jobs:
@@ -65,4 +75,5 @@
         - yake-ansible-molecule-molecule-clusterctl-install
         - yake-ansible-molecule-molecule-kind-cluster
         - yake-ansible-molecule-molecule-kind-install
+        - yake-ansible-molecule-molecule-kubectl-install
         - yamllint

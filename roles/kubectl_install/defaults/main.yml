@@ -1,0 +1,4 @@
+---
+kubectl_install_container_registry: ghcr.io
+kubectl_install_container_image: yakecloud/kubectl
+kubectl_install_container_tag: latest

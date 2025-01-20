@@ -1,0 +1,6 @@
+---
+- name: Install kubectl
+  hosts: "{{ hosts_kubectl_install | default('all') }}"
+
+  roles:
+    - role: kubectl_install

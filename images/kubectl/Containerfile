@@ -1,22 +1,27 @@
 ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION}
 
+COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 ARG KUBECTL_VERSION=v1.32.0
 ADD --chmod=0755 https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl /usr/bin/kubectl
+
+ENV USER_NAME=kubectl
+ENV USER_ID=1000
+ENV GROUP_ID=1000
 
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
       dumb-init \
-    && addgroup kubectl \
-    && adduser -D -G kubectl kubectl \
-    && mkdir /kubectl \
-    && chown -R kubectl:kubectl /kubectl
+      shadow \
+    && addgroup -g ${GROUP_ID} ${USER_NAME} \
+    && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
+    && mkdir /${USER_NAME} \
+    && chown -R ${USER_NAME}:${USER_NAME} /${USER_NAME}
 
-USER kubectl
-WORKDIR /kubectl
+USER ${USER_NAME}
+WORKDIR /{$USER_NAME}
 
-VOLUME ["/kubectl"]
+VOLUME ["/${USER_NAME}"]
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/usr/bin/kubectl"]
+ENTRYPOINT ["/entrypoint.sh"]

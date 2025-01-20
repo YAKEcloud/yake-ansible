@@ -1,19 +1,28 @@
 ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION}
 
+COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 ARG KIND_VERSION=v0.26.0
 ADD --chmod=0755 https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64 /usr/bin/kind
+
+ENV USER_NAME=kind
+ENV USER_ID=1000
+ENV GROUP_ID=1000
 
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
       docker-cli \
       dumb-init \
-    && mkdir /kind
+      shadow \
+    && addgroup -g ${GROUP_ID} ${USER_NAME} \
+    && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
+    && mkdir /${USER_NAME} \
+    && chown -R ${USER_NAME}:${USER_NAME} /${USER_NAME}
 
-WORKDIR /kind
+# USER ${USER_NAME}
+WORKDIR /{$USER_NAME}
 
-VOLUME ["/kind"]
+VOLUME ["/${USER_NAME}"]
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/usr/bin/kind"]
+ENTRYPOINT ["/entrypoint.sh"]

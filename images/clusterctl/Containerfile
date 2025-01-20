@@ -1,22 +1,27 @@
 ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION}
 
+COPY --chmod=0755 entrypoint.sh /entrypoint.sh
 ARG CLUSTERCTL_VERSION=v1.9.3
 ADD --chmod=0755 https://github.com/kubernetes-sigs/cluster-api/releases/download/${CLUSTERCTL_VERSION}/clusterctl-linux-amd64 /usr/bin/clusterctl
+
+ENV USER_NAME=clusterctl
+ENV USER_ID=1000
+ENV GROUP_ID=1000
 
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
       dumb-init \
-    && addgroup clusterctl \
-    && adduser -D -G clusterctl clusterctl \
-    && mkdir /clusterctl \
-    && chown -R clusterctl:clusterctl /clusterctl
+      shadow \
+    && addgroup -g ${GROUP_ID} ${USER_NAME} \
+    && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
+    && mkdir /${USER_NAME} \
+    && chown -R ${USER_NAME}:${USER_NAME} /${USER_NAME}
 
-USER clusterctl
-WORKDIR /clusterctl
+USER ${USER_NAME}
+WORKDIR /{$USER_NAME}
 
-VOLUME ["/clusterctl"]
+VOLUME ["/${USER_NAME}"]
 
-ENTRYPOINT ["/usr/bin/dumb-init", "--"]
-CMD ["/usr/bin/clusterctl"]
+ENTRYPOINT ["/entrypoint.sh"]

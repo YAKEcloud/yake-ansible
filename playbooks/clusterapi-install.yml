@@ -1,0 +1,6 @@
+---
+- name: Install Cluster API
+  hosts: "{{ hosts_clusterapi_install | default('all') }}"
+
+  roles:
+    - role: clusterapi_install

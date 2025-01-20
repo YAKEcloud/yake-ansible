@@ -5,3 +5,6 @@ kind_cluster_name: yake
 kind_cluster_version: v1.32.0
 kind_cluster_image: "kindest/node:{{ kind_cluster_version }}"
 kind_cluster_kubeconfig: "/kind/kubeconfig.{{ kind_cluster_name }}"
+kind_cluster_api_server_address: "{{ ansible_default_ipv4.address | default('127.0.0.1') }}"
+kind_cluster_uid: "{{ kind_install_uid | default(ansible_facts.user_uid) }}"
+kind_cluster_gid: "{{ kind_install_gid | default(ansible_facts.user_gid) }}"

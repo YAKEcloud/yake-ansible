@@ -9,6 +9,7 @@
     state: directory
 
 - name: Run clusterctl container
+  become: "{{ clusterctl_install_become }}"
   community.docker.docker_container:
     name: clusterctl
     command: sleep infinity
@@ -18,6 +19,7 @@
       GROUP_ID: "{{ clusterctl_install_gid }}"
     volumes:
       - /var/lib/yake:/clusterctl
+    network_mode: host
     state: started
 
 - name: Copy clusterctl script

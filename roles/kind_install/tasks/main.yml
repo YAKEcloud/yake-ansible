@@ -20,6 +20,7 @@
     volumes:
       - /var/lib/yake:/kind
       - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
     state: started
 
 - name: Copy kind script

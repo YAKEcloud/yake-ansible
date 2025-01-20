@@ -7,6 +7,7 @@ ADD --chmod=0755 https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64 /u
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
+      docker-cli \
       dumb-init \
     && addgroup kind \
     && adduser -D -G kind kind \

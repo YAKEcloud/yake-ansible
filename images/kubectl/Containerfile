@@ -1,0 +1,22 @@
+ARG ALPINE_VERSION=3.21
+FROM alpine:${ALPINE_VERSION}
+
+ARG KUBECTL_VERSION=v1.32.0
+ADD --chmod=0755 https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl /usr/bin/kubectl
+
+RUN apk update --no-cache \
+    && apk upgrade --no-cache --available \
+    && apk add --no-cache \
+      dumb-init \
+    && addgroup kubectl \
+    && adduser -D -G kubectl kubectl \
+    && mkdir /kubectl \
+    && chown -R kubectl:kubectl /kubectl
+
+USER kubectl
+WORKDIR /kubectl
+
+VOLUME ["/kubectl"]
+
+ENTRYPOINT ["/usr/bin/dumb-init", "--"]
+CMD ["/usr/bin/kubectl"]

@@ -19,7 +19,7 @@ RUN apk update --no-cache \
     && mkdir /${USER_NAME} \
     && chown -R ${USER_NAME}:${USER_NAME} /${USER_NAME}
 
-USER ${USER_NAME}
+# USER ${USER_NAME}
 WORKDIR /${USER_NAME}
 
 VOLUME ["/${USER_NAME}"]

@@ -1,0 +1,15 @@
+---
+- name: Run clusterctl container
+  community.docker.docker_container:
+    name: clusterctl
+    image: "{{ clusterctl_install_container_registry }}/{{ clusterctl_install_container_image }}:{{ clusterctl_install_container_tag }}"
+    state: present
+
+- name: Copy clusterctl script
+  become: true
+  ansible.builtin.copy:
+    src: clusterctl
+    dest: /usr/local/bin/clusterctl
+    mode: 0755
+    owner: root
+    group: root

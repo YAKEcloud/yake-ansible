@@ -16,14 +16,14 @@
       - '^molecule\/requirements\.txt$'
       - '^molecule\/delegated\/[^\/]*yml$'
 
-# - job:
-#     name: yake-ansible-molecule-molecule-clusterctl
-#     parent: abstract-yake-ansible-molecule
-#     vars:
-#       ansible_role: clusterctl
-#     files:
-#       - '^roles\/clusterctl\/.*$'
-#       - '^molecule\/delegated\/tests\/clusterctl.*$'
+- job:
+    name: yake-ansible-molecule-molecule-clusterctl-install
+    parent: abstract-yake-ansible-molecule
+    vars:
+      ansible_role: clusterctl_install
+    files:
+      - '^roles\/clusterctl_install\/.*$'
+      - '^molecule\/delegated\/tests\/clusterctl_installl.*$'
 
 - job:
     name: yake-ansible-molecule-molecule-kind-install

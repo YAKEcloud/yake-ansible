@@ -1,0 +1,4 @@
+---
+clusterctl_install_container_registry: ghcr.io
+clusterctl_install_container_image: yakecloud/clusterctl
+clusterctl_install_container_tag: latest

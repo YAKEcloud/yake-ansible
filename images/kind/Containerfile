@@ -21,7 +21,7 @@ RUN apk update --no-cache \
     && chown -R ${USER_NAME}:${USER_NAME} /${USER_NAME}
 
 # USER ${USER_NAME}
-WORKDIR /{$USER_NAME}
+WORKDIR /${USER_NAME}
 
 VOLUME ["/${USER_NAME}"]
 

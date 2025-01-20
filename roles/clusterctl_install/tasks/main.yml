@@ -4,6 +4,9 @@
     name: clusterctl
     command: sleep infinity
     image: "{{ clusterctl_install_container_registry }}/{{ clusterctl_install_container_image }}:{{ clusterctl_install_container_tag }}"
+    env:
+      USER_ID: "{{ ansible_facts.user_uid }}"
+      GROUP_ID: "{{ ansible_facts.user_gid }}"
     state: started
 
 - name: Copy clusterctl script

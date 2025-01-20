@@ -1,7 +1,16 @@
 ---
+- name: Copy kind cluster configuration file
+  become: true
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "/var/lib/yake/config.{{ kind_cluster_name }}.yml"
+    mode: 0644
+    owner: "{{ kind_cluster_uid }}"
+    group: "{{ kind_cluster_gid }}"
+
 - name: Create kind cluster
   become: "{{ kind_cluster_become }}"
-  ansible.builtin.command: "/usr/local/bin/kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }}"
+  ansible.builtin.command: "/usr/local/bin/kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }} --config /kind/config.{{ kind_cluster_name }}.yml"
   register: result
   changed_when: "'Creating cluster' in result.stdout"
   when: "kind_cluster_state == 'present'"

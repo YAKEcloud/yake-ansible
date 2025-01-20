@@ -17,6 +17,15 @@
       - '^molecule\/delegated\/[^\/]*yml$'
 
 - job:
+    name: yake-ansible-molecule-molecule-clusterapi-install
+    parent: abstract-yake-ansible-molecule
+    vars:
+      ansible_role: clusterapi_install
+    files:
+      - '^roles\/clusterapi_install\/.*$'
+      - '^molecule\/delegated\/tests\/clusterapi_installl.*$'
+
+- job:
     name: yake-ansible-molecule-molecule-clusterctl-install
     parent: abstract-yake-ansible-molecule
     vars:
@@ -61,6 +70,7 @@
         - flake8
         - hadolint
         - python-black
+        - yake-ansible-molecule-molecule-clusterapi-install
         - yake-ansible-molecule-molecule-clusterctl-install
         - yake-ansible-molecule-molecule-kind-cluster
         - yake-ansible-molecule-molecule-kind-install
@@ -72,6 +82,7 @@
         - flake8
         - hadolint
         - python-black
+        - yake-ansible-molecule-molecule-clusterapi-install
         - yake-ansible-molecule-molecule-clusterctl-install
         - yake-ansible-molecule-molecule-kind-cluster
         - yake-ansible-molecule-molecule-kind-install

@@ -18,6 +18,7 @@
       GROUP_ID: "{{ kubectl_install_gid }}"
     volumes:
       - /var/lib/yake:/kubectl
+    network_mode: host
     state: started
 
 - name: Copy kubectl script

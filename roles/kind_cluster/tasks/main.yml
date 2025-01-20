@@ -1,0 +1,7 @@
+---
+- name: Create kind cluster
+  become: "{{ kind_cluster_become }}"
+  ansible.builtin.command: "/usr/local/bin/kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }}"
+  register: result
+  changed_when: "'Creating cluster' in result.stdout"
+  when: "kind_cluster_state == 'present'"

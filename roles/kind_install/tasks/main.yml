@@ -5,6 +5,9 @@
     name: kind
     command: sleep infinity
     image: "{{ kind_install_container_registry }}/{{ kind_install_container_image }}:{{ kind_install_container_tag }}"
+    env:
+      USER_ID: "{{ ansible_facts.user_uid }}"
+      GROUP_ID: "{{ ansible_facts.user_gid }}"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
     state: started

@@ -4,6 +4,9 @@
     name: kubectl
     command: sleep infinity
     image: "{{ kubectl_install_container_registry }}/{{ kubectl_install_container_image }}:{{ kubectl_install_container_tag }}"
+    env:
+      USER_ID: "{{ ansible_facts.user_uid }}"
+      GROUP_ID: "{{ ansible_facts.user_gid }}"
     state: started
 
 - name: Copy kubectl script

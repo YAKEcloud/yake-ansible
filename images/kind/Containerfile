@@ -4,14 +4,18 @@ FROM alpine:${ALPINE_VERSION}
 ARG KIND_VERSION=v0.26.0
 ADD --chmod=0755 https://kind.sigs.k8s.io/dl/${KIND_VERSION}/kind-linux-amd64 /usr/bin/kind
 
+ARG DOCKER_GROUP_ID=988
+
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
       docker-cli \
       dumb-init \
+    && addgroup -g ${DOCKER_GROUP_ID} docker \
     && addgroup kind \
-    && adduser -D -G kind kind \
     && mkdir /kind \
+    && adduser -D -G kind -h /kind kind \
+    && addgroup kind docker \
     && chown -R kind:kind /kind
 
 USER kind

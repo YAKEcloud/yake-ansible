@@ -1,0 +1,16 @@
+---
+- name: Run kubectl container
+  community.docker.docker_container:
+    name: kubectl
+    command: sleep infinity
+    image: "{{ kubectl_install_container_registry }}/{{ kubectl_install_container_image }}:{{ kubectl_install_container_tag }}"
+    state: started
+
+- name: Copy kubectl script
+  become: true
+  ansible.builtin.copy:
+    src: kubectl
+    dest: /usr/local/bin/kubectl
+    mode: 0755
+    owner: root
+    group: root

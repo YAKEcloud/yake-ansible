@@ -14,3 +14,11 @@
   register: result
   changed_when: "'Creating cluster' in result.stdout"
   when: "kind_cluster_state == 'present'"
+
+- name: Change permissions of kubeconfig
+  become: true
+  ansible.builtin.file:
+    path: "/var/lib/yake/kubeconfig.{{ kind_cluster_name }}"
+    mode: 0640
+    owner: "{{ kind_cluster_uid }}"
+    group: "{{ kind_cluster_gid }}"

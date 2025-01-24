@@ -9,6 +9,7 @@
     state: directory
 
 - name: Run kubectl container
+  become: "{{ kubectl_install_become }}"
   community.docker.docker_container:
     name: kubectl
     command: sleep infinity

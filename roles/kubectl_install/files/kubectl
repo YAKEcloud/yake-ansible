@@ -10,4 +10,8 @@ else
     INTERACTIVE=${INTERACTIVE:-false}
 fi
 
+if [[ -n "$KUBECONFIG" ]]; then
+    PARAMETERS="$PARAMETERS --env KUBECONFIG=$KUBECONFIG"
+fi
+
 exec docker exec $PARAMETERS kubectl kubectl "$@"

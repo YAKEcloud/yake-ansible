@@ -9,6 +9,9 @@ ENV USER_NAME=kind
 ENV USER_ID=1000
 ENV GROUP_ID=1000
 
+ENV DOCKER_GROUP_NAME=docker
+ENV DOCKER_GROUP_ID=988
+
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
@@ -16,7 +19,9 @@ RUN apk update --no-cache \
       dumb-init \
       shadow \
     && addgroup -g ${GROUP_ID} ${USER_NAME} \
+    && addgroup -g ${DOCKER_GROUP_ID} ${DOCKER_GROUP_NAME} \
     && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
+    && usermod -aG ${DOCKER_GROUP_NAME} ${USER_NAME} \
     && mkdir /${USER_NAME} \
     && chown -R ${USER_NAME}:${USER_NAME} /${USER_NAME}
 

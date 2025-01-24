@@ -14,6 +14,8 @@
   register: result
   changed_when: "'Creating cluster' in result.stdout"
   when: "kind_cluster_state == 'present'"
+  async: 180
+  poll: 5
 
 - name: Change permissions of kubeconfig
   become: true

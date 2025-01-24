@@ -1,0 +1,15 @@
+---
+- name: Install kubectl
+  ansible.builtin.import_playbook: kubectl-install.yml
+
+- name: Install clusterctl
+  ansible.builtin.import_playbook: clusterctl-install.yml
+
+- name: Install kind
+  ansible.builtin.import_playbook: kind-install.yml
+
+- name: Create kind cluster
+  ansible.builtin.import_playbook: kind-cluster.yml
+
+- name: Install clusterapi
+  ansible.builtin.import_playbook: clusterapi-install.yml

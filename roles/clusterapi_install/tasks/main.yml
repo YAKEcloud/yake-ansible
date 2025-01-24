@@ -1,8 +1,6 @@
 ---
 - name: Initialize Cluster API
   become: "{{ clusterapi_install_become }}"
-  ansible.builtin.shell: |
-    export KUBECONFIG={{ clusterapi_install_kubeconfig }}
-    /usr/local/bin/clusterctl init --infrastructure {{ clusterapi_install_infrastructure }}
+  ansible.builtin.command: /usr/local/bin/clusterctl --kubeconfig {{ clusterapi_install_kubeconfig }} init --infrastructure {{ clusterapi_install_infrastructure }}
   register: result
   changed_when: "'Your management cluster has been initialized successfully' in result.stdout"

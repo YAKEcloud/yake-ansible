@@ -1,4 +1,4 @@
 ---
 clusterapi_install_become: false
 clusterapi_install_infrastructure: openstack
-clusterapi_install_kubeconfig: kubeconfig.yake
+clusterapi_install_kubeconfig: kubeconfig

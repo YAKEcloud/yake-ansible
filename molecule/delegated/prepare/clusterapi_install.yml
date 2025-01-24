@@ -27,3 +27,9 @@
     name: clusterctl_install
   vars:
     clusterctl_install_become: true
+
+- name: Ensure kubectl
+  ansible.builtin.include_role:
+    name: kubectl_install
+  vars:
+    kubectl_install_become: true

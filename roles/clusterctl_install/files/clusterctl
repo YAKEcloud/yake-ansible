@@ -10,4 +10,10 @@ else
     INTERACTIVE=${INTERACTIVE:-false}
 fi
 
+if [[ -n "$KUBECONFIG" ]]; then
+    PARAMETERS="$PARAMETERS --env KUBECONFIG=$KUBECONFIG"
+else
+    PARAMETERS="$PARAMETERS --env KUBECONFIG=kubeconfig"
+fi
+
 exec docker exec $PARAMETERS clusterctl clusterctl "$@"

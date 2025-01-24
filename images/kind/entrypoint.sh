@@ -10,4 +10,4 @@ if [ -n "${DOCKER_GROUP_ID}" ]; then
     groupmod -g ${DOCKER_GROUP_ID} ${DOCKER_GROUP_NAME} 2>/dev/null
 fi
 
-exec /usr/bin/dumb-init -- su - "$USER_NAME" -c "$@"
+exec /usr/bin/dumb-init -- su - "$USER_NAME" -c "$*"

@@ -6,4 +6,4 @@ if [ -n "${USER_ID}" ] && [ -n "${GROUP_ID}" ]; then
     chown -R ${USER_ID}:${GROUP_ID} /${USER_NAME}
 fi
 
-exec /usr/bin/dumb-init -- su - "$USER_NAME" -c "$@"
+exec /usr/bin/dumb-init -- su - "$USER_NAME" -c "$*"

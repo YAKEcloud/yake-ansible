@@ -24,3 +24,13 @@
     mode: 0640
     owner: "{{ kind_cluster_uid }}"
     group: "{{ kind_cluster_gid }}"
+
+- name: Copy kubeconfig
+  become: true
+  ansible.builtin.copy:
+    src: "/var/lib/yake/kubeconfig.{{ kind_cluster_name }}"
+    dest: "/var/lib/yake/kubeconfig"
+    mode: 0640
+    owner: "{{ kind_cluster_uid }}"
+    group: "{{ kind_cluster_gid }}"
+  when: kind_cluster_primary == kind_cluster_name

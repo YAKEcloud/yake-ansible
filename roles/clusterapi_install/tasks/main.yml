@@ -1,4 +1,22 @@
 ---
+- name: Create /var/lib/yake directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/yake
+    owner: "{{ clusterapi_install_uid }}"
+    group: "{{ clusterapi_install_gid }}"
+    mode: 0755
+    state: directory
+
+# Cluster API Provider OpenStack depends on openstack-resource-controller since v0.12.
+- name: Copy manifest to install ORC
+  ansible.builtin.template:
+    src: install-orc.yaml.j2
+    dest: /var/lib/yake/install-orc.yaml
+    owner: "{{ clusterapi_install_uid }}"
+    group: "{{ clusterapi_install_gid }}"
+    mode: 0644
+
 - name: Initialize Cluster API
   become: "{{ clusterapi_install_become }}"
   ansible.builtin.shell: |

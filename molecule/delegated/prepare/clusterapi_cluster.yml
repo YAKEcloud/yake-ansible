@@ -1,0 +1,41 @@
+---
+- name: Ensure docker
+  ansible.builtin.include_role:
+    name: osism.services.docker
+  vars:
+    docker_user: zuul
+    docker_group: zuul
+    docker_python_install: false
+
+- name: Ensure kind
+  ansible.builtin.include_role:
+    name: kind_install
+  vars:
+    kind_install_become: true
+
+- name: Reset connection
+  ansible.builtin.meta: reset_connection
+
+- name: Ensure kind cluster
+  ansible.builtin.include_role:
+    name: kind_cluster
+  vars:
+    kind_cluster_become: true
+
+- name: Ensure clusterctl
+  ansible.builtin.include_role:
+    name: clusterctl_install
+  vars:
+    clusterctl_install_become: true
+
+- name: Ensure kubectl
+  ansible.builtin.include_role:
+    name: kubectl_install
+  vars:
+    kubectl_install_become: true
+
+- name: Ensure clusterapi
+  ansible.builtin.include_role:
+    name: clusterapi_install
+  vars:
+    clusterapi_install_become: true

@@ -1,3 +1,5 @@
 ansible-core
 docker
+kubernetes
+openstacksdk
 requests

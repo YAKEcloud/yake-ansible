@@ -4,3 +4,6 @@ extends: default
 rules:
   line-length: disable
   truthy: enable
+
+ignore: |
+  roles/clusterapi_cluster/files/cluster-template.yaml

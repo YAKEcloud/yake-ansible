@@ -23,7 +23,16 @@
       ansible_role: clusterapi_install
     files:
       - '^roles\/clusterapi_install\/.*$'
-      - '^molecule\/delegated\/tests\/clusterapi_installl.*$'
+      - '^molecule\/delegated\/tests\/clusterapi_install.*$'
+
+- job:
+    name: yake-ansible-molecule-molecule-clusterapi-cluster
+    parent: abstract-yake-ansible-molecule
+    vars:
+      ansible_role: clusterapi_cluster
+    files:
+      - '^roles\/clusterapi_cluster\/.*$'
+      - '^molecule\/delegated\/tests\/clusterapi_cluster.*$'
 
 - job:
     name: yake-ansible-molecule-molecule-clusterctl-install
@@ -32,7 +41,7 @@
       ansible_role: clusterctl_install
     files:
       - '^roles\/clusterctl_install\/.*$'
-      - '^molecule\/delegated\/tests\/clusterctl_installl.*$'
+      - '^molecule\/delegated\/tests\/clusterctl_install.*$'
 
 - job:
     name: yake-ansible-molecule-molecule-kind-cluster
@@ -59,7 +68,7 @@
       ansible_role: kubectl_install
     files:
       - '^roles\/kubectl_install\/.*$'
-      - '^molecule\/delegated\/tests\/kubectl_installl.*$'
+      - '^molecule\/delegated\/tests\/kubectl_install.*$'
 
 - project:
     merge-mode: squash-merge

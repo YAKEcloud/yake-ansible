@@ -1,0 +1,36 @@
+---
+clusterapi_cluster_become: false
+
+clusterapi_cluster_uid: "{{ ansible_facts.user_uid }}"
+clusterapi_cluster_gid: "{{ ansible_facts.user_gid }}"
+
+clusterapi_cluster_kubeconfig: kubeconfig
+clusterapi_cluster_name: yake
+clusterapi_cluster_state: present
+
+clusterapi_cluster_openstack_cloud: "{{ clusterapi_cluster_name }}"
+clusterapi_cluster_external_network: public
+clusterapi_cluster_ssh_key_name: "{{ clusterapi_cluster_name }}"
+clusterapi_cluster_cloud_yaml: "{{ playbook_dir }}/clouds.yaml"
+clusterapi_cluster_kubernetes_version: "v1.32.0"
+
+clusterapi_cluster_defaults:
+  CLUSTER_NAME: "{{ clusterapi_cluster_name }}"
+  CONTROL_PLANE_MACHINE_COUNT: 3
+  KUBERNETES_VERSION: "{{ clusterapi_cluster_kubernetes_version }}"
+  OPENSTACK_CINDER_STORAGE_CLASS: ssd
+  OPENSTACK_CLOUD: "{{ clusterapi_cluster_openstack_cloud }}"
+  OPENSTACK_CLOUD_CACERT_B64: ""
+  OPENSTACK_CLOUD_YAML_B64: "{{ _clusterapi_cluster_cloud_yaml_b64 | default('') }}"
+  OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR: SCS-2V-4-20
+  OPENSTACK_DNS_NAMESERVERS: "8.8.8.8"
+  OPENSTACK_EXTERNAL_NETWORK_ID: "{{ _clusterapi_cluster_external_network_id | default('') }}"
+  OPENSTACK_FAILURE_DOMAIN: nova
+  OPENSTACK_FLOATING_IP_POOL: "{{ clusterapi_cluster_external_network }}"
+  OPENSTACK_IMAGE_NAME: "ubuntu-capi-image-{{ clusterapi_cluster_kubernetes_version }}"
+  OPENSTACK_NODE_MACHINE_FLAVOR: SCS-2V-4-20
+  OPENSTACK_SSH_KEY_NAME: "{{ clusterapi_cluster_ssh_key_name }}"
+  OPENSTACK_VOLUME_SIZE: 20
+  WORKER_MACHINE_COUNT: 3
+
+clusterapi_cluster_extra: {}

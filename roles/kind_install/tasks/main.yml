@@ -18,7 +18,7 @@
       USER_ID: "{{ kind_install_uid }}"
       GROUP_ID: "{{ kind_install_gid }}"
     volumes:
-      - /var/lib/yake:/kind
+      - /var/lib/yake:/var/lib/yake
       - /var/run/docker.sock:/var/run/docker.sock
     network_mode: host
     state: started

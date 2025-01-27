@@ -18,7 +18,7 @@
       USER_ID: "{{ clusterctl_install_uid }}"
       GROUP_ID: "{{ clusterctl_install_gid }}"
     volumes:
-      - /var/lib/yake:/clusterctl
+      - /var/lib/yake://var/lib/yake
     network_mode: host
     state: started
 

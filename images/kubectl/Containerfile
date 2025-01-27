@@ -16,12 +16,11 @@ RUN apk update --no-cache \
       shadow \
     && addgroup -g ${GROUP_ID} ${USER_NAME} \
     && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
-    && mkdir /${USER_NAME} \
-    && chown -R ${USER_NAME}:${USER_NAME} /${USER_NAME}
+    && mkdir /var/lib/yake \
+    && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake
 
-# USER ${USER_NAME}
-WORKDIR /${USER_NAME}
+WORKDIR /var/lib/yake
 
-VOLUME ["/${USER_NAME}"]
+VOLUME ["/var/lib/yake"]
 
 ENTRYPOINT ["/entrypoint.sh"]

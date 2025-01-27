@@ -16,4 +16,8 @@ else
     PARAMETERS="$PARAMETERS --env KUBECONFIG=kubeconfig"
 fi
 
+if [[ -n "$CLUSTER_TOPOLOGY" ]]; then
+    PARAMETERS="$PARAMETERS --env CLUSTER_TOPOLOGY=$CLUSTER_TOPOLOGY"
+fi
+
 exec docker exec $PARAMETERS clusterctl clusterctl "$@"

@@ -105,6 +105,15 @@
     group: "{{ clusterapi_cluster_gid }}"
     mode: 0644
 
+- name: Wait for Kubernetes API
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    kind: Node
+  register: result_k8s_nodes
+  until: result_k8s_nodes.resources is defined
+  retries: 60
+  delay: 10
+
 - name: Copy cloud.conf file
   ansible.builtin.template:
     src: cloud.conf.j2

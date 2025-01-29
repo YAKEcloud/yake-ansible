@@ -1,0 +1,8 @@
+---
+- name: Delete Kubernetes cluster
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    state: absent
+    kind: cluster
+    name: "{{ clusterapi_cluster_name }}"
+    wait: true

@@ -26,11 +26,24 @@ ansible-playbook -i localhost, -c local clusterapi-install.yml
 ansible-playbook -i localhost, -c local clusterapi-cluster.yml
 ```
 
-### Accessing the workload cluster
+### Accessing the Cluster API cluster
 
 ```
-kubectl get cluster
-clusterctl describe cluster yake
-kubectl get kubeadmcontrolplane
-clusterctl get kubeconfig yake
+export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
+kubectl get nodes
+```
+
+### Accessing the Garden cluster
+
+```
+export KUBECONFIG=/var/lib/yake/kubeconfig.garden
+kubectl get nodes
+```
+
+### Cleanup
+
+```
+export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
+kubectl delete cluster garden
+kind delete cluster --name clusterapi
 ```

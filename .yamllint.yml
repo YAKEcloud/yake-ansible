@@ -6,4 +6,7 @@ rules:
   truthy: enable
 
 ignore: |
+  roles/clusterapi_cluster/files/cloud-controller-manager-role-bindings.yaml
+  roles/clusterapi_cluster/files/cloud-controller-manager-roles.yaml
   roles/clusterapi_cluster/files/cluster-template.yaml
+  roles/clusterapi_cluster/files/openstack-cloud-controller-manager-ds.yaml

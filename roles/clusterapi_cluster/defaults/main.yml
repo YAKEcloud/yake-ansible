@@ -4,6 +4,8 @@ clusterapi_cluster_become: false
 clusterapi_cluster_uid: "{{ ansible_facts.user_uid }}"
 clusterapi_cluster_gid: "{{ ansible_facts.user_gid }}"
 
+clusterapi_cluster_kind_cluster_name: "{{ kind_cluster_name | default('clusterapi') }}"
+
 clusterapi_cluster_kubeconfig: kubeconfig
 clusterapi_cluster_name: garden
 clusterapi_cluster_state: present

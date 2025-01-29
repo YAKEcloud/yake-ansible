@@ -84,7 +84,7 @@
 
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
     state: present
     src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
     wait: true

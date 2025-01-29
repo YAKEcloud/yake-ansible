@@ -1,0 +1,6 @@
+---
+- name: Create CAPI cluster
+  hosts: "{{ hosts_clusterapi_cluster | default('all') }}"
+
+  roles:
+    - role: clusterapi_cluster

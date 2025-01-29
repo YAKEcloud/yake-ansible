@@ -1,4 +1,8 @@
 ---
 collections:
+  - name: openstack.cloud
+    source: https://galaxy.ansible.com
+  - name: kubernetes.core
+    source: https://galaxy.ansible.com
   - name: osism.services
     source: https://galaxy.ansible.com

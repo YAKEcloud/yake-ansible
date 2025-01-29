@@ -32,7 +32,7 @@ clusterapi_cluster_defaults:
   CONTROL_PLANE_MACHINE_COUNT: 3
   KUBERNETES_VERSION: "{{ clusterapi_cluster_kubernetes_version }}"
   OPENSTACK_CINDER_STORAGE_CLASS: ssd
-  OPENSTACK_CLOUD: "{{ clusterapi_cluster_openstack_cloud }}"
+  OPENSTACK_CLOUD: openstack
   OPENSTACK_CLOUD_CACERT_B64: ""
   OPENSTACK_CLOUD_YAML_B64: "{{ _clusterapi_cluster_cloud_yaml_b64 | default('') }}"
   OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR: SCS-2V-4-20

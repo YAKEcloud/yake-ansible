@@ -177,5 +177,4 @@
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     state: present
-    wait: true
     src: /var/lib/yake/calico.yaml

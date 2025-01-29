@@ -1,0 +1,91 @@
+---
+- name: Copy clouds.yaml file
+  ansible.builtin.copy:
+    src: "{{ clusterapi_cluster_cloud_yaml }}"
+    dest: /var/lib/yake/clouds.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
+- name: Slurp clouds.yaml file
+  ansible.builtin.slurp:
+    src: /var/lib/yake/clouds.yaml
+  register: register_clouds
+
+- name: Set _clusterapi_cluster_cloud_yaml_b64 fact
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_cloud_yaml_b64: "{{ register_clouds['content'] }}"
+
+- name: Copy cluster template file
+  ansible.builtin.copy:
+    src: cluster-template.yaml
+    dest: /var/lib/yake/cluster-template.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
+- name: Create ssh keypair
+  openstack.cloud.keypair:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
+    state: present
+    name: "{{ clusterapi_cluster_ssh_key_name }}"
+  register: result_keypair
+
+- name: Write private ssh key
+  ansible.builtin.copy:
+    content: "{{ result_keypair.keypair.private_key }}"
+    dest: "/var/lib/yake/id_rsa.{{ clusterapi_cluster_name }}"
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+  when: result_keypair.changed  # noqa no-handler
+
+- name: Write public ssh key
+  ansible.builtin.copy:
+    content: "{{ result_keypair.keypair.public_key }}"
+    dest: "/var/lib/yake/id_rsa.{{ clusterapi_cluster_name }}.pub"
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+  when: result_keypair.changed  # noqa no-handler
+
+- name: Get external network ID
+  openstack.cloud.networks_info:
+    name: "{{ clusterapi_cluster_external_network }}"
+  register: result_external_network
+
+- name: Set _clusterapi_cluster_external_network fact
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_external_network: "{{ result_external_network.networks | first | default({}) }}"
+
+- name: Set _clusterapi_cluster_external_network_id fact
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_external_network_id: "{{ _clusterapi_cluster_external_network.id | default('') }}"
+
+- name: Combine clusterapi_cluster_defaults and clusterapi_cluster_extra
+  ansible.builtin.set_fact:
+    _clusterapi_cluster: "{{ clusterapi_cluster_defaults | combine(clusterapi_cluster_extra) }}"
+
+- name: Copy cluster configuration file
+  ansible.builtin.template:
+    src: config.yaml.j2
+    dest: "/var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml"
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
+- name: Generate manifest to create Kubernetes cluster
+  become: "{{ clusterapi_cluster_become }}"
+  ansible.builtin.shell: |
+    /usr/local/bin/clusterctl --config /var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml generate cluster --from /var/lib/yake/cluster-template.yaml {{ clusterapi_cluster_name }} > /var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml
+  args:
+    executable: /bin/bash
+  register: result
+  changed_when: false
+
+- name: Create Kubernetes cluster
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    state: present
+    src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
+    wait: true

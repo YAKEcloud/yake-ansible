@@ -158,7 +158,6 @@
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     state: present
-    wait: true
     src: "/var/lib/yake/{{ item }}"
   loop:
     - cloud-controller-manager-role-bindings.yaml
@@ -184,7 +183,6 @@
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     state: present
-    wait: true
     src: "/var/lib/yake/{{ item }}"
   loop:
     - cinder-csi-controllerplugin-rbac.yaml

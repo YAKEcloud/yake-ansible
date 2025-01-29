@@ -1,15 +1,15 @@
 ---
 - name: Copy clouds.yaml file
-  ansible.builtin.copy:
-    src: "{{ clusterapi_cluster_cloud_yaml }}"
-    dest: /var/lib/yake/clouds.yaml
+  ansible.builtin.template:
+    src: clouds.yaml.j2
+    dest: "/var/lib/yake/clouds.{{ clusterapi_cluster_name }}.yaml"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
     mode: 0644
 
 - name: Slurp clouds.yaml file
   ansible.builtin.slurp:
-    src: /var/lib/yake/clouds.yaml
+    src: "/var/lib/yake/clouds.{{ clusterapi_cluster_name }}.yaml"
   register: register_clouds
 
 - name: Set _clusterapi_cluster_cloud_yaml_b64 fact
@@ -80,7 +80,6 @@
     /usr/local/bin/clusterctl --config /var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml generate cluster --from /var/lib/yake/cluster-template.yaml {{ clusterapi_cluster_name }} > /var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml
   args:
     executable: /bin/bash
-  register: result
   changed_when: false
 
 - name: Create Kubernetes cluster
@@ -89,3 +88,19 @@
     state: present
     src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
     wait: true
+
+- name: Get kubeconfig
+  ansible.builtin.command: "clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
+  register: result_kubeconfig
+  changed_when: false
+  until: result.rc == 0
+  retries: 30
+  delay: 10
+
+- name: Write kubeconfig
+  ansible.builtin.copy:
+    content: "{{ result_kubeconfig.stdout }}"
+    dest: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644

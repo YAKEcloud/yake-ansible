@@ -5,14 +5,18 @@ clusterapi_cluster_uid: "{{ ansible_facts.user_uid }}"
 clusterapi_cluster_gid: "{{ ansible_facts.user_gid }}"
 
 clusterapi_cluster_kubeconfig: kubeconfig
-clusterapi_cluster_name: yake
+clusterapi_cluster_name: garden
 clusterapi_cluster_state: present
 
-clusterapi_cluster_openstack_cloud: "{{ clusterapi_cluster_name }}"
 clusterapi_cluster_external_network: public
 clusterapi_cluster_ssh_key_name: "{{ clusterapi_cluster_name }}"
-clusterapi_cluster_cloud_yaml: "{{ playbook_dir }}/clouds.yaml"
 clusterapi_cluster_kubernetes_version: "v1.32.0"
+
+clusterapi_cluster_openstack_cloud: "{{ clusterapi_cluster_name }}"
+clusterapi_cluster_openstack_auth_url: ""
+clusterapi_cluster_openstack_application_credential_id: ""
+clusterapi_cluster_openstack_application_credential_secret: ""
+clusterapi_cluster_openstack_region_name: ""
 
 clusterapi_cluster_defaults:
   CLUSTER_NAME: "{{ clusterapi_cluster_name }}"

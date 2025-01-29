@@ -165,6 +165,35 @@
     - cloud-controller-manager-roles.yaml
     - openstack-cloud-controller-manager-ds.yaml
 
+- name: Copy CSI manifests
+  ansible.builtin.copy:
+    src: "{{ item }}"
+    dest: "/var/lib/yake/{{ item }}"
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+  loop:
+    - cinder-csi-controllerplugin-rbac.yaml
+    - cinder-csi-controllerplugin.yaml
+    - cinder-csi-nodeplugin-rbac.yaml
+    - cinder-csi-nodeplugin.yaml
+    - csi-cinder-driver.yaml
+    - csi-secret-cinderplugin.yaml
+
+- name: Apply CSI manifests
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    state: present
+    wait: true
+    src: "/var/lib/yake/{{ item }}"
+  loop:
+    - cinder-csi-controllerplugin-rbac.yaml
+    - cinder-csi-controllerplugin.yaml
+    - cinder-csi-nodeplugin-rbac.yaml
+    - cinder-csi-nodeplugin.yaml
+    - csi-cinder-driver.yaml
+    - csi-secret-cinderplugin.yaml
+
 - name: Copy calico manifet
   ansible.builtin.copy:
     src: calico.yaml

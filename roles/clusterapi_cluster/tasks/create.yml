@@ -10,11 +10,11 @@
 - name: Slurp clouds.yaml file
   ansible.builtin.slurp:
     src: "/var/lib/yake/clouds.{{ clusterapi_cluster_name }}.yaml"
-  register: register_clouds
+  register: result_clouds_yaml
 
 - name: Set _clusterapi_cluster_cloud_yaml_b64 fact
   ansible.builtin.set_fact:
-    _clusterapi_cluster_cloud_yaml_b64: "{{ register_clouds['content'] }}"
+    _clusterapi_cluster_cloud_yaml_b64: "{{ result_clouds_yaml.content }}"
 
 - name: Copy cluster template file
   ansible.builtin.copy:
@@ -86,8 +86,8 @@
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
     state: present
-    src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
     wait: true
+    src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
 
 - name: Get kubeconfig
   ansible.builtin.command: "clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
@@ -104,3 +104,31 @@
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
     mode: 0644
+
+- name: Copy cloud.conf file
+  ansible.builtin.template:
+    src: cloud.conf.j2
+    dest: "/var/lib/yake/cloud.{{ clusterapi_cluster_name }}.conf"
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
+- name: Slurp cloud.conf file
+  ansible.builtin.slurp:
+    src: "/var/lib/yake/cloud.{{ clusterapi_cluster_name }}.conf"
+  register: register_cloud_conf
+
+- name: Create cloud-config secret
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    state: present
+    wait: true
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: cloud-config
+        namespace: kube-system
+      type: Opaque
+      stringData:
+        cloud.conf: "{{ register_cloud_conf.content | b64decode }}"

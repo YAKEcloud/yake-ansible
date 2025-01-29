@@ -93,7 +93,7 @@
   ansible.builtin.command: "clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
   register: result_kubeconfig
   changed_when: false
-  until: result.rc == 0
+  until: result_kubeconfig.rc == 0
   retries: 30
   delay: 10
 

@@ -155,3 +155,18 @@
     - cloud-controller-manager-role-bindings.yaml
     - cloud-controller-manager-roles.yaml
     - openstack-cloud-controller-manager-ds.yaml
+
+- name: Copy calico manifet
+  ansible.builtin.copy:
+    src: calico.yaml
+    dest: /var/lib/yake/calico.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
+- name: Apply calico manifest
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    state: present
+    wait: true
+    src: /var/lib/yake/calico.yaml

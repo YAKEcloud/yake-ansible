@@ -1,8 +1,8 @@
 ---
 clouds:
-  {{ clusterapi_cluster_openstack_cloud }}:
+  openstack:
     auth:
-      auth_url: {{ clusterapi_cluster_openstack_auth_url }}
+      auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
       application_credential_id: "{{ clusterapi_cluster_openstack_application_credential_id }}"
       application_credential_secret: "{{ clusterapi_cluster_openstack_application_credential_secret }}"
     region_name: "{{ clusterapi_cluster_openstack_region_name }}"

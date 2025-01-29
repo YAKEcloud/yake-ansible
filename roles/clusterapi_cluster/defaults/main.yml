@@ -12,12 +12,20 @@ clusterapi_cluster_external_network: public
 clusterapi_cluster_ssh_key_name: "{{ clusterapi_cluster_name }}"
 clusterapi_cluster_kubernetes_version: "v1.32.0"
 
-clusterapi_cluster_openstack_cloud: "{{ clusterapi_cluster_name }}"
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_image_name: "ubuntu-capi-image-{{ clusterapi_cluster_kubernetes_version }}"
+clusterapi_cluster_openstack_cloud:
+  auth:
+    auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
+    application_credential_id: "{{ clusterapi_cluster_openstack_application_credential_id }}"
+    application_credential_secret: "{{ clusterapi_cluster_openstack_application_credential_secret }}"
+  region_name: "{{ clusterapi_cluster_openstack_region_name }}"
+  interface: "public"
+  identity_api_version: 3
+  auth_type: "v3applicationcredential"
 
 clusterapi_cluster_defaults:
   CLUSTER_NAME: "{{ clusterapi_cluster_name }}"

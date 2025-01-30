@@ -206,10 +206,6 @@
     - cloud-controller-manager-roles.yaml
     - openstack-cloud-controller-manager-ds.yaml
 
-- name: Pause for 30 seconds
-  ansible.builtin.pause:
-    seconds: 30
-
 - name: Wait for coredns pods
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
@@ -260,9 +256,9 @@
     - cinder-csi-nodeplugin.yaml
     - csi-cinder-driver.yaml
 
-- name: Pause for 30 seconds
+- name: Pause for 10 seconds
   ansible.builtin.pause:
-    seconds: 30
+    seconds: 10
 
 - name: Wait for CSI pods
   kubernetes.core.k8s_info:

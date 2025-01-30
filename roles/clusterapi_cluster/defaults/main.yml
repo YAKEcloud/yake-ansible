@@ -14,6 +14,9 @@ clusterapi_cluster_external_network: public
 clusterapi_cluster_ssh_key_name: "{{ clusterapi_cluster_name }}"
 clusterapi_cluster_kubernetes_version: "v1.32.0"
 
+clusterapi_cluster_container_registry_cache_dockerhub: https://registry.osism.tech/v2/dockerhub
+clusterapi_cluster_container_registry_cache_ghcr: https://registry.osism.tech/v2/ghcr
+
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
@@ -48,5 +51,7 @@ clusterapi_cluster_defaults:
   OPENSTACK_SSH_KEY_NAME: "{{ clusterapi_cluster_ssh_key_name }}"
   OPENSTACK_VOLUME_SIZE: 20
   WORKER_MACHINE_COUNT: 3
+  CONTAINER_REGISTRY_CACHE_DOCKERHUB: "{{ clusterapi_cluster_container_registry_cache_dockerhub }}"
+  CONTAINER_REGISTRY_CACHE_GHCR: "{{ clusterapi_cluster_container_registry_cache_ghrc }}"
 
 clusterapi_cluster_extra: {}

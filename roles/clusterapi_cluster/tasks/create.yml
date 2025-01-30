@@ -114,6 +114,20 @@
   retries: 60
   delay: 10
 
+- name: Copy calico manifet
+  ansible.builtin.copy:
+    src: calico.yaml
+    dest: /var/lib/yake/calico.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
+- name: Apply calico manifest
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    state: present
+    src: /var/lib/yake/calico.yaml
+
 - name: Copy cloud.conf file
   ansible.builtin.template:
     src: cloud.conf.j2
@@ -191,17 +205,3 @@
     - cinder-csi-nodeplugin.yaml
     - csi-cinder-driver.yaml
     - csi-secret-cinderplugin.yaml
-
-- name: Copy calico manifet
-  ansible.builtin.copy:
-    src: calico.yaml
-    dest: /var/lib/yake/calico.yaml
-    owner: "{{ clusterapi_cluster_uid }}"
-    group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
-
-- name: Apply calico manifest
-  kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    state: present
-    src: /var/lib/yake/calico.yaml

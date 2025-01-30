@@ -7,12 +7,12 @@ rules:
 
 ignore: |
   roles/clusterapi_cluster/files/calico.yaml
-  roles/clusterapi_cluster/files/cinder-csi-controllerplugin-rbac.yaml
-  roles/clusterapi_cluster/files/cinder-csi-controllerplugin.yaml
-  roles/clusterapi_cluster/files/cinder-csi-nodeplugin-rbac.yaml
-  roles/clusterapi_cluster/files/cinder-csi-nodeplugin.yaml
+  roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin-rbac.yaml
+  roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin.yaml
+  roles/clusterapi_cluster/files/cinder-csi/cinder-csi-nodeplugin-rbac.yaml
+  roles/clusterapi_cluster/files/cinder-csi/cinder-csi-nodeplugin.yaml
+  roles/clusterapi_cluster/files/cinder-csi/csi-cinder-driver.yaml
   roles/clusterapi_cluster/files/cloud-controller-manager-role-bindings.yaml
   roles/clusterapi_cluster/files/cloud-controller-manager-roles.yaml
   roles/clusterapi_cluster/files/cluster-template.yaml
-  roles/clusterapi_cluster/files/csi-cinder-driver.yaml
   roles/clusterapi_cluster/files/openstack-cloud-controller-manager-ds.yaml

@@ -186,7 +186,7 @@
 
 - name: Copy CCM manifests
   ansible.builtin.copy:
-    src: "{{ item }}"
+    src: "cloud-controller-manager/{{ item }}"
     dest: "/var/lib/yake/{{ item }}"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"

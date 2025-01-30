@@ -52,6 +52,6 @@ clusterapi_cluster_defaults:
   OPENSTACK_VOLUME_SIZE: 20
   WORKER_MACHINE_COUNT: 3
   CONTAINER_REGISTRY_CACHE_DOCKERHUB: "{{ clusterapi_cluster_container_registry_cache_dockerhub }}"
-  CONTAINER_REGISTRY_CACHE_GHCR: "{{ clusterapi_cluster_container_registry_cache_ghrc }}"
+  CONTAINER_REGISTRY_CACHE_GHCR: "{{ clusterapi_cluster_container_registry_cache_ghcr }}"
 
 clusterapi_cluster_extra: {}

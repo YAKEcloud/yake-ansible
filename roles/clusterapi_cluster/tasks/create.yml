@@ -236,7 +236,7 @@
 
 - name: Copy CSI manifests
   ansible.builtin.copy:
-    src: "{{ item }}"
+    src: "cinder-csi/{{ item }}"
     dest: "/var/lib/yake/{{ item }}"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"

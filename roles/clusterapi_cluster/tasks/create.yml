@@ -247,7 +247,6 @@
     - cinder-csi-nodeplugin-rbac.yaml
     - cinder-csi-nodeplugin.yaml
     - csi-cinder-driver.yaml
-    - csi-secret-cinderplugin.yaml
 
 - name: Apply CSI manifests
   kubernetes.core.k8s:
@@ -260,7 +259,6 @@
     - cinder-csi-nodeplugin-rbac.yaml
     - cinder-csi-nodeplugin.yaml
     - csi-cinder-driver.yaml
-    - csi-secret-cinderplugin.yaml
 
 - name: Pause for 30 seconds
   ansible.builtin.pause:

@@ -114,6 +114,24 @@
   retries: 60
   delay: 10
 
+- name: Wait for Kubernetes nodes
+  ansible.builtin.shell:
+    set -o pipefail
+
+    MAX_RETRIES=30
+    SLEEP_TIME=10
+
+    for i in $(seq 1 $MAX_RETRIES); do
+        NOT_READY_NODES=$(kubectl --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }} get nodes --no-headers | awk '$2 != "Ready" {print $1}')
+        if [ -z "$NOT_READY_NODES" ]; then
+            exit 0
+        fi
+        sleep $SLEEP_TIME
+    done
+  changed_when: false
+  args:
+    executable: /bin/bash
+
 - name: Copy cloud.conf file
   ansible.builtin.template:
     src: cloud.conf.j2

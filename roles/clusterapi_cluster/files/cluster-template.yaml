@@ -36,6 +36,16 @@ spec:
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
+        - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://registry.k8s.io"
+
+            [host."${CONTAINER_REGISTRY_CACHE_K8S}"]
+              capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
@@ -117,6 +127,16 @@ spec:
           server = "https://ghcr.io"
 
           [host."${CONTAINER_REGISTRY_CACHE_GHCR}"]
+            capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
+      - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://registry.k8s.io"
+
+          [host."${CONTAINER_REGISTRY_CACHE_K8S}"]
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true

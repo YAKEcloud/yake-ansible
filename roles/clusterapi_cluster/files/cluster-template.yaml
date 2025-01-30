@@ -24,6 +24,8 @@ spec:
 
             [host."${CONTAINER_REGISTRY_CACHE_DOCKERHUB}"]
               capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
         - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
           owner: root:root
           permissions: "0644"
@@ -32,6 +34,8 @@ spec:
 
             [host."${CONTAINER_REGISTRY_CACHE_GHCR}"]
               capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
@@ -104,6 +108,8 @@ spec:
 
           [host."${CONTAINER_REGISTRY_CACHE_DOCKERHUB}"]
             capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
       - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
         owner: root:root
         permissions: "0644"
@@ -112,6 +118,8 @@ spec:
 
           [host."${CONTAINER_REGISTRY_CACHE_GHCR}"]
             capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:

@@ -15,7 +15,23 @@ metadata:
 spec:
   template:
     spec:
-      files: []
+      files:
+        - path: /etc/containerd/certs.d/docker.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://docker.io"
+
+            [host."${CONTAINER_REGISTRY_CACHE_DOCKERHUB}"]
+              capabilities = ["pull", "resolve"]
+        - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://ghcr.io"
+
+            [host."${CONTAINER_REGISTRY_CACHE_GHCR}"]
+              capabilities = ["pull", "resolve"]
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
@@ -79,7 +95,23 @@ spec:
       controllerManager:
         extraArgs:
           cloud-provider: external
-    files: []
+    files:
+      - path: /etc/containerd/certs.d/docker.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://docker.io"
+
+          [host."${CONTAINER_REGISTRY_CACHE_DOCKERHUB}"]
+            capabilities = ["pull", "resolve"]
+      - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://ghcr.io"
+
+          [host."${CONTAINER_REGISTRY_CACHE_GHCR}"]
+            capabilities = ["pull", "resolve"]
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:

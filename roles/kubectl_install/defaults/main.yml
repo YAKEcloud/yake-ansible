@@ -3,6 +3,6 @@ kubectl_install_become: false
 kubectl_install_container_registry: ghcr.io
 kubectl_install_container_image: yakecloud/kubectl
 # renovate: datasource=docker depName=ghcr.io/yakecloud/kubectl
-kubectl_install_container_tag: 'v1.32.0'
+kubectl_install_container_tag: 'v1.32.1'
 kubectl_install_uid: "{{ ansible_facts.user_uid }}"
 kubectl_install_gid: "{{ ansible_facts.user_gid }}"

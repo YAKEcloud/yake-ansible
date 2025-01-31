@@ -2,8 +2,8 @@ ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG KUBECTL_VERSION=v1.32.0
-ADD --chmod=0755 https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl /usr/bin/kubectl
+ARG VERSION=v1.32.0
+ADD --chmod=0755 https://dl.k8s.io/release/${VERSION}/bin/linux/amd64/kubectl /usr/bin/kubectl
 
 ENV USER_NAME=kubectl
 ENV USER_ID=1000

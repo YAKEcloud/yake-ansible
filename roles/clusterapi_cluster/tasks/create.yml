@@ -116,7 +116,7 @@
 
 - name: Copy calico manifet
   ansible.builtin.copy:
-    src: files/calico.yaml
+    src: calico/calico.yaml
     dest: /var/lib/yake/calico.yaml
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"

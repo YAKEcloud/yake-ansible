@@ -22,11 +22,11 @@ repositories:
     version: 'v1.31.2'
     sources:
       - src: manifests/controller-manager/cloud-controller-manager-role-bindings.yaml
-        dstFile: roles/clusterapi_cluster/files/cloud-provider-openstack/cloud-controller-manager-role-bindings.yaml
+        dstFile: roles/clusterapi_cluster/files/cloud-controller-manager/cloud-controller-manager-role-bindings.yaml
       - src: manifests/controller-manager/cloud-controller-manager-roles.yaml
-        dstFile: roles/clusterapi_cluster/files/cloud-provider-openstack/cloud-controller-manager-roles.yaml
+        dstFile: roles/clusterapi_cluster/files/cloud-controller-manager/cloud-controller-manager-roles.yaml
       - src: manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
-        dstFile: roles/clusterapi_cluster/files/cloud-provider-openstack/openstack-cloud-controller-manager-ds.yaml
+        dstFile: roles/clusterapi_cluster/files/cloud-controller-manager/openstack-cloud-controller-manager-ds.yaml
   - git: https://github.com/projectcalico/calico
     # renovate: datasource=github-releases depName=projectcalico/calico
     version: 'v3.29.1'

@@ -19,6 +19,7 @@ ansible-playbook -i localhost, -c local site.yml
 
 ```
 ansible-playbook -i localhost, -c local kubectl-install.yml
+ansible-playbook -i localhost, -c local helm-install.yml
 ansible-playbook -i localhost, -c local clusterctl-install.yml
 ansible-playbook -i localhost, -c local kind-install.yml
 ansible-playbook -i localhost, -c local kind-cluster.yml

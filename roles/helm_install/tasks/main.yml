@@ -1,0 +1,31 @@
+---
+- name: Create /var/lib/yake directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/yake
+    owner: "{{ helm_install_uid }}"
+    group: "{{ helm_install_gid }}"
+    mode: 0755
+    state: directory
+
+- name: Run helm container
+  become: "{{ helm_install_become }}"
+  community.docker.docker_container:
+    name: helm
+    command: sleep infinity
+    image: "{{ helm_install_container_registry }}/{{ helm_install_container_image }}:{{ helm_install_container_tag }}"
+    env:
+      USER_ID: "{{ helm_install_uid }}"
+      GROUP_ID: "{{ helm_install_gid }}"
+    volumes:
+      - /var/lib/yake:/var/lib/yake
+    state: started
+
+- name: Copy helm script
+  become: true
+  ansible.builtin.copy:
+    src: helm
+    dest: /usr/local/bin/helm
+    mode: 0755
+    owner: root
+    group: root

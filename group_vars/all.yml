@@ -1,5 +1,6 @@
 ---
-clusterapi_cluster_kubernetes_version: "v1.32.0"
+# renovate: datasource=github-releases depName=kubernetes/kubernetes
+clusterapi_cluster_kubernetes_version: 'v1.32.0'
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""

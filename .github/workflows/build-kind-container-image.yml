@@ -22,6 +22,10 @@ permissions:
 jobs:
   build-kind-container-image:
     runs-on: ubuntu-24.04
+    strategy:
+      matrix:
+        version:
+          - v0.26.0  # renovate: datasource=github-releases depName=kubernetes-sigs/kind
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4
@@ -42,7 +46,9 @@ jobs:
         with:
           context: images/kind
           push: false
-          tags: ghcr.io/yakecloud/kind:latest
+          tags: ghcr.io/yakecloud/kind:${{ matrix.version }}
+          build-args: |
+            VERSION=${{ matrix.version }}
         if: github.repository == 'YAKEcloud/yake-ansible' && github.ref != 'refs/heads/main'
 
       - name: Build and push container image
@@ -50,5 +56,7 @@ jobs:
         with:
           context: images/kind
           push: true
-          tags: ghcr.io/yakecloud/kind:latest
+          tags: ghcr.io/yakecloud/kind:${{ matrix.version }}
+          build-args: |
+            VERSION=${{ matrix.version }}
         if: github.repository == 'YAKEcloud/yake-ansible' && github.ref == 'refs/heads/main'

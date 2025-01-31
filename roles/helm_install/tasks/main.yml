@@ -8,6 +8,20 @@
     mode: 0755
     state: directory
 
+- name: Create charts directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/yake/charts
+    owner: "{{ helm_install_uid }}"
+    group: "{{ helm_install_gid }}"
+    mode: 0755
+    state: directory
+
+- name: Sync helm charts
+  ansible.posix.synchronize:
+    src: "{{ helm_install_charts_dir }}"
+    dest: /var/lib/yake/charts
+
 - name: Run helm container
   become: "{{ helm_install_become }}"
   community.docker.docker_container:

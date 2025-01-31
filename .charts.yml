@@ -1,0 +1,6 @@
+---
+charts:
+  - name: cilium
+    repository:
+      url: https://helm.cilium.io/
+    version: 1.16.6

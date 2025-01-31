@@ -6,6 +6,7 @@ rules:
   truthy: enable
 
 ignore: |
+  charts/*
   roles/clusterapi_cluster/files/calico/calico.yaml
   roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin-rbac.yaml
   roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin.yaml

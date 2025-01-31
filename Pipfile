@@ -1,0 +1,17 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+ansible-core = "==2.18.2"
+docker = "==7.1.0"
+kubernetes = "==32.0.0"
+openstacksdk = "==4.3.0"
+python-gilt = "==2.2.4"
+requests = "==2.32.3"
+
+[dev-packages]
+
+[requires]
+python_version = "3.13"

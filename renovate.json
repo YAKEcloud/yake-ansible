@@ -39,6 +39,15 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?_version: '(?<currentValue>.*?)'"
       ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
+        "^Giltfile.yaml"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?version: '(?<currentValue>.*?)'"
+      ]
     }
   ]
 }

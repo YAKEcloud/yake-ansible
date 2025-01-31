@@ -1,0 +1,35 @@
+---
+giltDir: ~/.gilt/clone
+debug: false
+parallel: true
+repositories:
+  - git: https://github.com/kubernetes/cloud-provider-openstack
+    # renovate: datasource=github-releases depName=kubernetes/cloud-provider-openstack
+    version: 'v1.31.2'
+    sources:
+      - src: manifests/cinder-csi-plugin/cinder-csi-controllerplugin-rbac.yaml
+        dstFile: roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin-rbac.yaml
+      - src: manifests/cinder-csi-plugin/cinder-csi-controllerplugin.yaml
+        dstFile: roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin.yaml
+      - src: manifests/cinder-csi-plugin/cinder-csi-nodeplugin-rbac.yaml
+        dstFile: roles/clusterapi_cluster/files/cinder-csi/cinder-csi-nodeplugin-rbac.yaml
+      - src: manifests/cinder-csi-plugin/cinder-csi-nodeplugin.yaml
+        dstFile: roles/clusterapi_cluster/files/cinder-csi/cinder-csi-nodeplugin.yaml
+      - src: manifests/cinder-csi-plugin/csi-cinder-driver.yaml
+        dstFile: roles/clusterapi_cluster/files/cinder-csi/csi-cinder-driver.yaml
+  - git: https://github.com/kubernetes/cloud-provider-openstack
+    # renovate: datasource=github-releases depName=kubernetes/cloud-provider-openstack
+    version: 'v1.31.2'
+    sources:
+      - src: manifests/controller-manager/cloud-controller-manager-role-bindings.yaml
+        dstFile: roles/clusterapi_cluster/files/cloud-provider-openstack/cloud-controller-manager-role-bindings.yaml
+      - src: manifests/controller-manager/cloud-controller-manager-roles.yaml
+        dstFile: roles/clusterapi_cluster/files/cloud-provider-openstack/cloud-controller-manager-roles.yaml
+      - src: manifests/controller-manager/openstack-cloud-controller-manager-ds.yaml
+        dstFile: roles/clusterapi_cluster/files/cloud-provider-openstack/openstack-cloud-controller-manager-ds.yaml
+  - git: https://github.com/projectcalico/calico
+    # renovate: datasource=github-releases depName=projectcalico/calico
+    version: 'v3.29.1'
+    sources:
+      - src: manifests/calico.yaml
+        dstFile: roles/clusterapi_cluster/files/calico/calico.yaml

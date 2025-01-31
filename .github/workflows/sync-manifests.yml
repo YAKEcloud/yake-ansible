@@ -1,6 +1,10 @@
 ---
 name: Sync manifests
 
+permissions:
+  contents: write
+  pull-requests: write
+
 "on":
   workflow_dispatch:
   schedule:
@@ -19,19 +23,18 @@ jobs:
         with:
           python-version: '3.x'
 
-      - name: Create PR
-        uses: technote-space/create-pr-action@v2
-        with:
-          EXECUTE_COMMANDS: |
-            pip3 install python-gilt
-            gilt overlay
-          COMMIT_EMAIL: 'bot@yake.cloud'
-          COMMIT_MESSAGE: |
-            chore: sync manifests
+      - name: Run gilt
+        run: |
+          pip3 install python-gilt
+          gilt overlay
 
-            Signed-off-by: YAKE Bot <bot@yake.cloud>
-          COMMIT_NAME: 'YAKE Bot'
-          ONLY_DEFAULT_BRANCH: true
-          PR_BRANCH_NAME: 'sync-manifests'
-          PR_BRANCH_PREFIX: 'chore/'
-          PR_TITLE: 'chore: sync manifests'
+      - name: Create Pull Request
+        uses: peter-evans/create-pull-request@v7
+        with:
+          commit-message: "chore: sync manifests"
+          committer: "YAKE Bot <bot@yake.cloud>"
+          author: "YAKE Bot <bot@yake.cloud>"
+          signoff: true
+          branch: sync-manifests
+          delete-branch: true
+          title: "chore: sync manifests"

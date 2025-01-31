@@ -2,10 +2,10 @@ ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v0.26.0
-ADD --chmod=0755 https://kind.sigs.k8s.io/dl/${VERSION}/kind-linux-amd64 /usr/bin/kind
+ARG VERSION=v3.17.0
+ADD https://get.helm.sh/helm-${VERSION}-linux-amd64.tar.gz /helm.tar.gz
 
-ENV USER_NAME=kind
+ENV USER_NAME=helm
 ENV USER_ID=1000
 ENV GROUP_ID=1000
 
@@ -15,7 +15,6 @@ ENV DOCKER_GROUP_ID=988
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
-      docker-cli \
       dumb-init \
       shadow \
     && addgroup -g ${GROUP_ID} ${USER_NAME} \
@@ -23,7 +22,9 @@ RUN apk update --no-cache \
     && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
     && usermod -aG ${DOCKER_GROUP_NAME} ${USER_NAME} \
     && mkdir //var/lib/yake \
-    && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake
+    && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake \
+    && tar -xzf /helm.tar.gz --strip-components=1 -C /usr/local/bin linux-amd64/helm \
+    && rm /helm.tar.gz
 
 WORKDIR /var/lib/yake
 

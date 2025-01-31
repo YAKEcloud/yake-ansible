@@ -2,5 +2,27 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
+  "labels": ["renovate"],
+  "regexManagers":[
+    {
+      "fileMatch":[
+        "^roles\\/clusterctl_install\\/defaults\\/main.yml$",
+        "^roles\\/kind_install\\/defaults\\/main.yml$",
+        "^roles\\/kubectl_install\\/defaults\\/main.yml$"
+      ],
+      "matchStrings":[
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?_tag: '(?<currentValue>.*?)'"
+     ]
+    },
+    {
+      "fileMatch":[
+        "^\\.github\\/workflows\\/build-.*\\.yml"
+      ],
+      "matchStrings":[
+        "- (?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
+     ]
+    }
   ]
 }

@@ -10,6 +10,12 @@
   "ignorePaths": [
     "charts/**"
   ],
+  "packageRules": [
+    {
+      "matchFileNames": ["^.charts.yml"],
+      "versioning": "loose"
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",
@@ -46,7 +52,15 @@
     {
       "customType": "regex",
       "fileMatch": [
-        "^Giltfile.yaml",
+        "^Giltfile.yaml"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?version: '(?<currentValue>.*?)'"
+      ]
+    },
+    {
+      "customType": "regex",
+      "fileMatch": [
         "^.charts.yml"
       ],
       "matchStrings": [

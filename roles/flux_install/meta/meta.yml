@@ -1,0 +1,14 @@
+---
+galaxy_info:
+  author: Christian Berendt
+  description: Role to install flux
+  company: 23 Technologies GmbH
+  license: Apache License 2.0
+  min_ansible_version: 2.18.0
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+  galaxy_tags:
+    - kubernetes
+dependencies: []

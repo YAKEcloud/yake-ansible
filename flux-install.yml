@@ -1,0 +1,6 @@
+---
+- name: Install flux
+  hosts: "{{ hosts_flux_install | default('all') }}"
+
+  roles:
+    - role: flux_install

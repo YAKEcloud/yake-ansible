@@ -1,17 +1,12 @@
 ---
 charts:
   - name: cilium
-    # renovate: datasource=helm depName=cilium/cilium
+    # renovate: datasource=github-releases depName=cilium/cilium
     version: '1.16.6'
     repository:
       url: https://helm.cilium.io/
   - name: cert-manager
-    # renovate: datasource=helm depName=cert-manager/cert-manager
+    # renovate: datasource=github-releases depName=cert-manager/cert-manager
     version: '1.16.3'
     repository:
       url: https://charts.jetstack.io
-  - name: cert-manager-crds
-    # renovate: datasource=helm depName=wiremind/cert-manager-crds
-    version: '1.16.1'
-    repository:
-      url: https://wiremind.github.io/wiremind-helm-charts

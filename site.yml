@@ -2,6 +2,9 @@
 - name: Install kubectl
   ansible.builtin.import_playbook: kubectl-install.yml
 
+- name: Install helm
+  ansible.builtin.import_playbook: helm-install.yml
+
 - name: Install clusterctl
   ansible.builtin.import_playbook: clusterctl-install.yml
 
@@ -13,3 +16,9 @@
 
 - name: Install clusterapi
   ansible.builtin.import_playbook: clusterapi-install.yml
+
+- name: Install clusterapi-cluster
+  ansible.builtin.import_playbook: clusterapi-cluster.yml
+
+- name: Install flux-install
+  ansible.builtin.import_playbook: flux-install.yml

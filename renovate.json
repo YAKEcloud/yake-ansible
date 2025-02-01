@@ -10,9 +10,6 @@
   "ignorePaths": [
     "charts/**"
   ],
-  "helm": {
-    "enabled": true
-  },
   "customManagers": [
     {
       "customType": "regex",

@@ -20,7 +20,7 @@
 - name: Sync helm charts
   ansible.posix.synchronize:
     src: "{{ helm_install_charts_dir }}"
-    dest: /var/lib/yake/charts
+    dest: /var/lib/yake/charts/
 
 - name: Run helm container
   become: "{{ helm_install_become }}"
@@ -33,6 +33,7 @@
       GROUP_ID: "{{ helm_install_gid }}"
     volumes:
       - /var/lib/yake:/var/lib/yake
+      - /tmp:/tmp
     state: started
 
 - name: Copy helm script

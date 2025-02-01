@@ -1,0 +1,34 @@
+---
+- name: Deploy cilium
+  kubernetes.core.helm:
+    release_name: "{{ cilium_helm_release_name }}"
+    chart_ref: "{{ cilium_helm_chart_ref }}"
+    release_namespace: "{{ cilium_helm_release_namespace }}"
+    create_namespace: true
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    wait: true
+    values: "{{ _cilium_helm_values | combine(cilium_helm_values, recursive=True) }}"
+
+- name: Wait for cilium pods
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    kind: Pod
+    namespace: default
+  register: cilium_pods
+  until: >
+    cilium_pods.resources is defined and
+    (
+      cilium_pods.resources
+      | selectattr('metadata.labels', 'defined')
+      | selectattr('metadata.labels.k8s-app', 'defined')
+      | selectattr('metadata.labels.k8s-app', 'equalto', 'cilium')
+      | selectattr('status.phase', 'equalto', 'Running')
+      | list | length ==
+      cilium_pods.resources
+      | selectattr('metadata.labels', 'defined')
+      | selectattr('metadata.labels.k8s-app', 'defined')
+      | selectattr('metadata.labels.k8s-app', 'equalto', 'cilium')
+      | list | length
+    )
+  retries: 30
+  delay: 10

@@ -1,0 +1,2 @@
+---
+_cilium_helm_values: {}  # noqa: var-naming[no-role-prefix]

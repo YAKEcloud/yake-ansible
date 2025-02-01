@@ -21,7 +21,7 @@ RUN apk update --no-cache \
     && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake \
     && CLEAN_VERSION=$(echo "$VERSION" | sed 's/^v//') \
     && curl -o /flux.tar.gz -L https://github.com/fluxcd/flux2/releases/download/${VERSION}/flux_${CLEAN_VERSION}_linux_amd64.tar.gz \
-    && tar -xzf /flux.tar.gz --strip-components=1 -C /usr/local/bin flux \
+    && tar -xzf /flux.tar.gz -C /usr/local/bin flux \
     && rm /flux.tar.gz \
     && apk del .build-deps
 

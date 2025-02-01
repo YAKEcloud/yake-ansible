@@ -2,24 +2,28 @@ ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v3.17.0
-ADD https://get.helm.sh/helm-${VERSION}-linux-amd64.tar.gz /helm.tar.gz
+ARG VERSION=v2.4.0
 
-ENV USER_NAME=helm
+ENV USER_NAME=flux
 ENV USER_ID=1000
 ENV GROUP_ID=1000
 
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
+    && apk add --no-cache --virtual .build-deps \
+      curl \
+      shadow \
     && apk add --no-cache \
       dumb-init \
-      shadow \
     && addgroup -g ${GROUP_ID} ${USER_NAME} \
     && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
     && mkdir //var/lib/yake \
     && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake \
-    && tar -xzf /helm.tar.gz --strip-components=1 -C /usr/local/bin linux-amd64/helm \
-    && rm /helm.tar.gz
+    && CLEAN_VERSION=$(echo "$VERSION" | sed 's/^v//') \
+    && curl -o /flux.tar.gz -L https://github.com/fluxcd/flux2/releases/download/${VERSION}/flux_${CLEAN_VERSION}_linux_amd64.tar.gz \
+    && tar -xzf /flux.tar.gz --strip-components=1 -C /usr/local/bin flux \
+    && rm /flux.tar.gz \
+    && apk del .build-deps
 
 WORKDIR /var/lib/yake
 

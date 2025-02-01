@@ -19,7 +19,7 @@ clusterapi_cluster_container_registry_cache_dockerhub: https://registry.osism.te
 clusterapi_cluster_container_registry_cache_ghcr: https://registry.osism.tech/v2/ghcr
 clusterapi_cluster_container_registry_cache_k8s: https://registry.osism.tech/v2/k8s
 
-clusterapi_cluster_charts_dir: "{{ playbook_dir }}/charts"
+clusterapi_cluster_charts_dir: "{{ playbook_dir }}/charts/"
 
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""
@@ -60,3 +60,12 @@ clusterapi_cluster_defaults:
   CONTAINER_REGISTRY_CACHE_K8S: "{{ clusterapi_cluster_container_registry_cache_k8s }}"
 
 clusterapi_cluster_extra: {}
+
+# network
+
+clusterapi_cluster_network: cilium
+
+cilium_helm_chart_ref: /var/lib/yake/charts/cilium  # noqa: var-naming[no-role-prefix]
+cilium_helm_release_name: cilium  # noqa: var-naming[no-role-prefix]
+cilium_helm_release_namespace: kube-system  # noqa: var-naming[no-role-prefix]
+cilium_helm_values: {}  # noqa: var-naming[no-role-prefix]

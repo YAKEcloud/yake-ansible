@@ -6,4 +6,4 @@ helm_install_container_image: yakecloud/helm
 helm_install_container_tag: 'v3.17.0'
 helm_install_uid: "{{ ansible_facts.user_uid }}"
 helm_install_gid: "{{ ansible_facts.user_gid }}"
-helm_install_charts_dir: "{{ playbook_dir }}/charts"
+helm_install_charts_dir: "{{ playbook_dir }}/charts/"

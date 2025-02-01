@@ -11,7 +11,7 @@
 - name: Sync helm charts
   ansible.posix.synchronize:
     src: "{{ clusterapi_cluster_charts_dir }}"
-    dest: /var/lib/yake/charts
+    dest: /var/lib/yake/charts/
 
 - name: Copy clouds.yaml file
   ansible.builtin.template:
@@ -128,47 +128,8 @@
   retries: 60
   delay: 10
 
-- name: Copy calico manifet
-  ansible.builtin.copy:
-    src: calico/calico.yaml
-    dest: /var/lib/yake/calico.yaml
-    owner: "{{ clusterapi_cluster_uid }}"
-    group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
-
-- name: Apply calico manifest
-  kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    state: present
-    src: /var/lib/yake/calico.yaml
-
-- name: Pause for 30 seconds
-  ansible.builtin.pause:
-    seconds: 30
-
-- name: Wait for calico-node pods
-  kubernetes.core.k8s_info:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    kind: Pod
-    namespace: kube-system
-  register: calico_pods
-  until: >
-    calico_pods.resources is defined and
-    (
-      calico_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'equalto', 'calico-node')
-      | selectattr('status.phase', 'equalto', 'Running')
-      | list | length ==
-      calico_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'equalto', 'calico-node')
-      | list | length
-    )
-  retries: 30
-  delay: 10
+- name: Include network tasks
+  ansible.builtin.include_tasks: "network-{{ clusterapi_cluster_network }}.yml"
 
 - name: Copy cloud.conf file
   ansible.builtin.template:

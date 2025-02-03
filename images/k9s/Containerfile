@@ -1,0 +1,28 @@
+ARG ALPINE_VERSION=3.21
+FROM alpine:${ALPINE_VERSION}
+
+COPY --chmod=0755 entrypoint.sh /entrypoint.sh
+ARG VERSION=v0.32.7
+ADD https://github.com/derailed/k9s/releases/download/${VERSION}/k9s_linux_amd64.apk /k9s_linux_amd64.apk
+
+ENV USER_NAME=k9s
+ENV USER_ID=1000
+ENV GROUP_ID=1000
+
+RUN apk update --no-cache \
+    && apk upgrade --no-cache --available \
+    && apk add --no-cache \
+      dumb-init \
+      shadow \
+    && apk add --allow-untrusted /k9s_linux_amd64.apk \
+    && rm /k9s_linux_amd64.apk \
+    && addgroup -g ${GROUP_ID} ${USER_NAME} \
+    && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
+    && mkdir /var/lib/yake \
+    && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake
+
+WORKDIR /var/lib/yake
+
+VOLUME ["/var/lib/yake"]
+
+ENTRYPOINT ["/entrypoint.sh"]

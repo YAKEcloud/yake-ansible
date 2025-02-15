@@ -3,6 +3,6 @@ kind_install_become: false
 kind_install_container_registry: ghcr.io
 kind_install_container_image: yakecloud/kind
 # renovate: datasource=docker depName=ghcr.io/yakecloud/kind
-kind_install_container_tag: 'v0.26.0'
+kind_install_container_tag: 'v0.27.0'
 kind_install_uid: "{{ ansible_facts.user_uid }}"
 kind_install_gid: "{{ ansible_facts.user_gid }}"

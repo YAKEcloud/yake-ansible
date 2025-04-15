@@ -2,7 +2,7 @@
 charts:
   - name: cilium
     # renovate: datasource=github-releases depName=cilium/cilium
-    version: '1.17.2'
+    version: '1.17.3'
     repository:
       url: https://helm.cilium.io/
   - name: cert-manager

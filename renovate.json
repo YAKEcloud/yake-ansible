@@ -68,6 +68,20 @@
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?version: '(?<currentValue>.*?)'"
       ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "/^images\\/clusterctl\\/Containerfile$/",
+        "/^images\\/flux\\/Containerfile$/",
+        "/^images\\/helm\\/Containerfile$/",
+        "/^images\\/k9s\\/Containerfile$/",
+        "/^images\\/kind\\/Containerfile$/",
+        "/^images\\/kubectl\\/Containerfile$/"
+      ],
+     "matchStrings":[
+        "ARG VERSION=(?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
+     ]
     }
   ]
 }

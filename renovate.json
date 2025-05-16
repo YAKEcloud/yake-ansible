@@ -42,10 +42,18 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
+        "/^roles\\/kind_cluster\\/defaults\\/main.yml$/"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?_version: '(?<currentValue>.*?)'"
+      ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
         "/^group_vars\\/all\\.yml/",
         "/^roles\\/clusterapi_cluster\\/defaults\\/main.yml$/",
-        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/kind_cluster\\/defaults\\/main.yml$/"
+        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?_version: '(?<currentValue>.*?)'"

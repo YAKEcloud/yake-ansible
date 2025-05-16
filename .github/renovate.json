@@ -1,0 +1,12 @@
+{
+   "regexManagers":[
+      {
+         "fileMatch":[
+            "Containerfile"
+         ],
+         "matchStrings":[
+            "ARG VERSION=(?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
+         ]
+      }
+   ]
+}

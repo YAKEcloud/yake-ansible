@@ -26,7 +26,7 @@
   become: true
   ansible.builtin.copy:
     src: clusterctl
-    dest: /usr/local/bin/clusterctl
+    dest: /usr/local/bin/yake-clusterctl
     mode: 0755
     owner: root
     group: root

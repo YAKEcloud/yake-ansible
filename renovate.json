@@ -12,17 +12,19 @@
   ],
   "packageRules": [
     {
-      "matchFileNames": ["^.charts.yml"],
+      "matchFileNames": [
+        "^.charts.yml"
+      ],
       "versioning": "loose"
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
-      "fileMatch": [
-        "^roles\\/clusterctl_install\\/defaults\\/main.yml$",
-        "^roles\\/kind_install\\/defaults\\/main.yml$",
-        "^roles\\/kubectl_install\\/defaults\\/main.yml$"
+      "managerFilePatterns": [
+        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
+        "/^roles\\/kind_install\\/defaults\\/main.yml$/",
+        "/^roles\\/kubectl_install\\/defaults\\/main.yml$/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?_tag: '(?<currentValue>.*?)'"
@@ -30,8 +32,8 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "^\\.github\\/workflows\\/build-.*\\.yml"
+      "managerFilePatterns": [
+        "/^\\.github\\/workflows\\/build-.*\\.yml/"
       ],
       "matchStrings": [
         "- (?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
@@ -39,11 +41,11 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "^group_vars\\/all\\.yml",
-        "^roles\\/clusterapi_cluster\\/defaults\\/main.yml$",
-        "^roles\\/clusterctl_install\\/defaults\\/main.yml$",
-        "^roles\\/kind_cluster\\/defaults\\/main.yml$"
+      "managerFilePatterns": [
+        "/^group_vars\\/all\\.yml/",
+        "/^roles\\/clusterapi_cluster\\/defaults\\/main.yml$/",
+        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
+        "/^roles\\/kind_cluster\\/defaults\\/main.yml$/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?_version: '(?<currentValue>.*?)'"
@@ -51,8 +53,8 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "^Giltfile.yaml"
+      "managerFilePatterns": [
+        "/^Giltfile.yaml/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?version: '(?<currentValue>.*?)'"
@@ -60,8 +62,8 @@
     },
     {
       "customType": "regex",
-      "fileMatch": [
-        "^.charts.yml"
+      "managerFilePatterns": [
+        "/^.charts.yml/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?version: '(?<currentValue>.*?)'"

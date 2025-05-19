@@ -1,8 +1,8 @@
 ---
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 clusterapi_cluster_kubernetes_version: 'v1.32.5'
-clusterapi_cluster_openstack_auth_url: "https://keystone.services.a.regiocloud.tech"
-clusterapi_cluster_openstack_application_credential_id: "7816bd154fb0439e80b0d1c50b66b0f4"
-clusterapi_cluster_openstack_application_credential_secret: "AYmJPXgwu05tKBs8RWZSu0cC0iT5XIDOoxqVTebGBP6DL-CFtyQkwt1ZTTeY0vvZ2Co8mESPJ3YpwwgV9xMlMw"
-clusterapi_cluster_openstack_domain_name: "Default"
-clusterapi_cluster_openstack_region_name: "RegionA"
+clusterapi_cluster_openstack_auth_url: ""
+clusterapi_cluster_openstack_application_credential_id: ""
+clusterapi_cluster_openstack_application_credential_secret: ""
+clusterapi_cluster_openstack_domain_name: ""
+clusterapi_cluster_openstack_region_name: ""

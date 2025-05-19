@@ -1,5 +1,5 @@
 def test_kubectl_install_script(host):
-    f = host.file("/usr/local/bin/kubectl")
+    f = host.file("/usr/local/bin/kind-kubectl")
     assert f.exists
     assert not f.is_directory
     assert f.mode == 0o755

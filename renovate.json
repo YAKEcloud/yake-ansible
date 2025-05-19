@@ -41,11 +41,11 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "/^group_vars\\/all\\.yml/",
-        "/^roles\\/clusterapi_cluster\\/defaults\\/main.yml$/",
-        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/kind_cluster\\/defaults\\/main.yml$/"
+      "fileMatch": [
+        "^group_vars\\/all\\.yml.example",
+        "^roles\\/clusterapi_cluster\\/defaults\\/main.yml$",
+        "^roles\\/clusterctl_install\\/defaults\\/main.yml$",
+        "^roles\\/kind_cluster\\/defaults\\/main.yml$"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?_version: '(?<currentValue>.*?)'"

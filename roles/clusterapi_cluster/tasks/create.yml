@@ -91,7 +91,7 @@
 - name: Generate manifest to create Kubernetes cluster
   become: "{{ clusterapi_cluster_become }}"
   ansible.builtin.shell: |
-    /usr/local/bin/clusterctl --config /var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml generate cluster --from /var/lib/yake/cluster-template.yaml {{ clusterapi_cluster_name }} > /var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml
+    /usr/local/bin/yake-clusterctl --config /var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml generate cluster --from /var/lib/yake/cluster-template.yaml {{ clusterapi_cluster_name }} > /var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml
   args:
     executable: /bin/bash
   changed_when: false

@@ -27,7 +27,7 @@
   become: true
   ansible.builtin.copy:
     src: kind
-    dest: /usr/local/bin/kind
+    dest: /usr/local/bin/yake-kind
     mode: 0755
     owner: root
     group: root

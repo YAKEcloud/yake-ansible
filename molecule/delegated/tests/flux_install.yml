@@ -1,5 +1,5 @@
 def test_flux_install_script(host):
-    f = host.file("/usr/local/bin/flux")
+    f = host.file("/usr/local/bin/yake-flux")
     assert f.exists
     assert not f.is_directory
     assert f.mode == 0o755

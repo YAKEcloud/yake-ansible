@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - v1.10.1  # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
+          - v1.10.2  # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4

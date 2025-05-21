@@ -1,4 +1,16 @@
 ---
+- name: Fix docker wiping ipv6 default route
+  become: true
+  ansible.builtin.shell: |
+    set -e
+    set -x
+
+    INTERFACE=$(ip -6 route show default | awk '{for(i=1;i<=NF;i++) if($i=="dev") print $(i+1)}' | head -n 1)
+    sysctl -w net.ipv6.conf.$INTERFACE.accept_ra=2
+  changed_when: false
+  args:
+    executable: /bin/bash
+
 - name: Ensure docker
   ansible.builtin.include_role:
     name: osism.services.docker

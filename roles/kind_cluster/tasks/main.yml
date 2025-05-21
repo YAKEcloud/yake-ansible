@@ -9,6 +9,7 @@
     group: "{{ kind_cluster_gid }}"
 
 - name: Pull kind container image
+  become: "{{ kind_cluster_become }}"
   community.docker.docker_image:
     name: "{{ kind_cluster_image }}"
     source: pull

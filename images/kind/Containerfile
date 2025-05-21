@@ -2,7 +2,7 @@ ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v0.28.0  # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+ARG VERSION=v0.29.0  # renovate: datasource=github-releases depName=kubernetes-sigs/kind
 ADD --chmod=0755 https://kind.sigs.k8s.io/dl/${VERSION}/kind-linux-amd64 /usr/bin/kind
 
 ENV USER_NAME=kind

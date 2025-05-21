@@ -16,7 +16,7 @@
 
 - name: Prepare kind create command
   ansible.builtin.set_fact:
-    _kind_create_cluster: "/usr/local/bin/kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }} --config /var/lib/yake/config.{{ kind_cluster_name }}.yml"
+    _kind_create_cluster: "/usr/local/bin/yake-kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }} --config /var/lib/yake/config.{{ kind_cluster_name }}.yml"
 
 - name: Print kind create command
   ansible.builtin.debug:

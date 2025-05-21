@@ -8,9 +8,24 @@
     owner: "{{ kind_cluster_uid }}"
     group: "{{ kind_cluster_gid }}"
 
+- name: Pull kind container image
+  community.docker.docker_image:
+    name: "{{ kind_cluster_image }}"
+    source: pull
+
+- name: Prepare kind create command
+  ansible.builtin.set_fact:
+    _kind_create_cluster: "/usr/local/bin/kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }} --config /var/lib/yake/config.{{ kind_cluster_name }}.yml"
+
+- name: Print kind create command
+  ansible.builtin.debug:
+    var: _kind_create_cluster
+
 - name: Create kind cluster
   become: "{{ kind_cluster_become }}"
-  ansible.builtin.command: "/usr/local/bin/kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }} --config /var/lib/yake/config.{{ kind_cluster_name }}.yml"
+  ansible.builtin.shell: "{{ _kind_create_cluster }}"
+  args:
+    executable: /bin/bash
   register: result
   changed_when: "'Creating cluster' in result.stdout"
   when: "kind_cluster_state == 'present'"

@@ -48,7 +48,5 @@ jobs:
         with:
           context: .
           push: true
-          tags: ghcr.io/yakecloud/charts:${{ matrix.version }}
-          build-args: |
-            VERSION=${{ matrix.version }}
+          tags: ghcr.io/yakecloud/charts:latest
         if: github.repository == 'YAKEcloud/yake-ansible' && github.ref == 'refs/heads/main'

@@ -35,6 +35,17 @@
   async: 180
   poll: 5
 
+- name: Wait for kind cluster to be ready
+  become: "{{ kind_cluster_become }}"
+  ansible.builtin.command: >
+    /usr/local/bin/yake-kubectl --kubeconfig {{ kind_cluster_kubeconfig }} wait --for=condition=Ready nodes --all --timeout=300s
+  register: wait_result
+  until: wait_result.rc == 0
+  retries: 10
+  delay: 10
+  when: "kind_cluster_state == 'present'"
+  changed_when: false
+
 - name: Change permissions of kubeconfig
   become: true
   ansible.builtin.file:

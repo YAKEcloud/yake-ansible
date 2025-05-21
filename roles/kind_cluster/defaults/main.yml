@@ -3,10 +3,10 @@ kind_cluster_state: present
 kind_cluster_become: false
 kind_cluster_name: clusterapi
 kind_cluster_primary: clusterapi
-# renovate: datasource=github-releases depName=kubernetes/kubernetes
-kind_cluster_version: 'v1.32.2'
+# renovate: datasource=docker depName=kindest/node
+kind_cluster_version: 'v1.32.5'
 kind_cluster_image: "kindest/node:{{ kind_cluster_version }}"
 kind_cluster_kubeconfig: "/var/lib/yake/kubeconfig.{{ kind_cluster_name }}"
-kind_cluster_api_server_address: "{{ ansible_default_ipv4.address | default('127.0.0.1') }}"
+kind_cluster_api_server_address: "127.0.0.1"
 kind_cluster_uid: "{{ kind_install_uid | default(ansible_facts.user_uid) }}"
 kind_cluster_gid: "{{ kind_install_gid | default(ansible_facts.user_gid) }}"

@@ -20,7 +20,7 @@
   become: "{{ clusterapi_install_become }}"
   ansible.builtin.shell: |
     export CLUSTER_TOPOLOGY={{ clusterapi_install_cluster_topology | lower }}
-    /usr/local/bin/clusterctl --kubeconfig {{ clusterapi_install_kubeconfig }} init --infrastructure {{ clusterapi_install_infrastructure }}
+    /usr/local/bin/yake-clusterctl --kubeconfig {{ clusterapi_install_kubeconfig }} init --infrastructure {{ clusterapi_install_infrastructure }}
   args:
     executable: /bin/bash
   register: result

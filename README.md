@@ -32,20 +32,20 @@ ansible-playbook -i localhost, -c local flux-install.yml
 
 ```
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
-kubectl get nodes
+yake-kubectl get nodes
 ```
 
 ### Accessing the Garden cluster
 
 ```
 export KUBECONFIG=/var/lib/yake/kubeconfig.garden
-kubectl get nodes
+yake-kubectl get nodes
 ```
 
 ### Cleanup
 
 ```
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
-kubectl delete cluster garden
-kind delete cluster --name clusterapi
+yake-kubectl delete cluster garden
+yake-kind delete cluster --name clusterapi
 ```

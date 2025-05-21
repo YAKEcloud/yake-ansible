@@ -25,7 +25,7 @@
   become: true
   ansible.builtin.copy:
     src: flux
-    dest: /usr/local/bin/flux
+    dest: /usr/local/bin/yake-flux
     mode: 0755
     owner: root
     group: root

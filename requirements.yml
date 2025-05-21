@@ -1,5 +1,9 @@
 ---
 collections:
+  - name: community.docker
+    source: https://galaxy.ansible.com
+  - name: ansible.posix
+    source: https://galaxy.ansible.com
   - name: openstack.cloud
     source: https://galaxy.ansible.com
   - name: kubernetes.core

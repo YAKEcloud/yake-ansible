@@ -51,7 +51,7 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^group_vars\\/all\\.yml/",
+        "/^group_vars\\/all\\.yml\\.example/",
         "/^roles\\/clusterapi_cluster\\/defaults\\/main.yml$/",
         "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/"
       ],

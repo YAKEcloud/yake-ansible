@@ -40,7 +40,7 @@
   become: true
   ansible.builtin.copy:
     src: helm
-    dest: /usr/local/bin/helm
+    dest: /usr/local/bin/yake-helm
     mode: 0755
     owner: root
     group: root

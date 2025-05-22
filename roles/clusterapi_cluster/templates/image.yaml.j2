@@ -1,0 +1,25 @@
+---
+apiVersion: openstack.k-orc.cloud/v1alpha1
+kind: Image
+metadata:
+  name: {{ clusterapi_cluster_openstack_image_name }}
+  namespace: default
+spec:
+  cloudCredentialsRef:
+    cloudName: openstack
+    secretName: {{ clusterapi_cluster_name }}-cloud-config
+  managementPolicy: managed
+  managedOptions:
+    onDelete: detach
+  properties:
+    minDiskGB: 20
+    minMemoryMB: 512
+  resource:
+    name: {{ clusterapi_cluster_openstack_image_name }}
+    content:
+      diskFormat: raw
+      download:
+        url: https://swift.services.a.regiocloud.tech/swift/v1/AUTH_b182637428444b9aa302bb8d5a5a418c/openstack-k8s-capi-images/ubuntu-2204-kube-{{ clusterapi_cluster_kubernetes_version_short }}/ubuntu-2204-kube-{{ clusterapi_cluster_kubernetes_version }}.qcow2
+        hash:
+          algorithm: sha256
+          value: {{ clusterapi_cluster_image_hash }}

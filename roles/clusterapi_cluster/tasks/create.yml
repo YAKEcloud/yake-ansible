@@ -30,6 +30,32 @@
   ansible.builtin.set_fact:
     _clusterapi_cluster_cloud_yaml_b64: "{{ result_clouds_yaml.content }}"
 
+- name: Get SHA256 hash for the image
+  uri:
+    url: https://swift.services.a.regiocloud.tech/swift/v1/AUTH_b182637428444b9aa302bb8d5a5a418c/openstack-k8s-capi-images/ubuntu-2204-kube-{{ clusterapi_cluster_kubernetes_version_short }}/ubuntu-2204-kube-{{ clusterapi_cluster_kubernetes_version }}.qcow2.CHECKSUM
+    return_content: yes
+  register: image_hash_raw
+
+- name: Get only the hash
+  ansible.builtin.set_fact:
+    clusterapi_cluster_image_hash: "{{ image_hash_raw.content.split()[0] }}"
+
+- name: Copy secret template file
+  ansible.builtin.template:
+    src: cloud-secret.yaml.j2
+    dest: /var/lib/yake/cloud-secret.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
+- name: Copy image.yaml file
+  ansible.builtin.template:
+    src: image.yaml.j2
+    dest: /var/lib/yake/image.{{ clusterapi_cluster_name }}.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
 - name: Copy cluster template file
   ansible.builtin.copy:
     src: cluster-template.yaml
@@ -65,6 +91,7 @@
 
 - name: Get external network ID
   openstack.cloud.networks_info:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     name: "{{ clusterapi_cluster_external_network }}"
   register: result_external_network
 
@@ -94,7 +121,41 @@
     /usr/local/bin/yake-clusterctl --config /var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml generate cluster --from /var/lib/yake/cluster-template.yaml {{ clusterapi_cluster_name }} > /var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml
   args:
     executable: /bin/bash
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
   changed_when: false
+
+- name: Create cloud secret
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
+    state: present
+    wait: true
+    src: "/var/lib/yake/cloud-secret.yaml"
+
+- name: Check if image exists
+  openstack.cloud.image_info:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
+    name: "{{ clusterapi_cluster_openstack_image_name }}"
+  register: image_check
+
+- name: Upload image to OpenStack
+  when: not clusterapi_cluster_openstack_use_existing_image or image_check.images | length == 0
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
+    state: present
+    wait: true
+    src: "/var/lib/yake/image.{{ clusterapi_cluster_name }}.yaml"
+  register: image_upload
+
+- name: Wait untill the image is uploaded (can take a long time)
+  openstack.cloud.image_info:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
+    name: "{{ clusterapi_cluster_openstack_image_name }}"
+  register: uploaded_image
+  until: uploaded_image.images[0].status == "active"
+  retries: 60
+  delay: 60
+  when: image_check.images | length == 0
 
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:
@@ -104,10 +165,12 @@
     src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
 
 - name: Get kubeconfig
-  ansible.builtin.command: "clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
+  ansible.builtin.command: "yake-clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
   register: result_kubeconfig
   changed_when: false
   until: result_kubeconfig.rc == 0
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
   retries: 30
   delay: 10
 

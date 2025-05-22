@@ -31,7 +31,7 @@
     _clusterapi_cluster_cloud_yaml_b64: "{{ result_clouds_yaml.content }}"
 
 - name: Get SHA256 hash for the image
-  uri:
+  ansible.builtin.uri:
     url: https://swift.services.a.regiocloud.tech/swift/v1/AUTH_b182637428444b9aa302bb8d5a5a418c/openstack-k8s-capi-images/ubuntu-2204-kube-{{ clusterapi_cluster_kubernetes_version_short }}/ubuntu-2204-kube-{{ clusterapi_cluster_kubernetes_version }}.qcow2.CHECKSUM
     return_content: yes
   register: image_hash_raw

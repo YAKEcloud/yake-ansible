@@ -31,3 +31,13 @@
     kubeconfig: "/var/lib/yake/{{ clusterapi_install_kubeconfig }}"
     state: present
     src: /var/lib/yake/install-orc.yaml
+
+- name: Wait for all pods to be ready
+  become: "{{ clusterapi_install_become }}"
+  ansible.builtin.command: >
+    /usr/local/bin/yake-kubectl --kubeconfig {{ clusterapi_install_kubeconfig }} wait --for=condition=Ready pods --all --all-namespaces --timeout=300s
+  register: wait_result
+  until: wait_result.rc == 0
+  retries: 10
+  delay: 10
+  changed_when: false

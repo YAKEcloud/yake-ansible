@@ -51,7 +51,11 @@ spec:
           kubeletExtraArgs:
             cloud-provider: external
             provider-id: openstack:///'{{ instance_id }}'
-          name: '{{ local_hostname }}'
+          name: "{{ local_hostname }}"
+          taints:
+            - key: "node.cilium.io/agent-not-ready"
+              value: "true"
+              effect: "NoSchedule"
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
@@ -61,7 +65,7 @@ spec:
   clusterNetwork:
     pods:
       cidrBlocks:
-      - 192.168.0.0/16
+        - 10.0.0.0/8
     serviceDomain: cluster.local
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -145,13 +149,23 @@ spec:
         kubeletExtraArgs:
           cloud-provider: external
           provider-id: openstack:///'{{ instance_id }}'
-        name: '{{ local_hostname }}'
+        name: "{{ local_hostname }}"
+        taints:
+          - key: "node.cilium.io/agent-not-ready"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/control-plane"
+            effect: "NoSchedule"
     joinConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
           cloud-provider: external
           provider-id: openstack:///'{{ instance_id }}'
-        name: '{{ local_hostname }}'
+        name: "{{ local_hostname }}"
+        taints:
+          - key: "node.cilium.io/agent-not-ready"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/control-plane"
+            effect: "NoSchedule"
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -173,29 +187,11 @@ spec:
     cloudName: ${OPENSTACK_CLOUD}
     name: ${CLUSTER_NAME}-cloud-config
   managedSecurityGroups:
-    allNodesSecurityGroupRules:
-    - description: Created by cluster-api-provider-openstack - BGP (calico)
-      direction: ingress
-      etherType: IPv4
-      name: BGP (Calico)
-      portRangeMax: 179
-      portRangeMin: 179
-      protocol: tcp
-      remoteManagedGroups:
-      - controlplane
-      - worker
-    - description: Created by cluster-api-provider-openstack - IP-in-IP (calico)
-      direction: ingress
-      etherType: IPv4
-      name: IP-in-IP (calico)
-      protocol: "4"
-      remoteManagedGroups:
-      - controlplane
-      - worker
+    allowAllInClusterTraffic: True
   managedSubnets:
-  - cidr: 10.6.0.0/24
-    dnsNameservers:
-    - ${OPENSTACK_DNS_NAMESERVERS}
+    - cidr: 192.168.0.23/24
+      dnsNameservers:
+        - ${OPENSTACK_DNS_NAMESERVERS}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate

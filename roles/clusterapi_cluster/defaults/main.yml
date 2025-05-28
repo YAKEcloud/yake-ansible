@@ -14,6 +14,7 @@ clusterapi_cluster_external_network: public
 clusterapi_cluster_ssh_key_name: "{{ clusterapi_cluster_name }}"
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 clusterapi_cluster_kubernetes_version: 'v1.32.5'
+clusterapi_cluster_kubernetes_version_short: "{{ clusterapi_cluster_kubernetes_version.split('.')[:2] | join('.') }}"
 
 clusterapi_cluster_container_registry_cache_dockerhub: https://registry.osism.tech/v2/dockerhub
 clusterapi_cluster_container_registry_cache_ghcr: https://registry.osism.tech/v2/ghcr
@@ -26,7 +27,9 @@ clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
+clusterapi_cluster_openstack_use_existing_image: false
 clusterapi_cluster_openstack_image_name: "ubuntu-capi-image-{{ clusterapi_cluster_kubernetes_version }}"
+clusterapi_cluster_cloud_cacert_b64: ""
 clusterapi_cluster_openstack_cloud:
   auth:
     auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
@@ -43,15 +46,17 @@ clusterapi_cluster_defaults:
   KUBERNETES_VERSION: "{{ clusterapi_cluster_kubernetes_version }}"
   OPENSTACK_CINDER_STORAGE_CLASS: ssd
   OPENSTACK_CLOUD: openstack
-  OPENSTACK_CLOUD_CACERT_B64: ""
+  OPENSTACK_CLOUD_CACERT_B64: "{{ clusterapi_cluster_cloud_cacert_b64 }}"
   OPENSTACK_CLOUD_YAML_B64: "{{ _clusterapi_cluster_cloud_yaml_b64 | default('') }}"
   OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR: SCS-4V-8
+  OPENSTACK_CONTROL_PLANE_VOLUME_SIZE: 20
   OPENSTACK_DNS_NAMESERVERS: "8.8.8.8"
   OPENSTACK_EXTERNAL_NETWORK_ID: "{{ _clusterapi_cluster_external_network_id | default('') }}"
   OPENSTACK_FAILURE_DOMAIN: nova
   OPENSTACK_FLOATING_IP_POOL: "{{ clusterapi_cluster_external_network }}"
   OPENSTACK_IMAGE_NAME: "{{ clusterapi_cluster_openstack_image_name }}"
   OPENSTACK_NODE_MACHINE_FLAVOR: SCS-4V-8
+  OPENSTACK_NODE_VOLUME_SIZE: 20
   OPENSTACK_SSH_KEY_NAME: "{{ clusterapi_cluster_ssh_key_name }}"
   OPENSTACK_VOLUME_SIZE: 20
   WORKER_MACHINE_COUNT: 3

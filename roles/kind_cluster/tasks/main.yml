@@ -14,6 +14,12 @@
     name: "{{ kind_cluster_image }}"
     source: pull
 
+- name: Check if the kind cluster exists
+  become: "{{ kind_cluster_become }}"
+  ansible.builtin.command: "/usr/local/bin/yake-kind get clusters"
+  register: kind_clusters
+  changed_when: false
+
 - name: Prepare kind create command
   ansible.builtin.set_fact:
     _kind_create_cluster: "/usr/local/bin/yake-kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }} --config /var/lib/yake/config.{{ kind_cluster_name }}.yml"
@@ -29,7 +35,9 @@
     executable: /bin/bash
   register: result
   changed_when: "'Creating cluster' in result.stdout"
-  when: "kind_cluster_state == 'present'"
+  when:
+    - "kind_cluster_state == 'present'"
+    - "kind_cluster_name not in kind_clusters.stdout_lines"
   async: 180
   poll: 5
 
@@ -41,7 +49,9 @@
   until: wait_result.rc == 0
   retries: 10
   delay: 10
-  when: "kind_cluster_state == 'present'"
+  when:
+    - "kind_cluster_state == 'present'"
+    - "kind_cluster_name not in kind_clusters.stdout_lines"
   changed_when: false
 
 - name: Change permissions of kubeconfig

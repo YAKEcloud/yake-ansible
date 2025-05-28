@@ -87,9 +87,9 @@
         "/^images\\/kind\\/Containerfile$/",
         "/^images\\/kubectl\\/Containerfile$/"
       ],
-     "matchStrings":[
+      "matchStrings": [
         "ARG VERSION=(?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
-     ]
+      ]
     }
   ]
 }

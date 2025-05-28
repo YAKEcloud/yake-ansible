@@ -41,7 +41,11 @@ spec:
           kubeletExtraArgs:
             cloud-provider: external
             provider-id: openstack:///'{{ instance_id }}'
-          name: '{{ local_hostname }}'
+          name: "{{ local_hostname }}"
+          taints:
+            - key: "node.cilium.io/agent-not-ready"
+              value: "true"
+              effect: "NoSchedule"
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
@@ -135,13 +139,23 @@ spec:
         kubeletExtraArgs:
           cloud-provider: external
           provider-id: openstack:///'{{ instance_id }}'
-        name: '{{ local_hostname }}'
+        name: "{{ local_hostname }}"
+        taints:
+          - key: "node.cilium.io/agent-not-ready"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/control-plane"
+            effect: "NoSchedule"
     joinConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
           cloud-provider: external
           provider-id: openstack:///'{{ instance_id }}'
-        name: '{{ local_hostname }}'
+        name: "{{ local_hostname }}"
+        taints:
+          - key: "node.cilium.io/agent-not-ready"
+            effect: "NoSchedule"
+          - key: "node-role.kubernetes.io/control-plane"
+            effect: "NoSchedule"
   machineTemplate:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1

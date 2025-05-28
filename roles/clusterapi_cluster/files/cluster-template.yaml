@@ -192,7 +192,7 @@ spec:
     spec:
       flavor: ${OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR}
       rootVolume:
-          sizeGiB: ${OPENSTACK_CONTROL_PLANE_VOLUME_SIZE}
+        sizeGiB: ${OPENSTACK_CONTROL_PLANE_VOLUME_SIZE}
       image:
         filter:
           name: ${OPENSTACK_IMAGE_NAME}
@@ -207,7 +207,7 @@ spec:
     spec:
       flavor: ${OPENSTACK_NODE_MACHINE_FLAVOR}
       rootVolume:
-          sizeGiB: ${OPENSTACK_NODE_VOLUME_SIZE}
+        sizeGiB: ${OPENSTACK_NODE_VOLUME_SIZE}
       image:
         filter:
           name: ${OPENSTACK_IMAGE_NAME}

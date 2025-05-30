@@ -23,6 +23,7 @@
       "customType": "regex",
       "managerFilePatterns": [
         "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
+        "/^roles\\/helm_install\\/defaults\\/main.yml$/",
         "/^roles\\/kind_install\\/defaults\\/main.yml$/",
         "/^roles\\/kubectl_install\\/defaults\\/main.yml$/"
       ],

@@ -16,4 +16,13 @@ else
     PARAMETERS="$PARAMETERS --env KUBECONFIG=kubeconfig"
 fi
 
-exec docker exec $PARAMETERS helm helm "$@"
+PREFIX="HELM_"
+ENV_ARGS=()
+
+while IFS='=' read -r name value; do
+    if [[ $name == ${PREFIX}* ]]; then
+        ENV_ARGS+=("-e" "${name}=${value}")
+    fi
+done < <(env)
+
+exec docker exec $PARAMETERS "${ENV_ARGS[@]}" helm helm "$@"

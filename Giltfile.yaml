@@ -29,7 +29,7 @@ repositories:
         dstFile: roles/clusterapi_cluster/files/cloud-controller-manager/openstack-cloud-controller-manager-ds.yaml
   - git: https://github.com/projectcalico/calico
     # renovate: datasource=github-releases depName=projectcalico/calico
-    version: 'v3.30.0'
+    version: 'v3.30.1'
     sources:
       - src: manifests/calico.yaml
         dstFile: roles/clusterapi_cluster/files/calico/calico.yaml

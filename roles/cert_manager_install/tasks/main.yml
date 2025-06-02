@@ -2,30 +2,30 @@
 - name: Deploy cert-manager
   kubernetes.core.helm:
     binary_path: "/usr/local/bin/yake-helm"
-    release_name: "{{ cert_manager_helm_release_name }}"
-    chart_ref: "{{ cert_manager_helm_chart_ref }}"
-    release_namespace: "{{ cert_manager_helm_release_namespace }}"
+    release_name: "{{ cert_manager_install_helm_release_name }}"
+    chart_ref: "{{ cert_manager_install_helm_chart_ref }}"
+    release_namespace: "{{ cert_manager_install_helm_release_namespace }}"
     create_namespace: true
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ cert_manager_cluster_name }}"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ cert_manager_install_cluster_name }}"
     wait: true
-    values: "{{ _cert_manager_helm_values | combine(cert_manager_helm_values, recursive=True) }}"
+    values: "{{ _cert_manager_install_helm_values | combine(cert_manager_install_helm_values, recursive=True) }}"
 
 - name: Wait for cert-manager pods
   kubernetes.core.k8s_info:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ cert_manager_cluster_name }}"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ cert_manager_install_cluster_name }}"
     kind: Pod
     namespace: default
-  register: cert_manager_pods
+  register: cert_manager_install_pods
   until: >
-    cert_manager_pods.resources is defined and
+    cert_manager_install_pods.resources is defined and
     (
-      cert_manager_pods.resources
+      cert_manager_install_pods.resources
       | selectattr('metadata.labels', 'defined')
       | selectattr('metadata.labels.k8s-app', 'defined')
       | selectattr('metadata.labels.k8s-app', 'equalto', 'cert-manager')
       | selectattr('status.phase', 'equalto', 'Running')
       | list | length ==
-      cert_manager_pods.resources
+      cert_manager_install_pods.resources
       | selectattr('metadata.labels', 'defined')
       | selectattr('metadata.labels.k8s-app', 'defined')
       | selectattr('metadata.labels.k8s-app', 'equalto', 'cert-manager')
@@ -38,13 +38,13 @@
   ansible.builtin.copy:
     src: cluster-issuer.yaml
     dest: /var/lib/yake/cluster-issuer.yaml
-    owner: "{{ cert_manager_cluster_uid }}"
-    group: "{{ cert_manager_cluster_gid }}"
+    owner: "{{ cert_manager_install_cluster_uid }}"
+    group: "{{ cert_manager_install_cluster_gid }}"
     mode: 0644
 
 - name: Create cluster issuer
   kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ cert_manager_cluster_name }}"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ cert_manager_install_cluster_name }}"
     state: present
     wait: true
     src: "/var/lib/yake/cluster-issuer.yaml"

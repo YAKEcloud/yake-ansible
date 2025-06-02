@@ -1,10 +1,10 @@
 ---
-ingress_nginx_cluster_name: garden
+ingress_nginx_install_cluster_name: garden
 
-ingress_nginx_helm_chart_ref: /var/lib/yake/charts/ingress-nginx
-ingress_nginx_helm_release_name: ingress-nginx
-ingress_nginx_helm_release_namespace: ingress-nginx
-ingress_nginx_helm_values:
+ingress_nginx_install_helm_chart_ref: /var/lib/yake/charts/ingress-nginx
+ingress_nginx_install_helm_release_name: ingress-nginx
+ingress_nginx_install_helm_release_namespace: ingress-nginx
+ingress_nginx_install_helm_values:
   controller:
     allowSnippetAnnotations: true
     watchIngressWithoutClass: true

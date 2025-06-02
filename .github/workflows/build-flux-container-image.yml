@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - v2.6.0  # renovate: datasource=github-releases depName=fluxcd/flux2
+          - v2.6.1  # renovate: datasource=github-releases depName=fluxcd/flux2
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4

@@ -1,0 +1,12 @@
+---
+cert_manager_cluster_uid: "{{ ansible_facts.user_uid }}"
+cert_manager_cluster_gid: "{{ ansible_facts.user_gid }}"
+
+cert_manager_cluster_name: garden
+
+cert_manager_helm_chart_ref: /var/lib/yake/charts/cert-manager
+cert_manager_helm_release_name: cert-manager
+cert_manager_helm_release_namespace: cert-manager
+cert_manager_helm_values:
+  crds:
+    enabled: true

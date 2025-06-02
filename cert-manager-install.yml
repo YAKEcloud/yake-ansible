@@ -1,0 +1,6 @@
+---
+- name: Install cert-manager
+  hosts: "{{ hosts_cert_manager_install | default('all') }}"
+
+  roles:
+    - role: cert-manager_install

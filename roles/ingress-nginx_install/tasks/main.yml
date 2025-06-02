@@ -1,0 +1,28 @@
+---
+- name: Deploy ingress-nginx
+  kubernetes.core.helm:
+    binary_path: "/usr/local/bin/yake-helm"
+    release_name: "{{ ingress_nginx_helm_release_name }}"
+    chart_ref: "{{ ingress_nginx_helm_chart_ref }}"
+    release_namespace: "{{ ingress_nginx_helm_release_namespace }}"
+    create_namespace: true
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ ingress_nginx_cluster_name }}"
+    wait: true
+    values: "{{ _ingress_nginx_helm_values | combine(ingress_nginx_helm_values, recursive=True) }}"
+
+- name: Wait for External IP of ingress-nginx LoadBalancer
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ ingress_nginx_cluster_name }}"
+    kind: Service
+    namespace: "{{ ingress_nginx_helm_release_namespace }}"
+    name: ingress-nginx-controller
+  register: ingress_svc
+  retries: 30
+  delay: 10
+  until: >
+    ingress_svc.resources[0].status.loadBalancer.ingress is defined and
+    ingress_svc.resources[0].status.loadBalancer.ingress[0].ip is defined
+
+- name: Print External IP of LoadBalancer
+  debug:
+    msg: "External IP: {{ ingress_svc.resources[0].status.loadBalancer.ingress[0].ip }}"

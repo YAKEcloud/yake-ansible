@@ -1,0 +1,6 @@
+---
+- name: Install ingress-nginx
+  hosts: "{{ hosts_ingress_nginx_install | default('all') }}"
+
+  roles:
+    - role: ingress-nginx_install

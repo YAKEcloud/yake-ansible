@@ -1,0 +1,21 @@
+---
+ingress_nginx_cluster_name: garden
+
+ingress_nginx_helm_chart_ref: /var/lib/yake/charts/ingress-nginx
+ingress_nginx_helm_release_name: ingress-nginx
+ingress_nginx_helm_release_namespace: ingress-nginx
+ingress_nginx_helm_values:
+  controller:
+    allowSnippetAnnotations: true
+    watchIngressWithoutClass: true
+    extraArgs:
+      enable-ssl-passthrough: ""
+    config:
+      use-http2: true
+      annotations-risk-level: "Critical"
+      strict-validate-path-type: false
+      block-user-agents: "GPTBot,~*GPTBot*,ChatGPT-User,~*ChatGPT-User*,Google-Extended,~*Google-Extended*,CCBot,~*CCBot*,Omgilibot,~*Omgilibot*,FacebookBot,~*FacebookBot*" # taken from https://github.com/superseriousbusiness/gotosocial/blob/main/internal/web/robots.go
+    service:
+      type: "LoadBalancer"
+  admissionWebhooks:
+    enabled: false

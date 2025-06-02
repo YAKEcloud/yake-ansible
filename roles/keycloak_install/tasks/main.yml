@@ -1,6 +1,6 @@
 ---
 - name: Wait for user input before continuing
-  pause:
+  ansible.builtin.pause:
     prompt: "Create an A record in your DNS for the external IP shown at the ingress-nginx install."
 
 - name: Deploy keycloak
@@ -14,7 +14,7 @@
     wait: true
     values: "{{ _keycloak_helm_values | combine(keycloak_helm_values, recursive=True) }}"
 
-- name: Check if initial Keycloak user exists
+- name: Check if initial Keycloak user exists # noqa: osism-fqcn
   community.general.keycloak_user:
     auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
     auth_realm: master
@@ -27,7 +27,7 @@
   ignore_errors: true
   failed_when: false
 
-- name: Create new Keycloak admin user
+- name: Create new Keycloak admin user # noqa: osism-fqcn
   community.general.keycloak_user:
     auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
     auth_realm: master
@@ -46,7 +46,7 @@
     state: present
   when: keycloak_initial_user_check.users is defined and keycloak_initial_user_check.users | length > 0
 
-- name: Add admin role to new user
+- name: Add admin role to new user # noqa: osism-fqcn
   community.general.keycloak_user_rolemapping:
     auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
     auth_realm: master
@@ -59,7 +59,7 @@
     state: present
   when: keycloak_initial_user_check.users is defined and keycloak_initial_user_check.users | length > 0
 
-- name: Delete initial admin user
+- name: Delete initial admin user # noqa: osism-fqcn
   community.general.keycloak_user:
     auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
     auth_realm: master
@@ -69,7 +69,7 @@
     state: absent
   when: keycloak_initial_user_check.users is defined and keycloak_initial_user_check.users | length > 0
 
-- name: Create or update Keycloak realm
+- name: Create or update Keycloak realm # noqa: osism-fqcn
   community.general.keycloak_realm:
     auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
     auth_realm: master

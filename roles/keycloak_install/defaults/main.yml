@@ -1,10 +1,10 @@
 ---
-keycloak_cluster_name: garden
+keycloak_cluster_name: garden # noqa: var-naming[no-role-prefix]
 
-keycloak_helm_chart_ref: /var/lib/yake/charts/keycloak
-keycloak_helm_release_name: keycloak
-keycloak_helm_release_namespace: keycloak
-keycloak_helm_values:
+keycloak_helm_chart_ref: /var/lib/yake/charts/keycloak # noqa: var-naming[no-role-prefix]
+keycloak_helm_release_name: keycloak # noqa: var-naming[no-role-prefix]
+keycloak_helm_release_namespace: keycloak # noqa: var-naming[no-role-prefix]
+keycloak_helm_values: # noqa: var-naming[no-role-prefix]
   auth:
     # Will be empty to not setup an inital admin user
     adminUser: user
@@ -28,7 +28,7 @@ keycloak_helm_values:
       tag: 17-debian-12
       pullPolicy: Always
 
-keycloak_admin_user: ""
-keycloak_admin_password: ""
+keycloak_admin_user: "" # noqa: var-naming[no-role-prefix]
+keycloak_admin_password: "" # noqa: var-naming[no-role-prefix]
 
-keycloak_new_realm_name: garden
+keycloak_new_realm_name: garden # noqa: var-naming[no-role-prefix]

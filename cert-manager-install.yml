@@ -3,4 +3,4 @@
   hosts: "{{ hosts_cert_manager_install | default('all') }}"
 
   roles:
-    - role: cert-manager_install
+    - role: cert_manager_install

@@ -7,3 +7,12 @@ clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_use_existing_image: true
+
+keycloak_helm_values_admin_password: supersecretpassword
+# Set this to the IP that was shown to you before continuing
+keycloak_helm_values_hostname: keycloak.example.com
+keycloak_helm_values_postgres_postgres_password: supersecretpassword
+keycloak_helm_values_postgres_password: supersecretpassword
+keycloak_admin_user: admin
+keycloak_admin_password: supersecretpassword
+keycloak_admin_email: operations@example.com

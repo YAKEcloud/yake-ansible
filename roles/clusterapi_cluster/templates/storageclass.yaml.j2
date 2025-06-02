@@ -1,0 +1,11 @@
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: ssd
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: cinder.csi.openstack.org
+parameters:
+  type: {{ clusterapi_cluster_openstack_storage_type }}
+reclaimPolicy: Delete
+volumeBindingMode: WaitForFirstConsumer

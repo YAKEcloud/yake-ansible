@@ -1,0 +1,6 @@
+---
+- name: Install keycloak
+  hosts: "{{ hosts_keycloak_install | default('all') }}"
+
+  roles:
+    - role: keycloak_install

@@ -10,3 +10,5 @@ collections:
     source: https://galaxy.ansible.com
   - name: osism.services
     source: https://galaxy.ansible.com
+  - name: community.general
+    source: https://galaxy.ansible.com

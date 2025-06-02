@@ -1,0 +1,79 @@
+---
+- name: Wait for user input before continuing
+  pause:
+    prompt: "Create an A record in your DNS for the external IP shown at the ingress-nginx install."
+
+- name: Deploy keycloak
+  kubernetes.core.helm:
+    binary_path: "/usr/local/bin/yake-helm"
+    release_name: "{{ keycloak_helm_release_name }}"
+    chart_ref: "{{ keycloak_helm_chart_ref }}"
+    release_namespace: "{{ keycloak_helm_release_namespace }}"
+    create_namespace: true
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ keycloak_cluster_name }}"
+    wait: true
+    values: "{{ _keycloak_helm_values | combine(keycloak_helm_values, recursive=True) }}"
+
+- name: Check if initial Keycloak user exists
+  community.general.keycloak_user:
+    auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: user
+    auth_password: "{{ keycloak_helm_values_admin_password }}"
+    username: user
+    state: present
+  register: keycloak_initial_user_check
+  check_mode: true
+  ignore_errors: true
+  failed_when: false
+
+- name: Create new Keycloak admin user
+  community.general.keycloak_user:
+    auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: user
+    auth_password: "{{ keycloak_helm_values_admin_password }}"
+    username: "{{ keycloak_admin_user }}"
+    first_name: "Admin"
+    last_name: "User"
+    email: "admin@example.com"
+    enabled: true
+    email_verified: true
+    credentials:
+      - type: password
+        value: "{{ keycloak_admin_password }}"
+        temporary: false
+    state: present
+  when: keycloak_initial_user_check.users is defined and keycloak_initial_user_check.users | length > 0
+
+- name: Add admin role to new user
+  community.general.keycloak_user_rolemapping:
+    auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: user
+    auth_password: "{{ keycloak_helm_values_admin_password }}"
+    target_username: "{{ keycloak_admin_user }}"
+    roles:
+      - name: admin
+      - name: default-roles-master
+    state: present
+  when: keycloak_initial_user_check.users is defined and keycloak_initial_user_check.users | length > 0
+
+- name: Delete initial admin user
+  community.general.keycloak_user:
+    auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: "{{ keycloak_admin_user }}"
+    auth_password: "{{ keycloak_admin_password }}"
+    username: user
+    state: absent
+  when: keycloak_initial_user_check.users is defined and keycloak_initial_user_check.users | length > 0
+
+- name: Create or update Keycloak realm
+  community.general.keycloak_realm:
+    auth_keycloak_url: "https://{{ keycloak_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: "{{ keycloak_admin_user }}"
+    auth_password: "{{ keycloak_admin_password }}"
+    realm: "{{ keycloak_new_realm_name }}"
+    state: present

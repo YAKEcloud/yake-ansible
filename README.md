@@ -11,6 +11,11 @@ ansible-galaxy install -f -r requirements.yml
 
 ## Usage
 
+Configure all.yml to your needs:
+```
+cp group_vars/all.yml.example group_vars/all.yml
+```
+Run the playbook:
 ```
 ansible-playbook -i localhost, -c local site.yml
 ```
@@ -26,6 +31,9 @@ ansible-playbook -i localhost, -c local kind-cluster.yml
 ansible-playbook -i localhost, -c local clusterapi-install.yml
 ansible-playbook -i localhost, -c local clusterapi-cluster.yml
 ansible-playbook -i localhost, -c local flux-install.yml
+ansible-playbook -i localhost, -c local ingress-nginx-install.yml
+ansible-playbook -i localhost, -c local cert-manager-install.yml
+ansible-playbook -i localhost, -c local keycloak-install.yml
 ```
 
 ### Accessing the Cluster API cluster

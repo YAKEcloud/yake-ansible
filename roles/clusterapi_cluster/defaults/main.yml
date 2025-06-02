@@ -30,6 +30,7 @@ clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_use_existing_image: false
 clusterapi_cluster_openstack_image_name: "ubuntu-capi-image-{{ clusterapi_cluster_kubernetes_version }}"
 clusterapi_cluster_cloud_cacert_b64: ""
+clusterapi_cluster_openstack_storage_type: "__DEFAULT__"
 clusterapi_cluster_openstack_cloud:
   auth:
     auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"

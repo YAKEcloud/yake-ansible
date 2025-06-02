@@ -2,7 +2,7 @@ ARG ALPINE_VERSION=3.21
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v2.6.0  # renovate: datasource=github-releases depName=fluxcd/flux2
+ARG VERSION=v2.6.1  # renovate: datasource=github-releases depName=fluxcd/flux2
 
 ENV USER_NAME=flux
 ENV USER_ID=1000

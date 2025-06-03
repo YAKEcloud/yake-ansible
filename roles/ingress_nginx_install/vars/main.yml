@@ -1,2 +1,2 @@
 ---
-_ingress_nginx_helm_values: {}  # noqa: var-naming[no-role-prefix]
+_ingress_nginx_install_helm_values: {}  # noqa: var-naming[no-role-prefix]

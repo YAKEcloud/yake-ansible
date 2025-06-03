@@ -1,7 +1,15 @@
 ---
-- name: Wait for user input before continuing
+- name: Get loadbalancer external ip
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ keycloak_install_cluster_name }}"
+    kind: Service
+    namespace: "{{ keycloak_install_ingress_namespace }}"
+    name: ingress-nginx-controller
+  register: ingress_svc
+
+- name: Wait for the DNS record
   ansible.builtin.pause:
-    prompt: "Create an A record in your DNS for the external IP shown at the ingress-nginx install."
+    prompt: "Create an A-record: {{ keycloak_install_helm_values_hostname }} point to {{ ingress_svc.resources[0].status.loadBalancer.ingress[0].ip }}"
 
 - name: Deploy keycloak
   kubernetes.core.helm:
@@ -22,10 +30,9 @@
     auth_password: "{{ keycloak_install_helm_values_admin_password }}"
     username: user
     state: present
-  register: keycloak_install_initial_user_check
-  check_mode: true
+  register: initial_user_check
   ignore_errors: true
-  failed_when: false
+  failed_when: initial_user_check.failed
 
 - name: Create new Keycloak admin user # noqa: osism-fqcn
   community.general.keycloak_user:
@@ -44,7 +51,7 @@
         value: "{{ keycloak_install_admin_password }}"
         temporary: false
     state: present
-  when: keycloak_install_initial_user_check.users is defined and keycloak_install_initial_user_check.users | length > 0
+  when: not initial_user_check.failed
 
 - name: Add admin role to new user # noqa: osism-fqcn
   community.general.keycloak_user_rolemapping:
@@ -57,7 +64,7 @@
       - name: admin
       - name: default-roles-master
     state: present
-  when: keycloak_install_initial_user_check.users is defined and keycloak_install_initial_user_check.users | length > 0
+  when: not initial_user_check.failed
 
 - name: Delete initial admin user # noqa: osism-fqcn
   community.general.keycloak_user:
@@ -67,7 +74,7 @@
     auth_password: "{{ keycloak_install_admin_password }}"
     username: user
     state: absent
-  when: keycloak_install_initial_user_check.users is defined and keycloak_install_initial_user_check.users | length > 0
+  when: not initial_user_check.failed
 
 - name: Create or update Keycloak realm # noqa: osism-fqcn
   community.general.keycloak_realm:

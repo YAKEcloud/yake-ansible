@@ -1,12 +1,13 @@
 ---
 keycloak_install_cluster_name: garden
 
+keycloak_install_ingress_namespace: ingress-nginx
+
 keycloak_install_helm_chart_ref: /var/lib/yake/charts/keycloak
 keycloak_install_helm_release_name: keycloak
 keycloak_install_helm_release_namespace: keycloak
 keycloak_install_helm_values:
   auth:
-    # Will be empty to not setup an inital admin user
     adminUser: user
     adminPassword: "{{ keycloak_install_helm_values_admin_password }}"
   production: true

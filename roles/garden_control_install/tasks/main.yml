@@ -20,44 +20,48 @@
     - cloudprofiles-values.yaml
     - webterminal-values.yaml
 
-- name: Extract node CIDR from first InternalIP
+- name: Extract node CIDR from first InternalIP #noqa risky-shell-pipe
   ansible.builtin.shell: |
-    set -o pipefail && yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
+    yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
     | awk -F. '{print $1"."$2"."$3".0/24"}'
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
   register: node_cidr_output
-  changed_when: false
 
 - name: Set node_cidr fact
   ansible.builtin.set_fact:
     garden_control_install_nodes_cidr: "{{ node_cidr_output.stdout }}"
 
-- name: Extract service CIDR from API server flags
+- name: Extract service CIDR from API server flags #noqa risky-shell-pipe
   ansible.builtin.shell: |
-    set -o pipefail && yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
+    yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
     | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
   register: service_cidr_output
-  changed_when: false
 
 - name: Set service_cidr fact
   ansible.builtin.set_fact:
     garden_control_install_services_cidr: "{{ service_cidr_output.stdout }}"
 
-- name: Extract pod CIDR from API server output
+- name: Extract pod CIDR from API server output #noqa risky-shell-pipe
   ansible.builtin.shell: |
-    set -o pipefail && yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
+    yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
     | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
   register: pod_cidr_output
-  changed_when: false
 
 - name: Set pod_cidr fact
   ansible.builtin.set_fact:
     garden_control_install_pods_cidr: "{{ pod_cidr_output.stdout }}"
+
+- name: Fail if any CIDR could not be extracted
+  ansible.builtin.fail:
+    msg: "One or more CIDR values could not be extracted."
+  when: garden_control_install_nodes_cidr == '' or
+        garden_control_install_services_cidr == '' or
+        garden_control_install_pods_cidr == ''
 
 - name: Template config files
   ansible.builtin.template:
@@ -129,7 +133,7 @@
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
   retries: 60
-  delay: 10
+  delay: 20
 
 - name: Template garden-content files
   ansible.builtin.template:

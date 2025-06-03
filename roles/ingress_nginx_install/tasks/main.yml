@@ -22,7 +22,3 @@
   until: >
     ingress_svc.resources[0].status.loadBalancer.ingress is defined and
     ingress_svc.resources[0].status.loadBalancer.ingress[0].ip is defined
-
-- name: Print External IP of LoadBalancer
-  ansible.builtin.debug:
-    msg: "External IP: {{ ingress_svc.resources[0].status.loadBalancer.ingress[0].ip }}"

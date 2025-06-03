@@ -20,7 +20,7 @@
     - cloudprofiles-values.yaml
     - webterminal-values.yaml
 
-- name: Extract node CIDR from first
+- name: Extract node CIDR from first InternalIP
   ansible.builtin.shell: |
     set -o pipefail && yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
     | awk -F. '{print $1"."$2"."$3".0/24"}'

@@ -1,0 +1,37 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: garden
+  labels:
+    gardener.cloud/role: project
+    project.gardener.cloud/name: seeds
+  annotations:
+    namespace.gardener.cloud/keep-after-project-deletion: "true"
+---
+apiVersion: core.gardener.cloud/v1beta1
+kind: Project
+metadata:
+  name: seeds
+spec:
+  namespace: garden
+  members:
+    - apiGroup: rbac.authorization.k8s.io
+      kind: User
+      name: {{ garden_control_install_admin_mail }}
+      role: admin
+      roles:
+        - serviceaccountmanager
+---
+apiVersion: core.gardener.cloud/v1beta1
+kind: SecretBinding
+metadata:
+  name: openstack
+  namespace: garden
+  labels:
+    cloudprofile.garden.sapcloud.io/name: openstack
+provider:
+  type: openstack
+secretRef:
+  name: openstack
+  namespace: garden

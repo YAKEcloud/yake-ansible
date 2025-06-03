@@ -1,0 +1,160 @@
+---
+- name: Create garden control directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/yake/garden-control
+    owner: "{{ garden_control_install_cluster_uid }}"
+    group: "{{ garden_control_install_cluster_gid }}"
+    mode: 0755
+    state: directory
+
+- name: Copy config files
+  ansible.builtin.copy:
+    src: "config/{{ item }}"
+    dest: "/var/lib/yake/garden-control/{{ item }}"
+    owner: "{{ garden_control_install_cluster_uid }}"
+    group: "{{ garden_control_install_cluster_gid }}"
+    mode: 0644
+  loop:
+    - addons-values.yaml
+    - cloudprofiles-values.yaml
+    - webterminal-values.yaml
+
+- name: Extract node CIDR from first InternalIP
+  ansible.builtin.shell: |
+    yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
+    | awk -F. '{print $1"."$2"."$3".0/24"}'
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
+  register: node_cidr_output
+  changed_when: false
+
+- name: Set node_cidr fact
+  ansible.builtin.set_fact:
+    garden_control_install_nodes_cidr: "{{ node_cidr_output.stdout }}"
+
+- name: Extract service CIDR from API server flags
+  ansible.builtin.shell: |
+    yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
+    | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
+  register: service_cidr_output
+  changed_when: false
+
+- name: Set service_cidr fact
+  ansible.builtin.set_fact:
+    garden_control_install_services_cidr: "{{ service_cidr_output.stdout }}"
+
+- name: Extract pod CIDR from API server output
+  ansible.builtin.shell: |
+    yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
+    | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
+  register: pod_cidr_output
+  changed_when: false
+
+- name: Set pod_cidr fact
+  ansible.builtin.set_fact:
+    garden_control_install_pods_cidr: "{{ pod_cidr_output.stdout }}"
+
+- name: Template config files
+  ansible.builtin.template:
+    src: "config/{{ item }}.j2"
+    dest: "/var/lib/yake/garden-control/{{ item }}"
+    owner: "{{ garden_control_install_cluster_uid }}"
+    group: "{{ garden_control_install_cluster_gid }}"
+    mode: 0644
+  loop:
+    - dashboard-values.yaml
+    - extensions-values.yaml
+    - gardener-values.yaml
+    - gardenlet-values.yaml
+    - identity-values.yaml
+    - yake-config.yaml
+
+- name: Ensure namespace flux-system exists
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
+    api_version: v1
+    kind: Namespace
+    name: flux-system
+    state: present
+
+- name: Apply config files
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
+    state: present
+    src: "/var/lib/yake/garden-control/{{ item }}"
+  loop:
+    - addons-values.yaml
+    - cloudprofiles-values.yaml
+    - extensions-values.yaml
+    - webterminal-values.yaml
+    - dashboard-values.yaml
+    - gardener-values.yaml
+    - gardenlet-values.yaml
+    - identity-values.yaml
+    - yake-config.yaml
+
+- name: Install flux from the yake repo
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
+    state: present
+    src: "https://raw.githubusercontent.com/YAKEcloud/yake/{{ garden_control_install_yake_version }}/flux-system/gotk-components.yaml"
+
+- name: Copy yake source file
+  ansible.builtin.template:
+    src: yake-source.yaml.j2
+    dest: /var/lib/yake/garden-control/yake-source.yaml
+    owner: "{{ garden_control_install_cluster_uid }}"
+    group: "{{ garden_control_install_cluster_gid }}"
+    mode: 0644
+
+- name: Apply yake source file
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
+    state: present
+    src: /var/lib/yake/garden-control/yake-source.yaml
+
+- name: Extract garden kubeconfig from secret
+  ansible.builtin.shell: |
+    yake-kubectl get secret -n garden garden-kubeconfig-for-admin \
+      -o go-template='{{ "{{.data.kubeconfig | base64decode }}" }}' \
+      > /var/lib/yake/garden-control/kubeconfig.vgarden
+  register: result_kubeconfig
+  changed_when: false
+  until: result_kubeconfig.rc == 0
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ garden_control_install_cluster_name }}"
+  retries: 60
+  delay: 10
+
+- name: Template garden-content files
+  ansible.builtin.template:
+    src: "garden-content/{{ item }}.j2"
+    dest: "/var/lib/yake/garden-control/{{ item }}"
+    owner: "{{ garden_control_install_cluster_uid }}"
+    group: "{{ garden_control_install_cluster_gid }}"
+    mode: 0644
+  loop:
+    - admin-crb.yaml
+    - backup-s3-controller-registration.yaml
+    - cloudprofile.yaml
+    - openstack.yaml
+    - project.yaml
+    - rbac.yaml
+
+- name: Apply garden-content files
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/garden-control/kubeconfig.vgarden
+    state: present
+    src: "/var/lib/yake/garden-control/{{ item }}"
+  loop:
+    - admin-crb.yaml
+    - backup-s3-controller-registration.yaml
+    - cloudprofile.yaml
+    - openstack.yaml
+    - project.yaml
+    - rbac.yaml

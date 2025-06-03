@@ -1,0 +1,79 @@
+apiVersion: core.gardener.cloud/v1beta1
+kind: CloudProfile
+metadata:
+  name: regiocloud
+spec:
+  type: openstack
+  kubernetes:
+    versions:
+      - version: 1.32.5
+        classification: supported
+      - version: 1.31.9
+        classification: supported
+  machineImages:
+    - name: gardenlinux
+      versions:
+        - version: 1592.8.0
+          cri:
+            - name: containerd
+  machineTypes:
+    - name: SCS-2V-4
+      cpu: "2"
+      gpu: "0"
+      memory: 4Gi
+    - name: SCS-4V-8
+      cpu: "4"
+      gpu: "0"
+      memory: 8Gi
+    - name: SCS-4V-16
+      cpu: "4"
+      gpu: "0"
+      memory: 16Gi
+    - name: SCS-8V-16
+      cpu: "8"
+      gpu: "0"
+      memory: 16Gi
+    - name: SCS-8V-32
+      cpu: "8"
+      gpu: "0"
+      memory: 32Gi
+  volumeTypes:
+    - name: ssd
+      class: ssd
+  regions:
+    - name: RegionA
+      zones:
+        - name: nova
+  providerConfig:
+    apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
+    kind: CloudProfileConfig
+    storageClasses:
+      - name: ssd
+        default: true
+        provisioner: cinder.csi.openstack.org
+        volumeBindingMode: WaitForFirstConsumer
+        parameters:
+          type: ssd
+    constraints:
+      floatingPools:
+        - name: public
+      loadBalancerProviders:
+        - name: amphora
+    keystoneURLs:
+      - region: RegionA
+        url: https://keystone.services.a.regiocloud.tech
+    machineImages:
+      - name: gardenlinux
+        versions:
+          - version: 1592.8.0
+            image: "Garden Linux 1592.8"
+            regions:
+              - name: RegionA
+                id: 234a6dab-6242-4926-a5e9-7b4d1414dd28
+    useOctavia: true
+    serverGroupPolicies:
+      - affinity
+      - soft-affinity
+      - anti-affinity
+      - soft-anti-affinity
+    nodeVolumeAttachLimit: 20

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gardener-values
+  namespace: flux-system
+type: Opaque
+stringData:
+  values.yaml: |
+    global:
+      deployment:
+        virtualGarden:
+          clusterIP: {{ garden_control_install_services_cidr.split('/')[0].rsplit('.', 1)[0] ~ '.100' }}
+      scheduler:
+        config:
+          schedulers:
+            shoot:
+              candidateDeterminationStrategy: MinimalDistance

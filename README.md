@@ -34,6 +34,7 @@ ansible-playbook -i localhost, -c local flux-install.yml
 ansible-playbook -i localhost, -c local ingress-nginx-install.yml
 ansible-playbook -i localhost, -c local cert-manager-install.yml
 ansible-playbook -i localhost, -c local keycloak-install.yml
+ansible-playbook -i localhost, -c local garden-control-install.yml
 ```
 
 ### Accessing the Cluster API cluster

@@ -1,0 +1,25 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: yake-config
+  namespace: flux-system
+type: Opaque
+stringData:
+  values.yaml: |
+    clusterIdentity: {{ garden_control_install_cluster_name }}
+    issuer:
+      enabled: true
+      acme:
+        email: {{ garden_control_install_acme_mail }}
+        server: https://acme-v02.api.letsencrypt.org/directory
+
+    domains:
+      global:
+        domain: {{ garden_control_install_yake_url }}
+        provider: openstack-designate
+        credentials:
+          OS_AUTH_URL: {{ garden_control_install_openstack_auth_url | b64encode }}
+          OS_PROJECT_NAME: {{ garden_control_install_openstack_project_name | b64encode }}
+          OS_DOMAIN_NAME: {{ garden_control_install_openstack_domain_name | b64encode }}
+          OS_APPLICATION_CREDENTIAL_ID: {{ garden_control_install_openstack_application_credential_id | b64encode }}
+          OS_APPLICATION_CREDENTIAL_SECRET: {{ garden_control_install_openstack_application_credential_secret | b64encode }}

@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openstack
+  namespace: garden
+type: Opaque
+data:
+  domainName: {{ garden_control_install_openstack_domain_name | b64encode }}
+  tenantName: {{ garden_control_install_openstack_project_name | b64encode }}
+  applicationCredentialID: {{ garden_control_install_openstack_application_credential_id | b64encode }}
+  applicationCredentialName: {{ garden_control_install_openstack_application_credential_name | b64encode }}
+  applicationCredentialSecret: {{ garden_control_install_openstack_application_credential_secret | b64encode }}

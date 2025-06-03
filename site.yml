@@ -31,3 +31,6 @@
 
 - name: Install keycloak-install
   ansible.builtin.import_playbook: keycloak-install.yml
+
+- name: Install garden-control-install
+  ansible.builtin.import_playbook: garden-control-install.yml

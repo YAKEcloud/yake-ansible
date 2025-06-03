@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-values
+  namespace: flux-system
+type: Opaque
+stringData:
+  values.yaml: |
+    connectors:
+    - type: oidc
+      id: Keycloak
+      name: Keycloak
+      config:
+        issuer: https://{{ garden_control_install_keycloak_url }}/realms/garden
+        clientID: gardener-client
+        clientSecret: {{ garden_control_install_keycloak_client_secret }}
+        redirectURI: https://identity.{{ garden_control_install_yake_url }}/oidc/callback

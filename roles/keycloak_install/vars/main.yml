@@ -1,2 +1,2 @@
 ---
-_keycloak_helm_values: {}  # noqa: var-naming[no-role-prefix]
+_keycloak_install_helm_values: {}  # noqa: var-naming[no-role-prefix]

@@ -77,3 +77,26 @@
     auth_password: "{{ keycloak_install_admin_password }}"
     realm: "{{ keycloak_install_new_realm_name }}"
     state: present
+
+- name: Create client for gardener identity # noqa: osism-fqcn
+  community.general.keycloak_client:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: "{{ keycloak_install_admin_user }}"
+    auth_password: "{{ keycloak_install_admin_password }}"
+    realm: "{{ keycloak_install_new_realm_name }}"
+    client_id: gardener-client
+    name: gardener-client
+    description: Client for Gardener Setup with an identity config
+    root_url: "https://identity.{{ keycloak_install_yake_url }}"
+    admin_url: "https://identity.{{ keycloak_install_yake_url }}"
+    redirect_uris:
+      - "https://identity.{{ keycloak_install_yake_url }}/oidc/callback"
+    enabled: true
+    client_authenticator_type: client-secret
+    secret: "{{ keycloak_install_client_secret }}"
+    protocol: openid-connect
+    public_client: false
+    direct_access_grants_enabled: true
+    standard_flow_enabled: true
+    state: present

@@ -32,3 +32,5 @@ keycloak_install_admin_user: ""
 keycloak_install_admin_password: ""
 
 keycloak_install_new_realm_name: garden
+keycloak_install_yake_url: garden.example.com
+keycloak_install_client_secret: ""

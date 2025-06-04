@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: identity-values
+  namespace: flux-system
+type: Opaque
+stringData:
+  values.yaml: |
+    staticPasswords:
+    - email: {{ garden_control_install_admin_mail }}
+      hash: {{ garden_control_install_admin_password | ansible.builtin.password_hash(hashtype='bcrypt') }}
+      username: "admin"
+      userID: "00000000-0000-4000-0000-000000000000"

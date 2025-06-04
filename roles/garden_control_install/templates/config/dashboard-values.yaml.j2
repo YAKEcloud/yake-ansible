@@ -1,0 +1,33 @@
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dashboard-values
+  namespace: flux-system
+type: Opaque
+stringData:
+  values.yaml: |
+    global:
+      bootstrapper:
+        enabled: true
+      terminal:
+        container:
+          image: europe-docker.pkg.dev/gardener-project/releases/gardener/ops-toolbelt:latest
+        gardenTerminalHost:
+          apiServerIngressHost: api.{{ garden_control_install_yake_url }}
+          secretRef:
+            namespace: garden
+            labelSelector:
+              - runtime=gardenTerminalHost
+        garden:
+          operatorCredentials:
+            secretRef:
+              name: kubeconfig
+              namespace: terminal-system
+        allowedHostSourceList:
+              - "*.internal.{{ garden_control_install_yake_url }}"
+              - "*.seeds.{{ garden_control_install_yake_url }}"
+      dashboard:
+        frontendConfig:
+          seedCandidateDeterminationStrategy: MinimalDistance
+          features:
+            terminalEnabled: true

@@ -7,3 +7,17 @@ clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_use_existing_image: true
+
+garden_control_install_yake_url: gardener.example.com
+
+garden_control_install_acme_mail: operations@example.com
+garden_control_install_acme_staging: false
+garden_control_install_admin_mail: admin@example.com
+garden_control_install_admin_password: supersecretpassword
+
+garden_control_install_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
+garden_control_install_openstack_project_name: example
+garden_control_install_openstack_domain_name: "{{ clusterapi_cluster_openstack_domain_name }}"
+garden_control_install_openstack_application_credential_id: "{{ clusterapi_cluster_openstack_application_credential_id }}"
+garden_control_install_openstack_application_credential_name: example
+garden_control_install_openstack_application_credential_secret: "{{ clusterapi_cluster_openstack_application_credential_secret }}"

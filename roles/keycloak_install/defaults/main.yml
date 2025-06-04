@@ -1,0 +1,37 @@
+---
+keycloak_install_cluster_name: garden
+
+keycloak_install_ingress_namespace: ingress-nginx
+
+keycloak_install_helm_chart_ref: /var/lib/yake/charts/keycloak
+keycloak_install_helm_release_name: keycloak
+keycloak_install_helm_release_namespace: keycloak
+keycloak_install_helm_values:
+  auth:
+    adminUser: user
+    adminPassword: "{{ keycloak_install_helm_values_admin_password }}"
+  production: true
+  proxy: edge
+  ingress:
+    enabled: true
+    ingressClassName: nginx
+    hostname: "{{ keycloak_install_helm_values_hostname }}"
+    annotations:
+      cert-manager.io/cluster-issuer: letsencrypt-prod
+    tls: true
+  postgresql:
+    auth:
+      postgresPassword: "{{ keycloak_install_helm_values_postgres_postgres_password }}"
+      username: keycloak
+      password: "{{ keycloak_install_helm_values_postgres_password }}"
+      database: keycloak
+    image:
+      tag: 17-debian-12
+      pullPolicy: Always
+
+keycloak_install_admin_user: ""
+keycloak_install_admin_password: ""
+
+keycloak_install_new_realm_name: garden
+keycloak_install_yake_url: garden.example.com
+keycloak_install_client_secret: ""

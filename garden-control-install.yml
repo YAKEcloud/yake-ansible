@@ -1,0 +1,6 @@
+---
+- name: Install garden-control
+  hosts: "{{ hosts_garden_control_install | default('all') }}"
+
+  roles:
+    - role: garden_control_install

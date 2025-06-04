@@ -55,7 +55,7 @@ spec:
   clusterNetwork:
     pods:
       cidrBlocks:
-        - 10.0.0.0/8
+        - 10.244.0.0/16
     serviceDomain: cluster.local
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
@@ -191,8 +191,8 @@ spec:
   template:
     spec:
       flavor: ${OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR}
-      rootVolume:
-          sizeGiB: ${OPENSTACK_CONTROL_PLANE_VOLUME_SIZE}
+      # rootVolume:
+      #     sizeGiB: ${OPENSTACK_CONTROL_PLANE_VOLUME_SIZE}
       image:
         filter:
           name: ${OPENSTACK_IMAGE_NAME}
@@ -206,8 +206,8 @@ spec:
   template:
     spec:
       flavor: ${OPENSTACK_NODE_MACHINE_FLAVOR}
-      rootVolume:
-          sizeGiB: ${OPENSTACK_NODE_VOLUME_SIZE}
+      # rootVolume:
+      #     sizeGiB: ${OPENSTACK_NODE_VOLUME_SIZE}
       image:
         filter:
           name: ${OPENSTACK_IMAGE_NAME}

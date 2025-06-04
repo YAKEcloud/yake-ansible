@@ -1,0 +1,24 @@
+apiVersion: source.toolkit.fluxcd.io/v1
+kind: GitRepository
+metadata:
+  name: yake
+  namespace: flux-system
+spec:
+  interval: 1m0s
+  ref:
+    tag: {{ garden_control_install_yake_version }}
+  timeout: 60s
+  url: https://github.com/yakecloud/yake.git
+---
+apiVersion: kustomize.toolkit.fluxcd.io/v1
+kind: Kustomization
+metadata:
+  name: yake
+  namespace: flux-system
+spec:
+  interval: 5m
+  sourceRef:
+    kind: GitRepository
+    name: yake
+  path: ./
+  prune: true

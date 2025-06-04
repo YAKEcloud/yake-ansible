@@ -321,3 +321,17 @@
     )
   retries: 30
   delay: 10
+
+- name: Copy storageclass file
+  ansible.builtin.template:
+    src: storageclass.yaml.j2
+    dest: /var/lib/yake/storageclass.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0644
+
+- name: Apply storageclass
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    state: present
+    src: /var/lib/yake/storageclass.yaml

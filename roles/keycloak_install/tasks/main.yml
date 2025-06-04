@@ -1,0 +1,138 @@
+---
+- name: Get loadbalancer external ip
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ keycloak_install_cluster_name }}"
+    kind: Service
+    namespace: "{{ keycloak_install_ingress_namespace }}"
+    name: ingress-nginx-controller
+  register: ingress_svc
+
+- name: Wait for the DNS record
+  ansible.builtin.pause:
+    prompt: "Create an A-record: {{ keycloak_install_helm_values_hostname }} point to {{ ingress_svc.resources[0].status.loadBalancer.ingress[0].ip }}"
+
+- name: Deploy keycloak
+  kubernetes.core.helm:
+    binary_path: "/usr/local/bin/yake-helm"
+    release_name: "{{ keycloak_install_helm_release_name }}"
+    chart_ref: "{{ keycloak_install_helm_chart_ref }}"
+    release_namespace: "{{ keycloak_install_helm_release_namespace }}"
+    create_namespace: true
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ keycloak_install_cluster_name }}"
+    wait: true
+    values: "{{ _keycloak_install_helm_values | combine(keycloak_install_helm_values, recursive=True) }}"
+
+- name: Wait till keycloak URL is available (flush your dns cache)
+  ansible.builtin.uri:
+    url: "https://{{ keycloak_install_helm_values_hostname }}/realms/master"
+    method: HEAD
+    validate_certs: true
+  register: keycloak_ready
+  retries: 30
+  delay: 10
+  until: keycloak_ready.status == 200
+
+- name: Check if initial Keycloak user exists # noqa: osism-fqcn
+  community.general.keycloak_user:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: user
+    auth_password: "{{ keycloak_install_helm_values_admin_password }}"
+    username: user
+    state: present
+  register: initial_user_check
+  ignore_errors: true
+  failed_when: initial_user_check.failed
+
+- name: Create new Keycloak admin user # noqa: osism-fqcn
+  community.general.keycloak_user:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: user
+    auth_password: "{{ keycloak_install_helm_values_admin_password }}"
+    username: "{{ keycloak_install_admin_user }}"
+    first_name: "Admin"
+    last_name: "User"
+    email: "admin@example.com"
+    enabled: true
+    email_verified: true
+    credentials:
+      - type: password
+        value: "{{ keycloak_install_admin_password }}"
+        temporary: false
+    state: present
+  when: not initial_user_check.failed
+
+- name: Add admin role to new user # noqa: osism-fqcn
+  community.general.keycloak_user_rolemapping:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: user
+    auth_password: "{{ keycloak_install_helm_values_admin_password }}"
+    target_username: "{{ keycloak_install_admin_user }}"
+    roles:
+      - name: admin
+      - name: default-roles-master
+    state: present
+  when: not initial_user_check.failed
+
+- name: Delete initial admin user # noqa: osism-fqcn
+  community.general.keycloak_user:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: "{{ keycloak_install_admin_user }}"
+    auth_password: "{{ keycloak_install_admin_password }}"
+    username: user
+    state: absent
+  when: not initial_user_check.failed
+
+- name: Create or update Keycloak realm # noqa: osism-fqcn
+  community.general.keycloak_realm:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: "{{ keycloak_install_admin_user }}"
+    auth_password: "{{ keycloak_install_admin_password }}"
+    realm: "{{ keycloak_install_new_realm_name }}"
+    state: present
+
+- name: Create client for gardener identity # noqa: osism-fqcn
+  community.general.keycloak_client:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: "{{ keycloak_install_admin_user }}"
+    auth_password: "{{ keycloak_install_admin_password }}"
+    realm: "{{ keycloak_install_new_realm_name }}"
+    client_id: gardener-client
+    name: gardener-client
+    description: Client for Gardener Setup with an identity config
+    root_url: "https://identity.{{ keycloak_install_yake_url }}"
+    admin_url: "https://identity.{{ keycloak_install_yake_url }}"
+    redirect_uris:
+      - "https://identity.{{ keycloak_install_yake_url }}/oidc/callback"
+    enabled: true
+    client_authenticator_type: client-secret
+    secret: "{{ keycloak_install_client_secret }}"
+    protocol: openid-connect
+    public_client: false
+    direct_access_grants_enabled: true
+    standard_flow_enabled: true
+    state: present
+
+- name: Create Keycloak gardener admin user # noqa: osism-fqcn
+  community.general.keycloak_user:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: "{{ keycloak_install_admin_user }}"
+    auth_password: "{{ keycloak_install_admin_password }}"
+    realm: "{{ keycloak_install_new_realm_name }}"
+    username: admin
+    first_name: Gardener
+    last_name: Admin
+    email: "{{ keycloak_install_gardener_admin_mail }}"
+    enabled: true
+    email_verified: true
+    credentials:
+      - type: password
+        value: "{{ keycloak_install_gardener_admin_password }}"
+        temporary: false
+    state: present

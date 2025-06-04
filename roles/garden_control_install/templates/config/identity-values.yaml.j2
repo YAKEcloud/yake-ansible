@@ -6,12 +6,8 @@ metadata:
 type: Opaque
 stringData:
   values.yaml: |
-    connectors:
-    - type: oidc
-      id: Keycloak
-      name: Keycloak
-      config:
-        issuer: https://{{ garden_control_install_keycloak_url }}/realms/garden
-        clientID: gardener-client
-        clientSecret: {{ garden_control_install_keycloak_client_secret }}
-        redirectURI: https://identity.{{ garden_control_install_yake_url }}/oidc/callback
+    staticPasswords:
+    - email: {{ garden_control_install_admin_mail }}
+      hash: {{ garden_control_install_admin_password | ansible.builtin.password_hash(hashtype='bcrypt') }}
+      username: "admin"
+      userID: "00000000-0000-4000-0000-000000000000"

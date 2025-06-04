@@ -8,24 +8,12 @@ clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_use_existing_image: true
 
-keycloak_install_helm_values_admin_password: supersecretpassword
-# Set this to the IP that was shown to you before continuing
-keycloak_install_helm_values_hostname: keycloak.example.com
-keycloak_install_helm_values_postgres_postgres_password: supersecretpassword
-keycloak_install_helm_values_postgres_password: supersecretpassword
-keycloak_install_admin_user: admin
-keycloak_install_admin_password: supersecretpassword
-keycloak_install_admin_email: operations@example.com
-# Create this before executing the role. E.g. create a zone in Designate.
-keycloak_install_yake_url: gardener.example.com
-keycloak_install_client_secret: suipersecretpassword
+garden_control_install_yake_url: gardener.example.com
 
-garden_control_install_yake_url: "{{ keycloak_install_yake_url }}"
-garden_control_install_keycloak_url: "{{ keycloak_install_helm_values_hostname }}"
-garden_control_install_keycloak_client_secret: "{{ keycloak_install_client_secret }}"
-
-garden_control_install_acme_mail: "{{ keycloak_install_admin_email }}"
-garden_control_install_admin_mail: admin@gardener.demo
+garden_control_install_acme_mail: operations@example.com
+garden_control_install_acme_staging: false
+garden_control_install_admin_mail: admin@example.com
+garden_control_install_admin_password: supersecretpassword
 
 garden_control_install_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
 garden_control_install_openstack_project_name: example

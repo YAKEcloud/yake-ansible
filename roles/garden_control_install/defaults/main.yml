@@ -3,13 +3,15 @@ garden_control_install_cluster_uid: "{{ ansible_facts.user_uid }}"
 garden_control_install_cluster_gid: "{{ ansible_facts.user_gid }}"
 garden_control_install_cluster_name: garden
 
-garden_control_install_yake_version: v1.119.0-0
+garden_control_install_yake_version: v1.120.1-0
 garden_control_install_yake_url: gardener.example.com
-garden_control_install_keycloak_url: keycloak.example.com
-garden_control_install_keycloak_client_secret: ""
+# garden_control_install_keycloak_url: keycloak.example.com
+# garden_control_install_keycloak_client_secret: ""
 
 garden_control_install_acme_mail: ""
+garden_control_install_acme_staging: false
 garden_control_install_admin_mail: ""
+garden_control_install_admin_password: ""
 
 garden_control_install_openstack_auth_url: ""
 garden_control_install_openstack_project_name: ""

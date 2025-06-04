@@ -49,17 +49,16 @@ clusterapi_cluster_defaults:
   OPENSTACK_CLOUD: openstack
   OPENSTACK_CLOUD_CACERT_B64: "{{ clusterapi_cluster_cloud_cacert_b64 }}"
   OPENSTACK_CLOUD_YAML_B64: "{{ _clusterapi_cluster_cloud_yaml_b64 | default('') }}"
-  OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR: SCS-4V-8
+  OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR: SCS-4V-8-50s
   OPENSTACK_CONTROL_PLANE_VOLUME_SIZE: 20
   OPENSTACK_DNS_NAMESERVERS: "8.8.8.8"
   OPENSTACK_EXTERNAL_NETWORK_ID: "{{ _clusterapi_cluster_external_network_id | default('') }}"
   OPENSTACK_FAILURE_DOMAIN: nova
   OPENSTACK_FLOATING_IP_POOL: "{{ clusterapi_cluster_external_network }}"
   OPENSTACK_IMAGE_NAME: "{{ clusterapi_cluster_openstack_image_name }}"
-  OPENSTACK_NODE_MACHINE_FLAVOR: SCS-4V-8
+  OPENSTACK_NODE_MACHINE_FLAVOR: SCS-4V-8-50s
   OPENSTACK_NODE_VOLUME_SIZE: 20
   OPENSTACK_SSH_KEY_NAME: "{{ clusterapi_cluster_ssh_key_name }}"
-  OPENSTACK_VOLUME_SIZE: 20
   WORKER_MACHINE_COUNT: 3
   CONTAINER_REGISTRY_CACHE_DOCKERHUB: "{{ clusterapi_cluster_container_registry_cache_dockerhub }}"
   CONTAINER_REGISTRY_CACHE_GHCR: "{{ clusterapi_cluster_container_registry_cache_ghcr }}"
@@ -75,6 +74,7 @@ cilium_helm_chart_ref: /var/lib/yake/charts/cilium  # noqa: var-naming[no-role-p
 cilium_helm_release_name: cilium  # noqa: var-naming[no-role-prefix]
 cilium_helm_release_namespace: kube-system  # noqa: var-naming[no-role-prefix]
 cilium_helm_values:  # noqa: var-naming[no-role-prefix]
+  policyCIDRMatchMode: nodes
   ipam:
     operator:
       clusterPoolIPv4PodCIDRList: ["10.244.0.0/16"]

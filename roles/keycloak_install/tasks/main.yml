@@ -22,6 +22,16 @@
     wait: true
     values: "{{ _keycloak_install_helm_values | combine(keycloak_install_helm_values, recursive=True) }}"
 
+- name: Wait till keycloak URL is available (flush your dns cache)
+  ansible.builtin.uri:
+    url: "https://{{ keycloak_install_helm_values_hostname }}/realms/master"
+    method: HEAD
+    validate_certs: true
+  register: keycloak_ready
+  retries: 30
+  delay: 10
+  until: keycloak_ready.status == 200
+
 - name: Check if initial Keycloak user exists # noqa: osism-fqcn
   community.general.keycloak_user:
     auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
@@ -106,4 +116,23 @@
     public_client: false
     direct_access_grants_enabled: true
     standard_flow_enabled: true
+    state: present
+
+- name: Create Keycloak gardener admin user # noqa: osism-fqcn
+  community.general.keycloak_user:
+    auth_keycloak_url: "https://{{ keycloak_install_helm_values_hostname }}"
+    auth_realm: master
+    auth_username: "{{ keycloak_install_admin_user }}"
+    auth_password: "{{ keycloak_install_admin_password }}"
+    realm: "{{ keycloak_install_new_realm_name }}"
+    username: admin
+    first_name: Gardener
+    last_name: Admin
+    email: "{{ keycloak_install_gardener_admin_mail }}"
+    enabled: true
+    email_verified: true
+    credentials:
+      - type: password
+        value: "{{ keycloak_install_gardener_admin_password }}"
+        temporary: false
     state: present

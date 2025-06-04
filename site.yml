@@ -23,14 +23,14 @@
 - name: Install flux-install
   ansible.builtin.import_playbook: flux-install.yml
 
-- name: Install ingress-nginx-install
-  ansible.builtin.import_playbook: ingress-nginx-install.yml
+# - name: Install ingress-nginx-install
+#   ansible.builtin.import_playbook: ingress-nginx-install.yml
 
-- name: Install cert-manager-install
-  ansible.builtin.import_playbook: cert-manager-install.yml
+# - name: Install cert-manager-install
+#   ansible.builtin.import_playbook: cert-manager-install.yml
 
-- name: Install keycloak-install
-  ansible.builtin.import_playbook: keycloak-install.yml
+# - name: Install keycloak-install
+#   ansible.builtin.import_playbook: keycloak-install.yml
 
 - name: Install garden-control-install
   ansible.builtin.import_playbook: garden-control-install.yml

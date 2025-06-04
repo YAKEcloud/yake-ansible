@@ -5,3 +5,4 @@ kubernetes==32.0.1
 openstacksdk==4.5.0
 python-gilt==2.2.4
 requests==2.32.3
+passlib==1.7.4

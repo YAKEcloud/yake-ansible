@@ -11,7 +11,12 @@ stringData:
       enabled: true
       acme:
         email: {{ garden_control_install_acme_mail }}
-        server: https://acme-v02.api.letsencrypt.org/directory
+        server: >-
+          {% if garden_control_install_acme_staging | default(false) %}
+          https://acme-staging-v02.api.letsencrypt.org/directory
+          {% else %}
+          https://acme-v02.api.letsencrypt.org/directory
+          {% endif %}
 
     domains:
       global:

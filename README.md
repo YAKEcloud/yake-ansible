@@ -25,7 +25,6 @@ ansible-playbook -i localhost, -c local kind-install.yml
 ansible-playbook -i localhost, -c local kind-cluster.yml
 ansible-playbook -i localhost, -c local clusterapi-install.yml
 ansible-playbook -i localhost, -c local clusterapi-cluster.yml
-ansible-playbook -i localhost, -c local flux-install.yml
 ```
 
 ### Accessing the Cluster API cluster

@@ -19,6 +19,3 @@
 
 - name: Install clusterapi-cluster
   ansible.builtin.import_playbook: clusterapi-cluster.yml
-
-- name: Install flux-install
-  ansible.builtin.import_playbook: flux-install.yml

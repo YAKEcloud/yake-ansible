@@ -44,15 +44,6 @@
       - '^molecule\/delegated\/tests\/clusterctl_install.*$'
 
 - job:
-    name: yake-ansible-molecule-molecule-flux-install
-    parent: abstract-yake-ansible-molecule
-    vars:
-      ansible_role: flux_install
-    files:
-      - '^roles\/flux_install\/.*$'
-      - '^molecule\/delegated\/tests\/flux_install.*$'
-
-- job:
     name: yake-ansible-molecule-molecule-helm-install
     parent: abstract-yake-ansible-molecule
     vars:
@@ -99,7 +90,6 @@
         - python-black
         - yake-ansible-molecule-molecule-clusterapi-install
         - yake-ansible-molecule-molecule-clusterctl-install
-        - yake-ansible-molecule-molecule-flux-install
         - yake-ansible-molecule-molecule-helm-install
         - yake-ansible-molecule-molecule-kind-cluster
         - yake-ansible-molecule-molecule-kind-install
@@ -113,7 +103,6 @@
         - python-black
         - yake-ansible-molecule-molecule-clusterapi-install
         - yake-ansible-molecule-molecule-clusterctl-install
-        - yake-ansible-molecule-molecule-flux-install
         - yake-ansible-molecule-molecule-helm-install
         - yake-ansible-molecule-molecule-kind-cluster
         - yake-ansible-molecule-molecule-kind-install

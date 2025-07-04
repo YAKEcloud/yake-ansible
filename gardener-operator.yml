@@ -1,0 +1,6 @@
+---
+- name: Setup gardener-operator
+  hosts: "{{ hosts_gardener_operator | default('all') }}"
+
+  roles:
+    - role: gardener_operator

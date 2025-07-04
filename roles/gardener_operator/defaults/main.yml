@@ -1,0 +1,17 @@
+---
+gardener_operator_uid: "{{ ansible_facts.user_uid }}"
+gardener_operator_gid: "{{ ansible_facts.user_gid }}"
+
+gardener_operator_clusterapi_name: garden
+gardener_operator_namespace: garden
+gardener_operator_version: v1.121.1
+
+# https://github.com/gardener/gardener/blob/master/charts/gardener/operator/values.yaml
+gardener_operator_helm_values:
+  replicaCount: 2
+
+gardener_operator_gardener_url: ""
+gardener_operator_openstack_zones:
+  - nova
+gardener_operator_kubernetes_version: 1.32.5
+gardener_operator_cluster_name: openstack-garden

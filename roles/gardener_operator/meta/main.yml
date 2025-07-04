@@ -1,0 +1,16 @@
+---
+galaxy_info:
+  author: Marius Wernicke
+  description: Role to install gardener operator and setup a garden object
+  company: 23 Technologies GmbH
+  license: Apache License 2.0
+  min_ansible_version: 2.18.0
+  platforms:
+    - name: Ubuntu
+      versions:
+        - noble
+  galaxy_tags:
+    - gardener
+    - operator
+    - kubernetes
+dependencies: []

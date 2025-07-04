@@ -19,3 +19,6 @@
 
 - name: Install clusterapi-cluster
   ansible.builtin.import_playbook: clusterapi-cluster.yml
+
+- name: Install gardener-operator
+  ansible.builtin.import_playbook: gardener-operator.yml

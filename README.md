@@ -1,5 +1,7 @@
 # yake-ansible
 
+At the moment we only support Openstack as infrastructure and for DNS. Get in contact with us, if you need another Cloud.
+
 ## Installation
 
 ```
@@ -41,10 +43,14 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.garden
 yake-kubectl get nodes
 ```
 
+### Patch/Upgrade
+If you want to patch/upgrade your gardener, just run the playbook once again and set the variable `gardener_operator_version` to the next version you like. Your gardener will be patched/upgraded to this version.
+
 ### Cleanup
 
 ```
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 yake-kubectl delete cluster garden
 yake-kind delete cluster --name clusterapi
+rm -rf /var/lib/yake/
 ```

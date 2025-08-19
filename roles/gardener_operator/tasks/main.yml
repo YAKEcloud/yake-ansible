@@ -21,10 +21,10 @@
   kubernetes.core.helm:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     chart_ref: oci://europe-docker.pkg.dev/gardener-project/releases/charts/gardener/operator
-    chart_version: "{{ gardener_operator_version }}"
+    chart_version: "v{{ gardener_operator_version }}"
     create_namespace: true
     release_name: gardener-operator
-    release_namespace: "{{ gardener_operator_namespace }}"
+    release_namespace: garden
     release_state: present
     update_repo_cache: true
     wait: true
@@ -76,17 +76,81 @@
         gardener_operator_services_cidr == '' or
         gardener_operator_pods_cidr == ''
 
-- name: Template garden.yaml file
+- name: Template garden files and dependencies
   ansible.builtin.template:
-    src: garden.yaml.j2
-    dest: /var/lib/yake/gardener-operator/garden.yaml
+    src: "{{ item }}.j2"
+    dest: "/var/lib/yake/gardener-operator/{{ item }}"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
     mode: 0644
+  loop:
+    - extensions.yaml
+    - garden.yaml
 
-- name: Create a garden object
+- name: Create a garden object and dependencies
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     state: present
     wait: true
-    src: /var/lib/yake/gardener-operator/garden.yaml
+    src: "/var/lib/yake/gardener-operator/{{ item }}"
+  loop:
+    - extensions.yaml
+    - garden.yaml
+
+- name: Get Gardener Secret
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    api_version: v1
+    kind: Secret
+    name: gardener
+    namespace: garden
+  register: gardener_secret
+  until: gardener_secret.resources | length > 0 and gardener_secret.resources[0].data is defined and gardener_secret.resources[0].data.kubeconfig is defined
+  retries: 60
+  delay: 10
+
+- name: Save Kubeconfig to file
+  ansible.builtin.copy:
+    content: "{{ gardener_secret.resources[0].data.kubeconfig | b64decode }}"
+    dest: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    mode: 0644
+  when: gardener_secret.resources | length > 0
+
+- name: Wait for 4 more minutes to get all ready
+  ansible.builtin.pause:
+    minutes: 4
+
+- name: Template vgarden files
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/var/lib/yake/gardener-operator/{{ item }}"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop:
+    - rbac.yaml
+    - project.yaml
+
+- name: Create garden project and admin
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: "/var/lib/yake/gardener-operator/{{ item }}"
+  loop:
+    - rbac.yaml
+    - project.yaml
+
+- name: Patch gardener annotation for reconcile
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    kind: Garden
+    api_version: "operator.gardener.cloud/v1alpha1"
+    name: gardener
+    definition:
+      metadata:
+        annotations:
+          gardener.cloud/operation: "reconcile"
+    merge_type:
+      - merge

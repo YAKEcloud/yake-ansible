@@ -2,35 +2,73 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: virtual-garden-etcd-main-backup-local
+  name: openstack-cloud
   namespace: garden
 type: Opaque
-stringData:
-  hostPath: "~/.garden/local-backupbuckets"
+data:
+  authURL: {{ gardener_operator_openstack_auth_url | b64encode }}
+  tenantName: {{ gardener_operator_openstack_project_name | b64encode }}
+  domainName: {{ gardener_operator_openstack_domain_name | b64encode }}
+  regionName: {{ gardener_operator_openstack_region_name | b64encode }}
+  applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
+  applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
+  applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
+  s3ForcePathStyle: dHJ1ZQ==
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gardener-auth-config
+  namespace: garden
+data:
+  config.yaml: |
+    apiVersion: apiserver.config.k8s.io/v1beta1
+    kind: AuthenticationConfiguration
+    jwt:
+    - issuer:
+        url: {{ gardener_operator_garden_auth_issuer_url }}
+        audiences: {{ gardener_operator_garden_auth_audiences }}
+      claimMappings:
+        groups:
+          claim: groups
+          prefix: ""
+        username:
+          claim: email
+          prefix: ""
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: garden-dns-local
+  name: gardener-dashboard-oidc
   namespace: garden
 type: Opaque
+stringData:
+  client_id: {{ gardener_operator_garden_auth_client_id }}
+  client_secret: {{ gardener_operator_garden_auth_client_secret }}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Garden
 metadata:
-  name: local
+  name: gardener
 spec:
+  extensions:
+    - type: controlplane-cert-service
+      providerConfig:
+        apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+        kind: CertConfig
+        generateControlPlaneCertificate: true
   dns:
     providers:
-    - name: primary
-      type: local
+    - name: designate
+      type: openstack-designate
       secretRef:
-        name: garden-dns-local
+        name: openstack-cloud
+        namespace: garden
   runtimeCluster:
     ingress:
       domains:
-      - name: ingress.runtime-garden.local.gardener.cloud
-        provider: primary
+      - name: {{ gardener_operator_garden_url }}
+        provider: designate
       controller:
         kind: nginx
     networking:
@@ -41,9 +79,8 @@ spec:
       services:
       - {{ gardener_operator_services_cidr }}
     provider:
-      region: local
-      zones:
-      - "1"
+      region: {{ gardener_operator_openstack_region_name }}
+      zones: {{ gardener_operator_openstack_zones }}
     settings:
       verticalPodAutoscaler:
         enabled: true
@@ -52,27 +89,49 @@ spec:
   virtualCluster:
     dns:
       domains:
-      - name: virtual-garden.local.gardener.cloud
-        provider: primary
+      - name: vgarden.{{ gardener_operator_garden_url }}
+        provider: designate
     etcd:
       main:
-        # backup:
-        #   provider: local
-        #   secretRef:
-        #     name: virtual-garden-etcd-main-backup-local
+        backup:
+          provider: openstack
+          bucketName: {{ gardener_operator_openstack_bucket_name }}
+          secretRef:
+            name: openstack-cloud
         storage:
           capacity: 25Gi
       events:
         storage:
           capacity: 10Gi
     kubernetes:
-      version: 1.32.5
+      version: {{ gardener_operator_kubernetes_version }}
+      kubeAPIServer:
+        structuredAuthentication:
+          configMapName: gardener-auth-config
     gardener:
-      clusterIdentity: local
+      clusterIdentity: {{ gardener_operator_cluster_name }}
       gardenerAPIServer:
         admissionPlugins:
         - name: ShootVPAEnabledByDefault
-      gardenerDashboard: {}
+        featureGates:
+          CredentialsRotationWithoutWorkersRollout: true
+          CloudProfileCapabilities: true
+          InPlaceNodeUpdates: true
+      gardenerDashboard:
+        oidcConfig:
+          clientIDPublic: {{ gardener_operator_garden_auth_public_name }}
+          issuerURL: {{ gardener_operator_garden_auth_issuer_url }}
+          sessionLifetime: 12h
+          additionalScopes:
+            - openid
+            - email
+            - profile
+            - groups
+          secretRef:
+            name: gardener-dashboard-oidc
+        ingress:
+          enabled: true
+        domain: dashboard.{{ gardener_operator_garden_url }}
       gardenerDiscoveryServer: {}
     maintenance:
       timeWindow:

@@ -1,17 +1,42 @@
 ---
 gardener_operator_uid: "{{ ansible_facts.user_uid }}"
 gardener_operator_gid: "{{ ansible_facts.user_gid }}"
-
 gardener_operator_clusterapi_name: garden
-gardener_operator_namespace: garden
-gardener_operator_version: v1.121.1
 
-# https://github.com/gardener/gardener/blob/master/charts/gardener/operator/values.yaml
+gardener_operator_version: 1.124.2
 gardener_operator_helm_values:
-  replicaCount: 2
+  replicaCount: 1
 
-gardener_operator_gardener_url: ""
+gardener_operator_openstack_auth_url: "https://keystone.example.com"
+gardener_operator_openstack_project_name: example
+gardener_operator_openstack_domain_name: example
+gardener_operator_openstack_region_name: RegionOne
+gardener_operator_openstack_application_credential_id: ""
+gardener_operator_openstack_application_credential_name: example-creds
+gardener_operator_openstack_application_credential_secret: ""
+gardener_operator_openstack_bucket_name: example-container
 gardener_operator_openstack_zones:
-  - nova
-gardener_operator_kubernetes_version: 1.32.5
-gardener_operator_cluster_name: openstack-garden
+  - zone1
+
+gardener_operator_garden_auth_issuer_url: https://keycloak.example.com/realms/gardener
+gardener_operator_garden_auth_audiences:
+  - gardener-client
+gardener_operator_garden_auth_client_id: ""
+gardener_operator_garden_auth_client_secret: ""
+gardener_operator_garden_auth_public_name: keycloak
+
+gardener_operator_garden_url: example.com
+gardener_operator_cluster_name: prod-garden
+gardener_operator_kubernetes_version: 1.32.8
+
+gardener_operator_provider_openstack_tag: 1.48.1
+gardener_operator_provider_openstack_storageclass_name: default
+gardener_operator_provider_openstack_storageclass_type: "__DEFAULT__"
+
+gardener_operator_cert_service_version: 1.52.0
+gardener_operator_cert_service_acme_email: ""
+# Staging: https://acme-staging-v02.api.letsencrypt.org/directory
+gardener_operator_cert_service_acme_server: https://acme-v02.api.letsencrypt.org/directory
+
+gardener_operator_garden_first_project_name: demo
+gardener_operator_garden_cluster_admin_email: info@demo.com

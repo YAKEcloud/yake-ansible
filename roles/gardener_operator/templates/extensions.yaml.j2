@@ -1,0 +1,91 @@
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: provider-openstack
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/admission-openstack-runtime:v{{ gardener_operator_provider_openstack_tag }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/admission-openstack-application:v{{ gardener_operator_provider_openstack_tag }}
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/provider-openstack:v{{ gardener_operator_provider_openstack_tag }}
+      injectGardenKubeconfig: true
+  resources:
+    - kind: BackupBucket
+      type: openstack
+    - kind: BackupEntry
+      type: openstack
+    - kind: Bastion
+      type: openstack
+    - kind: ControlPlane
+      type: openstack
+    - kind: Infrastructure
+      type: openstack
+    - kind: Worker
+      type: openstack
+    - kind: DNSRecord
+      type: openstack-designate
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: {{ gardener_operator_provider_openstack_storageclass_name }}
+  annotations:
+    storageclass.kubernetes.io/is-default-class: "true"
+provisioner: cinder.csi.openstack.org
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: {{ gardener_operator_provider_openstack_storageclass_type }}
+  availability: {{ gardener_operator_openstack_zones[0] }}
+reclaimPolicy: Delete
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: extension-shoot-cert-service
+spec:
+  deployment:
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/shoot-cert-service:v{{ gardener_operator_cert_service_version }}
+      injectGardenKubeconfig: true
+      policy: Always
+      runtimeClusterValues:
+        certificateConfig:
+          defaultIssuer:
+            acme:
+              email: {{ gardener_operator_cert_service_acme_email }}
+              server: {{ gardener_operator_cert_service_acme_server }}
+            name: default-issuer
+      values:
+        certificateConfig:
+          defaultIssuer:
+            acme:
+              email: {{ gardener_operator_cert_service_acme_email }}
+              server: {{ gardener_operator_cert_service_acme_server }}
+            name: default-issuer
+  resources:
+  - autoEnable:
+    - shoot
+    clusterCompatibility:
+    - shoot
+    kind: Extension
+    type: shoot-cert-service
+    workerlessSupported: true
+  - clusterCompatibility:
+    - garden
+    - seed
+    kind: Extension
+    type: controlplane-cert-service

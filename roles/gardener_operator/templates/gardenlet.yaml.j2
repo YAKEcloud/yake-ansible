@@ -1,0 +1,85 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openstack-cloud
+  namespace: garden
+  labels:
+    gardener.cloud/role: internal-domain
+  annotations:
+    dns.gardener.cloud/provider: openstack-designate
+    dns.gardener.cloud/domain: {{ gardener_operator_garden_url }}
+type: Opaque
+data:
+  authURL: {{ gardener_operator_openstack_auth_url | b64encode }}
+  tenantName: {{ gardener_operator_openstack_project_name | b64encode }}
+  domainName: {{ gardener_operator_openstack_domain_name | b64encode }}
+  regionName: {{ gardener_operator_openstack_region_name | b64encode }}
+  applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
+  applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
+  applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
+---
+apiVersion: seedmanagement.gardener.cloud/v1alpha1
+kind: Gardenlet
+metadata:
+  name: internal-seed
+  namespace: garden
+spec:
+  deployment:
+    replicaCount: 2
+    helm:
+      ociRepository:
+        ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/gardenlet:v{{ gardener_operator_version }}
+  config:
+    apiVersion: gardenlet.config.gardener.cloud/v1alpha1
+    kind: GardenletConfiguration
+    gardenClientConnection:
+      gardenClusterAddress: https://api.vgarden.{{ gardener_operator_garden_url }}:443
+      bootstrapKubeconfig:
+        secretRef:
+          name: gardenlet-kubeconfig-bootstrap
+          namespace: garden
+      kubeconfigSecret:
+        name: gardenlet-kubeconfig
+        namespace: garden
+    seedConfig:
+      spec:
+        # extensions:
+        # - type: controlplane-cert-service
+        #   providerConfig:
+        #     apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+        #     kind: CertConfig
+        #     generateControlPlaneCertificate: true
+        # backup:
+        #   provider: openstack
+        #   bucketName: gardener-operator-demo
+        #   credentialsRef:
+        #     apiVersion: v1
+        #     kind: Secret
+        #     name: openstack-cloud
+        #     namespace: garden
+        provider:
+          region: RegionA
+          type: openstack
+        dns:
+          provider:
+            type: openstack-designate
+            secretRef:
+              name: openstack-cloud
+              namespace: garden
+        ingress:
+          domain: internal.{{ gardener_operator_garden_url }}
+          controller:
+            kind: nginx
+        networks:
+          nodes: {{ gardener_operator_nodes_cidr }}
+          pods: 10.0.0.0/16
+          services: {{ gardener_operator_services_cidr }}
+          shootDefaults:
+            pods: 100.73.0.0/16
+            services: 100.88.0.0/13
+        settings:
+          excessCapacityReservation:
+            enabled: false
+          scheduling:
+            visible: true

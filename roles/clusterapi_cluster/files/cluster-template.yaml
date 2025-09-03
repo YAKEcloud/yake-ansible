@@ -39,7 +39,6 @@ spec:
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
-            cloud-provider: external
             provider-id: openstack:///'{{ instance_id }}'
           name: "{{ local_hostname }}"
           taints:
@@ -96,13 +95,6 @@ metadata:
   name: ${CLUSTER_NAME}-control-plane
 spec:
   kubeadmConfigSpec:
-    clusterConfiguration:
-      apiServer:
-        extraArgs:
-          cloud-provider: external
-      controllerManager:
-        extraArgs:
-          cloud-provider: external
     files:
       - path: /etc/containerd/certs.d/docker.io/hosts.toml
         owner: root:root
@@ -137,7 +129,6 @@ spec:
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          cloud-provider: external
           provider-id: openstack:///'{{ instance_id }}'
         name: "{{ local_hostname }}"
         taints:
@@ -148,7 +139,6 @@ spec:
     joinConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          cloud-provider: external
           provider-id: openstack:///'{{ instance_id }}'
         name: "{{ local_hostname }}"
         taints:
@@ -191,8 +181,6 @@ spec:
   template:
     spec:
       flavor: ${OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR}
-      # rootVolume:
-      #     sizeGiB: ${OPENSTACK_CONTROL_PLANE_VOLUME_SIZE}
       image:
         filter:
           name: ${OPENSTACK_IMAGE_NAME}
@@ -206,8 +194,6 @@ spec:
   template:
     spec:
       flavor: ${OPENSTACK_NODE_MACHINE_FLAVOR}
-      # rootVolume:
-      #     sizeGiB: ${OPENSTACK_NODE_VOLUME_SIZE}
       image:
         filter:
           name: ${OPENSTACK_IMAGE_NAME}

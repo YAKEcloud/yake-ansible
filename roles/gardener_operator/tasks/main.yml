@@ -30,39 +30,39 @@
     wait: true
     values: "{{ _gardener_operator_helm_values | combine(gardener_operator_helm_values, recursive=True) }}"
 
-- name: Extract node CIDR from first InternalIP  #noqa risky-shell-pipe
+- name: Extract node CIDR from first InternalIP
   ansible.builtin.shell: |
-    yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
-    | awk -F. '{print $1"."$2"."$3".0/24"}'
+    bash -o pipefail -c "yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
+    | awk -F. '{print $1"."$2"."$3".0/24"}'"
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: node_cidr_output
+  register: node_cidr_output # noqa: var-naming[no-role-prefix]
   changed_when: false
 
 - name: Set node_cidr fact
   ansible.builtin.set_fact:
     gardener_operator_nodes_cidr: "{{ node_cidr_output.stdout }}"
 
-- name: Extract service CIDR from API server flags  #noqa risky-shell-pipe
+- name: Extract service CIDR from API server flags
   ansible.builtin.shell: |
-    yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
-    | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'
+    bash -o pipefail -c "yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
+    | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'"
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: service_cidr_output
+  register: service_cidr_output # noqa: var-naming[no-role-prefix]
   changed_when: false
 
 - name: Set service_cidr fact
   ansible.builtin.set_fact:
     gardener_operator_services_cidr: "{{ service_cidr_output.stdout }}"
 
-- name: Extract pod CIDR from API server output  #noqa risky-shell-pipe
+- name: Extract pod CIDR from API server output
   ansible.builtin.shell: |
-    yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
-    | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'
+    bash -o pipefail -c "yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
+    | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'"
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: pod_cidr_output
+  register: pod_cidr_output # noqa: var-naming[no-role-prefix]
   changed_when: false
 
 - name: Set pod_cidr fact
@@ -104,7 +104,7 @@
     kind: Secret
     name: gardener
     namespace: garden
-  register: gardener_secret
+  register: gardener_secret # noqa: var-naming[no-role-prefix]
   until: gardener_secret.resources | length > 0 and gardener_secret.resources[0].data is defined and gardener_secret.resources[0].data.kubeconfig is defined
   retries: 60
   delay: 10
@@ -130,6 +130,7 @@
   loop:
     - rbac.yaml
     - project.yaml
+    - gardenlet.yaml
 
 - name: Create garden project and admin
   kubernetes.core.k8s:
@@ -140,6 +141,7 @@
   loop:
     - rbac.yaml
     - project.yaml
+    - gardenlet.yaml
 
 - name: Patch gardener annotation for reconcile
   kubernetes.core.k8s:

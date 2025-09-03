@@ -10,7 +10,7 @@ docker = "==7.1.0"
 kubernetes = "==33.1.0"
 openstacksdk = "==4.6.0"
 python-gilt = "==2.2.4"
-requests = "==2.32.4"
+requests = "==2.32.5"
 
 [dev-packages]
 

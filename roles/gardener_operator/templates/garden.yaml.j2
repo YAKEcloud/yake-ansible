@@ -1,0 +1,142 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: openstack-cloud
+  namespace: garden
+type: Opaque
+data:
+  authURL: {{ gardener_operator_openstack_auth_url | b64encode }}
+  tenantName: {{ gardener_operator_openstack_project_name | b64encode }}
+  domainName: {{ gardener_operator_openstack_domain_name | b64encode }}
+  regionName: {{ gardener_operator_openstack_region_name | b64encode }}
+  applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
+  applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
+  applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
+  s3ForcePathStyle: dHJ1ZQ==
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gardener-auth-config
+  namespace: garden
+data:
+  config.yaml: |
+    apiVersion: apiserver.config.k8s.io/v1beta1
+    kind: AuthenticationConfiguration
+    jwt:
+    - issuer:
+        url: {{ gardener_operator_garden_auth_issuer_url }}
+        audiences: {{ gardener_operator_garden_auth_audiences }}
+      claimMappings:
+        groups:
+          claim: groups
+          prefix: ""
+        username:
+          claim: email
+          prefix: ""
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gardener-dashboard-oidc
+  namespace: garden
+type: Opaque
+stringData:
+  client_id: {{ gardener_operator_garden_auth_client_id }}
+  client_secret: {{ gardener_operator_garden_auth_client_secret }}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Garden
+metadata:
+  name: gardener
+spec:
+  extensions:
+    - type: controlplane-cert-service
+      providerConfig:
+        apiVersion: service.cert.extensions.gardener.cloud/v1alpha1
+        kind: CertConfig
+        generateControlPlaneCertificate: true
+  dns:
+    providers:
+    - name: designate
+      type: openstack-designate
+      secretRef:
+        name: openstack-cloud
+        namespace: garden
+  runtimeCluster:
+    ingress:
+      domains:
+      - name: {{ gardener_operator_garden_url }}
+        provider: designate
+      controller:
+        kind: nginx
+    networking:
+      nodes:
+      - {{ gardener_operator_nodes_cidr }}
+      pods:
+      - {{ gardener_operator_pods_cidr }}
+      services:
+      - {{ gardener_operator_services_cidr }}
+    provider:
+      region: {{ gardener_operator_openstack_region_name }}
+      zones: {{ gardener_operator_openstack_zones }}
+    settings:
+      verticalPodAutoscaler:
+        enabled: true
+      topologyAwareRouting:
+        enabled: false
+  virtualCluster:
+    dns:
+      domains:
+      - name: vgarden.{{ gardener_operator_garden_url }}
+        provider: designate
+    etcd:
+      main:
+        backup:
+          provider: openstack
+          bucketName: {{ gardener_operator_openstack_bucket_name }}
+          secretRef:
+            name: openstack-cloud
+        storage:
+          capacity: 25Gi
+      events:
+        storage:
+          capacity: 10Gi
+    kubernetes:
+      version: {{ gardener_operator_kubernetes_version }}
+      kubeAPIServer:
+        structuredAuthentication:
+          configMapName: gardener-auth-config
+    gardener:
+      clusterIdentity: {{ gardener_operator_cluster_name }}
+      gardenerAPIServer:
+        admissionPlugins:
+        - name: ShootVPAEnabledByDefault
+        featureGates:
+          CredentialsRotationWithoutWorkersRollout: true
+          CloudProfileCapabilities: true
+          InPlaceNodeUpdates: true
+      gardenerDashboard:
+        oidcConfig:
+          clientIDPublic: {{ gardener_operator_garden_auth_public_name }}
+          issuerURL: {{ gardener_operator_garden_auth_issuer_url }}
+          sessionLifetime: 12h
+          additionalScopes:
+            - openid
+            - email
+            - profile
+            - groups
+          secretRef:
+            name: gardener-dashboard-oidc
+        ingress:
+          enabled: true
+        domain: dashboard.{{ gardener_operator_garden_url }}
+      gardenerDiscoveryServer: {}
+    maintenance:
+      timeWindow:
+        begin: 220000+0100
+        end: 230000+0100
+    networking:
+      services:
+      - 100.64.0.0/13

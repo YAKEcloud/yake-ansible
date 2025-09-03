@@ -2,3 +2,4 @@
 chart-vendor
 clouds.yaml
 group_vars/all.yml
+cloudprofile.yaml

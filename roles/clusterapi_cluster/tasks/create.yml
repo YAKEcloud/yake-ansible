@@ -32,13 +32,15 @@
 
 - name: Get SHA256 hash for the image
   ansible.builtin.uri:
-    url: https://swift.services.a.regiocloud.tech/swift/v1/AUTH_b182637428444b9aa302bb8d5a5a418c/openstack-k8s-capi-images/ubuntu-2204-kube-{{ clusterapi_cluster_kubernetes_version_short }}/ubuntu-2204-kube-{{ clusterapi_cluster_kubernetes_version }}.qcow2.CHECKSUM
+    url: https://{{ clusterapi_cluster_openstack_swift_image_url }}.CHECKSUM
     return_content: yes
   register: image_hash_raw
+  when: clusterapi_cluster_openstack_use_existing_image | bool
 
 - name: Get only the hash
   ansible.builtin.set_fact:
     clusterapi_cluster_image_hash: "{{ image_hash_raw.content.split()[0] }}"
+  when: clusterapi_cluster_openstack_use_existing_image | bool
 
 - name: Copy secret template file
   ansible.builtin.template:
@@ -55,6 +57,7 @@
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
     mode: 0644
+  when: clusterapi_cluster_openstack_use_existing_image | bool
 
 - name: Copy cluster template file
   ansible.builtin.copy:
@@ -137,6 +140,7 @@
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     name: "{{ clusterapi_cluster_openstack_image_name }}"
   register: image_check
+  when: clusterapi_cluster_openstack_use_existing_image | bool
 
 - name: Upload image to OpenStack
   when: not clusterapi_cluster_openstack_use_existing_image or image_check.images | length == 0

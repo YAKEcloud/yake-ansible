@@ -1,0 +1,158 @@
+---
+- name: Create gardener-operator directory
+  become: true
+  ansible.builtin.file:
+    path: /var/lib/yake/gardener-operator
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0755
+    state: directory
+
+- name: Create garden namespace
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    name: garden
+    api_version: v1
+    kind: Namespace
+    state: present
+    wait: true
+
+- name: Install gardener operator
+  kubernetes.core.helm:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    chart_ref: oci://europe-docker.pkg.dev/gardener-project/releases/charts/gardener/operator
+    chart_version: "v{{ gardener_operator_version }}"
+    create_namespace: true
+    release_name: gardener-operator
+    release_namespace: garden
+    release_state: present
+    update_repo_cache: true
+    wait: true
+    values: "{{ _gardener_operator_helm_values | combine(gardener_operator_helm_values, recursive=True) }}"
+
+- name: Extract node CIDR from first InternalIP
+  ansible.builtin.shell: |
+    bash -o pipefail -c "yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
+    | awk -F. '{print $1"."$2"."$3".0/24"}'"
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+  register: node_cidr_output # noqa: var-naming[no-role-prefix]
+  changed_when: false
+
+- name: Set node_cidr fact
+  ansible.builtin.set_fact:
+    gardener_operator_nodes_cidr: "{{ node_cidr_output.stdout }}"
+
+- name: Extract service CIDR from API server flags
+  ansible.builtin.shell: |
+    bash -o pipefail -c "yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
+    | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'"
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+  register: service_cidr_output # noqa: var-naming[no-role-prefix]
+  changed_when: false
+
+- name: Set service_cidr fact
+  ansible.builtin.set_fact:
+    gardener_operator_services_cidr: "{{ service_cidr_output.stdout }}"
+
+- name: Extract pod CIDR from API server output
+  ansible.builtin.shell: |
+    bash -o pipefail -c "yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
+    | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'"
+  environment:
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+  register: pod_cidr_output # noqa: var-naming[no-role-prefix]
+  changed_when: false
+
+- name: Set pod_cidr fact
+  ansible.builtin.set_fact:
+    gardener_operator_pods_cidr: "{{ pod_cidr_output.stdout }}"
+
+- name: Fail if any CIDR could not be extracted
+  ansible.builtin.fail:
+    msg: "One or more CIDR values could not be extracted."
+  when: gardener_operator_nodes_cidr == '' or
+        gardener_operator_services_cidr == '' or
+        gardener_operator_pods_cidr == ''
+
+- name: Template garden files and dependencies
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/var/lib/yake/gardener-operator/{{ item }}"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop:
+    - extensions.yaml
+    - garden.yaml
+
+- name: Create a garden object and dependencies
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    wait: true
+    src: "/var/lib/yake/gardener-operator/{{ item }}"
+  loop:
+    - extensions.yaml
+    - garden.yaml
+
+- name: Get Gardener Secret
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    api_version: v1
+    kind: Secret
+    name: gardener
+    namespace: garden
+  register: gardener_secret # noqa: var-naming[no-role-prefix]
+  until: gardener_secret.resources | length > 0 and gardener_secret.resources[0].data is defined and gardener_secret.resources[0].data.kubeconfig is defined
+  retries: 60
+  delay: 10
+
+- name: Save Kubeconfig to file
+  ansible.builtin.copy:
+    content: "{{ gardener_secret.resources[0].data.kubeconfig | b64decode }}"
+    dest: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    mode: 0644
+  when: gardener_secret.resources | length > 0
+
+- name: Wait for 4 more minutes to get all ready
+  ansible.builtin.pause:
+    minutes: 4
+
+- name: Template vgarden files
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/var/lib/yake/gardener-operator/{{ item }}"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop:
+    - rbac.yaml
+    - project.yaml
+    - gardenlet.yaml
+
+- name: Create garden project and admin
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: "/var/lib/yake/gardener-operator/{{ item }}"
+  loop:
+    - rbac.yaml
+    - project.yaml
+    - gardenlet.yaml
+
+- name: Patch gardener annotation for reconcile
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    kind: Garden
+    api_version: "operator.gardener.cloud/v1alpha1"
+    name: gardener
+    definition:
+      metadata:
+        annotations:
+          gardener.cloud/operation: "reconcile"
+    merge_type:
+      - merge

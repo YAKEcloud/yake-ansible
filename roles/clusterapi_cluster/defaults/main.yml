@@ -1,8 +1,8 @@
 ---
 clusterapi_cluster_become: false
 
-clusterapi_cluster_uid: "{{ ansible_facts.user_uid }}"
-clusterapi_cluster_gid: "{{ ansible_facts.user_gid }}"
+clusterapi_cluster_uid: "{{ ansible_facts.user_uid | string }}"
+clusterapi_cluster_gid: "{{ ansible_facts.user_gid | string }}"
 
 clusterapi_cluster_kind_cluster_name: "{{ kind_cluster_name | default('clusterapi') }}"
 
@@ -19,14 +19,16 @@ clusterapi_cluster_container_registry_cache_k8s: https://registry.osism.tech/v2/
 
 clusterapi_cluster_charts_dir: "{{ playbook_dir }}/charts/"
 
+clusterapi_cluster_kubernetes_version: "v1.33.5"
+
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_swift_image_url:  https://swift.example.com/swift/v1/AUTH_cda7bdba271d27a9499900be9319984f/openstack-k8s-capi-images/ubuntu-2404-kube-1.33/ubuntu-2404-kube-v1.33.4.qcow2
-clusterapi_cluster_openstack_use_existing_image: false
-clusterapi_cluster_openstack_image_name: "ubuntu-capi-image-{{ clusterapi_cluster_kubernetes_version }}"
+clusterapi_cluster_openstack_upload_image: false
+clusterapi_cluster_openstack_image_id: "fe820408-b646-46bb-8988-1d889723987"
 clusterapi_cluster_cloud_cacert_b64: ""
 clusterapi_cluster_openstack_cloud:
   auth:
@@ -51,7 +53,7 @@ clusterapi_cluster_defaults:
   OPENSTACK_EXTERNAL_NETWORK_ID: "{{ _clusterapi_cluster_external_network_id | default('') }}"
   OPENSTACK_FAILURE_DOMAIN: nova
   OPENSTACK_FLOATING_IP_POOL: "{{ clusterapi_cluster_external_network }}"
-  OPENSTACK_IMAGE_NAME: "{{ clusterapi_cluster_openstack_image_name }}"
+  OPENSTACK_IMAGE_ID: "{{ clusterapi_cluster_openstack_image_id }}"
   OPENSTACK_NODE_MACHINE_FLAVOR: SCS-4V-8-50s
   OPENSTACK_SSH_KEY_NAME: "{{ clusterapi_cluster_ssh_key_name }}"
   OPENSTACK_VOLUME_SIZE: 20

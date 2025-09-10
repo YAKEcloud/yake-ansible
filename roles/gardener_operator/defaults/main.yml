@@ -1,9 +1,10 @@
 ---
-gardener_operator_uid: "{{ ansible_facts.user_uid }}"
-gardener_operator_gid: "{{ ansible_facts.user_gid }}"
+gardener_operator_uid: "{{ ansible_facts.user_uid | string }}"
+gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
 gardener_operator_clusterapi_name: garden
 
-gardener_operator_version: 1.124.2
+# renovate: datasource=github-releases depName=gardener/gardener
+gardener_operator_version: 1.126.0
 gardener_operator_helm_values:
   replicaCount: 1
 
@@ -14,7 +15,7 @@ gardener_operator_openstack_region_name: RegionOne
 gardener_operator_openstack_application_credential_id: ""
 gardener_operator_openstack_application_credential_name: example-creds
 gardener_operator_openstack_application_credential_secret: ""
-gardener_operator_openstack_bucket_name: example-container
+gardener_operator_openstack_backup_gardener_bucket_name: example-container
 gardener_operator_openstack_zones:
   - zone1
 
@@ -27,16 +28,81 @@ gardener_operator_garden_auth_public_name: keycloak
 
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
-gardener_operator_kubernetes_version: 1.32.8
+gardener_operator_kubernetes_version: 1.33.5
 
-gardener_operator_provider_openstack_tag: 1.48.1
+# renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
+gardener_operator_provider_openstack_version: 1.48.1
 gardener_operator_provider_openstack_storageclass_name: default
-gardener_operator_provider_openstack_storageclass_type: "__DEFAULT__"
+gardener_operator_provider_openstack_storageclass_type: default
 
-gardener_operator_cert_service_version: 1.52.0
-gardener_operator_cert_service_acme_email: ""
+# renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-cert-service
+gardener_operator_shoot_cert_service_version: 1.53.0
+gardener_operator_shoot_cert_service_acme_email: ""
 # Staging: https://acme-staging-v02.api.letsencrypt.org/directory
-gardener_operator_cert_service_acme_server: https://acme-v02.api.letsencrypt.org/directory
+gardener_operator_shoot_cert_service_acme_server: https://acme-v02.api.letsencrypt.org/directory
 
-gardener_operator_garden_first_project_name: demo
+# renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-dns-service
+gardener_operator_shoot_dns_service_version: 1.68.0
+# renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
+gardener_operator_networking_cilium_version: 1.42.2
+# renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
+gardener_operator_os_gardenlinux_version: 0.32.0
+
+gardener_operator_networking_calico_enable: false
+# renovate: datasource=github-releases depName=gardener/gardener-extension-networking-calico
+gardener_operator_networking_calico_version: 1.50.0
+
+gardener_operator_os_ubuntu_enable: false
+# renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu
+gardener_operator_os_ubuntu_version: 1.31.0
+
+gardener_operator_provider_aws_enable: false
+# renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws
+gardener_operator_provider_aws_version: 1.63.0
+
+gardener_operator_provider_azure_enable: false
+# renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure
+gardener_operator_provider_azure_version: 1.53.0
+
+gardener_operator_provider_gcp_enable: false
+# renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
+gardener_operator_provider_gcp_version: 1.45.1
+
+gardener_operator_garden_project_name: seeds
 gardener_operator_garden_cluster_admin_email: info@demo.com
+
+# Activate this only on hosts with more than 16Gi of RAM. If "true" will be cativated
+# for the internal- and the optional managed-seed.
+gardener_operator_excess_capacity_reservation: "false"
+
+gardener_operator_managed_seed_enable: true
+gardener_operator_managed_seed_name: "managed-seed-1"
+gardener_operator_openstack_cloud:
+  auth:
+    auth_url: "{{ gardener_operator_openstack_auth_url }}"
+    application_credential_id: "{{ gardener_operator_openstack_application_credential_id }}"
+    application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
+  region_name: "{{ gardener_operator_openstack_region_name }}"
+  interface: "public"
+  identity_api_version: 3
+  auth_type: "v3applicationcredential"
+
+gardener_operator_cloudprofile_name: regiocloud
+gardener_operator_openstack_gardenlinux_version: "1592.8"
+gardener_operator_openstack_ubuntu_version: "24.04"
+gardener_operator_cloudprofile_kubernetes_versions:
+  - version: 1.33.5
+    classification: supported
+  - version: 1.32.9
+    classification: supported
+gardener_operator_openstack_machinetypes:
+  - name: SCS-4V-8
+    cpu: "4"
+    gpu: "0"
+    memory: 8Gi
+  - name: SCS-8V-16
+    cpu: "8"
+    gpu: "0"
+    memory: 16Gi
+gardener_operator_openstack_backup_seed_bucket_name: seed-example-container
+gardener_operator_managed_seed_machinetype: SCS-4V-8

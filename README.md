@@ -52,5 +52,6 @@ If you want to patch/upgrade your gardener, just run the playbook once again and
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 yake-kubectl delete cluster garden
 yake-kind delete cluster --name clusterapi
-rm -rf /var/lib/yake/
+docker rm -f $(docker ps -qa)
+sudo rm -rf /var/lib/yake/
 ```

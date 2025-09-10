@@ -1,0 +1,128 @@
+---
+apiVersion: core.gardener.cloud/v1beta1
+kind: SecretBinding
+metadata:
+  labels:
+    cloudprofile.garden.sapcloud.io/name: {{ gardener_operator_cloudprofile_name }}
+  name: seeds
+  namespace: garden
+provider:
+  type: openstack
+secretRef:
+  name: openstack-cloud
+  namespace: garden
+---
+apiVersion: core.gardener.cloud/v1beta1
+kind: Shoot
+metadata:
+  name: {{ gardener_operator_managed_seed_name }}
+  namespace: garden
+spec:
+  extensions:
+    - type: shoot-cert-service
+    - type: shoot-dns-service
+  seedName: internal-seed
+  cloudProfile:
+    name: {{ gardener_operator_cloudprofile_name }}
+  region: {{ gardener_operator_openstack_region_name }}
+  secretBindingName: seeds
+  dns:
+    domain: {{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}
+    providers:
+      - type: openstack-designate
+        secretName: openstack-cloud
+  provider:
+    type: openstack
+    infrastructureConfig:
+      apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
+      kind: InfrastructureConfig
+      floatingPoolName: public
+      networks:
+        workers: 10.250.0.0/16
+    controlPlaneConfig:
+      apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
+      kind: ControlPlaneConfig
+      loadBalancerProvider: amphora
+    workers:
+    - name: worker-hpd5z
+      machine:
+        type: {{ gardener_operator_managed_seed_machinetype }}
+        image:
+          name: gardenlinux
+          version: {{ gardener_operator_openstack_gardenlinux_version }}.0
+      minimum: 2
+      maximum: 5
+      volume:
+        type: {{ gardener_operator_provider_openstack_storageclass_type }}
+        size: 50Gi
+      zones: {{ gardener_operator_openstack_zones }}
+  networking:
+    nodes: 10.250.0.0/16
+    pods: 100.73.0.0/16
+    services: 100.88.0.0/13
+    type: cilium
+  kubernetes:
+    version: {{ gardener_operator_kubernetes_version }}
+  maintenance:
+    autoUpdate:
+      kubernetesVersion: true
+      machineImageVersion: true
+  addons:
+    kubernetesDashboard:
+      enabled: false
+    nginxIngress:
+      enabled: false
+  purpose: infrastructure
+---
+apiVersion: seedmanagement.gardener.cloud/v1alpha1
+kind: ManagedSeed
+metadata:
+  name: {{ gardener_operator_managed_seed_name }}
+  namespace: garden
+spec:
+  shoot:
+    name: {{ gardener_operator_managed_seed_name }}
+  gardenlet:
+    config:
+      apiVersion: gardenlet.config.gardener.cloud/v1alpha1
+      kind: GardenletConfiguration
+      seedConfig:
+        metadata:
+          labels:
+            name: {{ gardener_operator_managed_seed_name }}
+        taints:
+          seed.gardener.cloud/protected: false
+        spec:
+          backup:
+            provider: openstack
+            bucketName: {{ gardener_operator_openstack_backup_seed_bucket_name }}
+            credentialsRef:
+              apiVersion: v1
+              kind: Secret
+              name: openstack-cloud
+              namespace: garden
+          dns:
+            provider:
+              type: openstack-designate
+              secretRef:
+                name: openstack-cloud
+                namespace: garden
+          ingress:
+            domain: ingress.{{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}
+            controller:
+              kind: nginx
+          networks:
+            nodes: 10.250.0.0/16
+            pods: 100.73.0.0/16
+            services: 100.88.0.0/13
+            shootDefaults:
+              pods: 100.74.0.0/16
+              services: 100.96.0.0/13
+          provider:
+            type: openstack
+            region: {{ gardener_operator_openstack_region_name }}
+          settings:
+            scheduling:
+              visible: true
+            excessCapacityReservation:
+              enabled: {{ gardener_operator_excess_capacity_reservation }}

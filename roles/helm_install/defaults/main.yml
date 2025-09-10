@@ -4,6 +4,6 @@ helm_install_container_registry: ghcr.io
 helm_install_container_image: yakecloud/helm
 # renovate: datasource=docker depName=ghcr.io/yakecloud/helm
 helm_install_container_tag: 'v3.18.2'
-helm_install_uid: "{{ ansible_facts.user_uid }}"
-helm_install_gid: "{{ ansible_facts.user_gid }}"
+helm_install_uid: "{{ ansible_facts.user_uid | string }}"
+helm_install_gid: "{{ ansible_facts.user_gid | string }}"
 helm_install_charts_dir: "{{ playbook_dir }}/charts/"

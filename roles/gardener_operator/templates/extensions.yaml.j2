@@ -1,6 +1,9 @@
+---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
 metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
   name: provider-openstack
 spec:
   deployment:
@@ -8,15 +11,15 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/admission-openstack-runtime:v{{ gardener_operator_provider_openstack_tag }}
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-openstack-runtime:v{{ gardener_operator_provider_openstack_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/admission-openstack-application:v{{ gardener_operator_provider_openstack_tag }}
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-openstack-application:v{{ gardener_operator_provider_openstack_version }}
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/provider-openstack:v{{ gardener_operator_provider_openstack_tag }}
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/provider-openstack:v{{ gardener_operator_provider_openstack_version }}
       injectGardenKubeconfig: true
   resources:
     - kind: BackupBucket
@@ -59,22 +62,22 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/shoot-cert-service:v{{ gardener_operator_cert_service_version }}
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/shoot-cert-service:v{{ gardener_operator_shoot_cert_service_version }}
       injectGardenKubeconfig: true
       policy: Always
       runtimeClusterValues:
         certificateConfig:
           defaultIssuer:
             acme:
-              email: {{ gardener_operator_cert_service_acme_email }}
-              server: {{ gardener_operator_cert_service_acme_server }}
+              email: {{ gardener_operator_shoot_cert_service_acme_email }}
+              server: {{ gardener_operator_shoot_cert_service_acme_server }}
             name: default-issuer
       values:
         certificateConfig:
           defaultIssuer:
             acme:
-              email: {{ gardener_operator_cert_service_acme_email }}
-              server: {{ gardener_operator_cert_service_acme_server }}
+              email: {{ gardener_operator_shoot_cert_service_acme_email }}
+              server: {{ gardener_operator_shoot_cert_service_acme_server }}
             name: default-issuer
   resources:
   - autoEnable:
@@ -89,3 +92,227 @@ spec:
     - seed
     kind: Extension
     type: controlplane-cert-service
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: extension-shoot-dns-service
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/admission-shoot-dns-service-runtime:v{{ gardener_operator_shoot_dns_service_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/admission-shoot-dns-service-application:v{{ gardener_operator_shoot_dns_service_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/shoot-dns-service:v{{ gardener_operator_shoot_dns_service_version }}
+  resources:
+  - autoEnable:
+    - shoot
+    clusterCompatibility:
+    - shoot
+    kind: Extension
+    type: shoot-dns-service
+    workerlessSupported: true
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: networking-cilium
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-cilium-runtime:v{{ gardener_operator_networking_cilium_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-cilium-application:v{{ gardener_operator_networking_cilium_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/networking-cilium:v{{ gardener_operator_networking_cilium_version }}
+  resources:
+  - kind: Network
+    type: cilium
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: os-gardenlinux
+spec:
+  deployment:
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/os-gardenlinux:v{{ gardener_operator_os_gardenlinux_version }}
+  resources:
+  - kind: OperatingSystemConfig
+    type: gardenlinux
+{% if gardener_operator_os_ubuntu_enable %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: os-ubuntu
+spec:
+  deployment:
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/os-ubuntu:v{{ gardener_operator_os_ubuntu_version }}
+  resources:
+  - kind: OperatingSystemConfig
+    type: ubuntu
+{% endif %}
+{% if gardener_operator_provider_aws_enable %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: provider-aws
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-aws-runtime:v{{ gardener_operator_provider_aws_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-aws-application:v{{ gardener_operator_provider_aws_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/provider-aws:v{{ gardener_operator_provider_aws_version }}
+      injectGardenKubeconfig: true
+  resources:
+  - kind: BackupBucket
+    type: aws
+  - kind: BackupEntry
+    type: aws
+  - kind: Bastion
+    type: aws
+  - kind: ControlPlane
+    type: aws
+  - kind: DNSRecord
+    type: aws
+  - kind: Infrastructure
+    type: aws
+  - kind: Worker
+    type: aws
+{% endif %}
+{% if gardener_operator_provider_azure_enable %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: provider-azure
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-azure-runtime:v{{ gardener_operator_provider_azure_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-azure-application:v{{ gardener_operator_provider_azure_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/provider-azure:v{{ gardener_operator_provider_azure_version }}
+      injectGardenKubeconfig: true
+  resources:
+  - kind: BackupBucket
+    type: azure
+  - kind: BackupEntry
+    type: azure
+  - kind: Bastion
+    type: azure
+  - kind: ControlPlane
+    type: azure
+  - kind: DNSRecord
+    type: azure
+  - kind: Infrastructure
+    type: azure
+  - kind: Worker
+    type: azure
+{% endif %}
+{% if gardener_operator_provider_gcp_enable %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: provider-gcp
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-gcp-runtime:v{{ gardener_operator_provider_gcp_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-gcp-application:v{{ gardener_operator_provider_gcp_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/provider-gcp:v{{ gardener_operator_provider_gcp_version }}
+      injectGardenKubeconfig: true
+  resources:
+  - kind: BackupBucket
+    type: gcp
+  - kind: BackupEntry
+    type: gcp
+  - kind: Bastion
+    type: gcp
+  - kind: ControlPlane
+    type: gcp
+  - kind: DNSRecord
+    type: gooogle-clouddns
+  - kind: Infrastructure
+    type: gcp
+  - kind: Worker
+    type: gcp
+{% endif %}
+{% if gardener_operator_networking_calico_enable %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  name: networking-calico
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-calico-runtime:v{{ gardener_operator_networking_calico_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-calico-application:v{{ gardener_operator_networking_calico_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/networking-calico:v{{ gardener_operator_networking_calico_version }}
+  resources:
+  - kind: Network
+    type: calico
+{% endif %}

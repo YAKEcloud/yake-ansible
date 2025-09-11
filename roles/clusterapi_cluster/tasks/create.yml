@@ -121,7 +121,7 @@
 - name: Generate manifest to create Kubernetes cluster
   become: "{{ clusterapi_cluster_become }}"
   ansible.builtin.shell: |
-    /usr/local/bin/yake-clusterctl --config /var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml generate cluster --from /var/lib/yake/cluster-template.yaml {{ clusterapi_cluster_name }} > /var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml
+   {{ playbook_dir }}/.local/yake-clusterctl --config /var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml generate cluster --from /var/lib/yake/cluster-template.yaml {{ clusterapi_cluster_name }} > /var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml
   args:
     executable: /bin/bash
   environment:
@@ -169,7 +169,7 @@
     src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
 
 - name: Get kubeconfig
-  ansible.builtin.command: "yake-clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
+  ansible.builtin.command: "{{ playbook_dir }}/.local/yake-clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
   register: result_kubeconfig
   changed_when: false
   until: result_kubeconfig.rc == 0

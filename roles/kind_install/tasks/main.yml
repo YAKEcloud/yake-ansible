@@ -1,12 +1,15 @@
 ---
-- name: Create /var/lib/yake directory
+- name: Create directories
   become: true
   ansible.builtin.file:
-    path: /var/lib/yake
-    owner: "{{ kind_install_uid }}"
-    group: "{{ kind_install_gid }}"
+    path: "{{ item }}"
+    owner: "{{ kubectl_install_uid }}"
+    group: "{{ kubectl_install_gid }}"
     mode: 0755
     state: directory
+  loop:
+    - /var/lib/yake
+    - "{{ playbook_dir }}/.local"
 
 - name: Run kind container
   become: "{{ kind_install_become }}"
@@ -27,7 +30,7 @@
   become: true
   ansible.builtin.copy:
     src: kind
-    dest: /usr/local/bin/yake-kind
+    dest: "{{ playbook_dir }}/.local/yake-kind"
     mode: 0755
     owner: root
     group: root

@@ -35,14 +35,14 @@ ansible-playbook -i localhost, -c local gardener-operator.yml
 
 ```
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
-yake-kubectl get nodes
+./.local/yake-kubectl get nodes
 ```
 
 ### Accessing the Garden cluster
 
 ```
 export KUBECONFIG=/var/lib/yake/kubeconfig.garden
-yake-kubectl get nodes
+./.local/yake-kubectl get nodes
 ```
 
 ### Patch/Upgrade

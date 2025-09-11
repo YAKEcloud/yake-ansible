@@ -3,8 +3,8 @@
   become: true
   ansible.builtin.file:
     path: "{{ item }}"
-    owner: "{{ kubectl_install_uid }}"
-    group: "{{ kubectl_install_gid }}"
+    owner: "{{ helm_install_uid }}"
+    group: "{{ helm_install_gid }}"
     mode: 0755
     state: directory
   loop:

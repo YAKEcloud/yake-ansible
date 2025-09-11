@@ -1,17 +1,18 @@
+---
 apiVersion: v1
 kind: Namespace
 metadata:
   name: garden
   labels:
     gardener.cloud/role: project
-    project.gardener.cloud/name: {{ gardener_operator_garden_first_project_name }}
+    project.gardener.cloud/name: {{ gardener_operator_garden_project_name }}
   annotations:
     namespace.gardener.cloud/keep-after-project-deletion: "true"
 ---
 apiVersion: core.gardener.cloud/v1beta1
 kind: Project
 metadata:
-  name: {{ gardener_operator_garden_first_project_name }}
+  name: {{ gardener_operator_garden_project_name }}
 spec:
   namespace: garden
   members:

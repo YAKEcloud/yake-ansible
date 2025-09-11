@@ -32,8 +32,8 @@
 
 - name: Extract node CIDR from first InternalIP
   ansible.builtin.shell: |
-    bash -o pipefail -c "yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
-    | awk -F. '{print $1"."$2"."$3".0/24"}'"
+    yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
+    | awk -F. '{print $1"."$2"."$3".0/24"}'
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
   register: node_cidr_output # noqa: var-naming[no-role-prefix]
@@ -45,8 +45,8 @@
 
 - name: Extract service CIDR from API server flags
   ansible.builtin.shell: |
-    bash -o pipefail -c "yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
-    | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'"
+    yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
+    | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
   register: service_cidr_output # noqa: var-naming[no-role-prefix]
@@ -58,8 +58,8 @@
 
 - name: Extract pod CIDR from API server output
   ansible.builtin.shell: |
-    bash -o pipefail -c "yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
-    | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'"
+    yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
+    | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
   register: pod_cidr_output # noqa: var-naming[no-role-prefix]
@@ -129,7 +129,6 @@
     mode: 0644
   loop:
     - rbac.yaml
-    - project.yaml
     - gardenlet.yaml
 
 - name: Create garden project and admin
@@ -140,7 +139,6 @@
     src: "/var/lib/yake/gardener-operator/{{ item }}"
   loop:
     - rbac.yaml
-    - project.yaml
     - gardenlet.yaml
 
 - name: Patch gardener annotation for reconcile
@@ -156,3 +154,42 @@
           gardener.cloud/operation: "reconcile"
     merge_type:
       - merge
+
+- name: Get gardenlinux image info
+  openstack.cloud.image_info:
+    cloud: "{{ gardener_operator_openstack_cloud }}"
+    name: "Garden Linux {{ gardener_operator_openstack_gardenlinux_version }}"
+  register: gardener_operator_openstack_gardenlinux
+  when: gardener_operator_managed_seed_enable
+
+- name: Get ubuntu image info
+  openstack.cloud.image_info:
+    cloud: "{{ gardener_operator_openstack_cloud }}"
+    name: "Ubuntu {{ gardener_operator_os_ubuntu_version }}"
+  register: gardener_operator_openstack_ubuntu
+  when: gardener_operator_os_ubuntu_enable and gardener_operator_managed_seed_enable
+
+- name: Template managed-seed files
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/var/lib/yake/gardener-operator/{{ item }}"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop:
+    - project.yaml
+    - cloudprofile.yaml
+    - managed-seed.yaml
+  when: gardener_operator_managed_seed_enable
+
+- name: Create managed-seed if wanted
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: "/var/lib/yake/gardener-operator/{{ item }}"
+  loop:
+    - project.yaml
+    - cloudprofile.yaml
+    - managed-seed.yaml
+  when: gardener_operator_managed_seed_enable

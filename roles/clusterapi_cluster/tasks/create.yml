@@ -32,15 +32,15 @@
 
 - name: Get SHA256 hash for the image
   ansible.builtin.uri:
-    url: https://{{ clusterapi_cluster_openstack_swift_image_url }}.CHECKSUM
+    url: "{{ clusterapi_cluster_openstack_swift_image_url }}.CHECKSUM"
     return_content: yes
   register: image_hash_raw
-  when: clusterapi_cluster_openstack_use_existing_image | bool
+  when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Get only the hash
   ansible.builtin.set_fact:
     clusterapi_cluster_image_hash: "{{ image_hash_raw.content.split()[0] }}"
-  when: clusterapi_cluster_openstack_use_existing_image | bool
+  when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Copy secret template file
   ansible.builtin.template:
@@ -57,7 +57,7 @@
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
     mode: 0644
-  when: clusterapi_cluster_openstack_use_existing_image | bool
+  when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Copy cluster template file
   ansible.builtin.copy:
@@ -140,16 +140,16 @@
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     name: "{{ clusterapi_cluster_openstack_image_name }}"
   register: image_check
-  when: clusterapi_cluster_openstack_use_existing_image | bool
+  when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Upload image to OpenStack
-  when: not clusterapi_cluster_openstack_use_existing_image or image_check.images | length == 0
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
     state: present
     wait: true
     src: "/var/lib/yake/image.{{ clusterapi_cluster_name }}.yaml"
   register: image_upload
+  when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Wait untill the image is uploaded (can take a long time)
   openstack.cloud.image_info:
@@ -159,7 +159,7 @@
   until: uploaded_image.images[0].status == "active"
   retries: 60
   delay: 60
-  when: image_check.images | length == 0
+  when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:

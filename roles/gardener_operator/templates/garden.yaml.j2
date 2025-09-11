@@ -95,7 +95,7 @@ spec:
       main:
         backup:
           provider: openstack
-          bucketName: {{ gardener_operator_openstack_bucket_name }}
+          bucketName: {{ gardener_operator_openstack_backup_gardener_bucket_name }}
           secretRef:
             name: openstack-cloud
         storage:
@@ -117,6 +117,13 @@ spec:
           CredentialsRotationWithoutWorkersRollout: true
           CloudProfileCapabilities: true
           InPlaceNodeUpdates: true
+        gardenerScheduler:
+          config:
+            schedulers:
+              shoot:
+                retrySyncPeriod: 15s
+                concurrentSyncs: 5
+                candidateDeterminationStrategy: MinimalDistance
       gardenerDashboard:
         oidcConfig:
           clientIDPublic: {{ gardener_operator_garden_auth_public_name }}

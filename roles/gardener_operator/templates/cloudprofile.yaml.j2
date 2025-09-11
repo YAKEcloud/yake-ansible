@@ -1,0 +1,79 @@
+---
+apiVersion: core.gardener.cloud/v1beta1
+kind: CloudProfile
+metadata:
+  name: {{ gardener_operator_cloudprofile_name }}
+spec:
+  type: openstack
+  providerConfig:
+    apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
+    kind: CloudProfileConfig
+    storageClasses:
+      - name: {{ gardener_operator_provider_openstack_storageclass_name }}
+        default: true
+        provisioner: cinder.csi.openstack.org
+        volumeBindingMode: WaitForFirstConsumer
+        parameters:
+          type: {{ gardener_operator_provider_openstack_storageclass_type }}
+          availability: {{ gardener_operator_openstack_zones[0] }}
+    constraints:
+      floatingPools:
+        - name: public
+      loadBalancerProviders:
+        - name: amphora
+    keystoneURLs:
+      - region: {{ gardener_operator_openstack_region_name }}
+        url: {{ gardener_operator_openstack_auth_url }}
+    machineImages:
+      - name: gardenlinux
+        versions:
+          - version: {{ gardener_operator_openstack_gardenlinux_version }}.0
+            image: "Garden Linux {{ gardener_operator_openstack_gardenlinux_version }}"
+            regions:
+              - name: {{ gardener_operator_openstack_region_name }}
+                id: {{ gardener_operator_openstack_gardenlinux.images[0].id }}
+{% if gardener_operator_os_ubuntu_enable %}
+      - name: ubuntu
+        versions:
+          - version: {{ gardener_operator_os_ubuntu_version }}
+            image: "Ubuntu {{ gardener_operator_os_ubuntu_version }}"
+            regions:
+              - name: {{ gardener_operator_openstack_region_name }}
+                id: {{ gardener_operator_openstack_ubuntu.images[0].id }}
+{% endif %}
+    useOctavia: true
+    serverGroupPolicies:
+      - affinity
+      - soft-affinity
+      - anti-affinity
+      - soft-anti-affinity
+    nodeVolumeAttachLimit: 20
+  kubernetes:
+    versions:
+{% for v in gardener_operator_cloudprofile_kubernetes_versions %}
+      - version: {{ v.version }}
+        classification: {{ v.classification }}
+{% endfor %}
+  machineImages:
+    - name: gardenlinux
+      versions:
+        - version: {{ gardener_operator_openstack_gardenlinux_version }}.0
+{% if gardener_operator_os_ubuntu_enable %}
+    - name: ubuntu
+      versions:
+        - version: {{ gardener_operator_os_ubuntu_version }}
+{% endif %}
+  machineTypes:
+{% for type in gardener_operator_openstack_machinetypes %}
+    - name: {{ type.name }}
+      cpu: {{ type.cpu }}
+      gpu: {{ type.gpu }}
+      memory: {{ type.memory }}
+{% endfor %}
+  volumeTypes:
+    - name: {{ gardener_operator_provider_openstack_storageclass_type }}
+      class: {{ gardener_operator_provider_openstack_storageclass_name }}
+  regions:
+    - name: {{ gardener_operator_openstack_region_name }}
+      zones:
+        - name: {{ gardener_operator_openstack_zones[0] }}

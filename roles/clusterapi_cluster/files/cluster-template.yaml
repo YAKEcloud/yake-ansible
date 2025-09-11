@@ -40,6 +40,7 @@ spec:
         nodeRegistration:
           kubeletExtraArgs:
             provider-id: openstack:///'{{ instance_id }}'
+            node-labels: "topology.kubernetes.io/zone=${OPENSTACK_FAILURE_DOMAIN}"
           name: "{{ local_hostname }}"
           taints:
             - key: "node.cilium.io/agent-not-ready"
@@ -182,8 +183,7 @@ spec:
     spec:
       flavor: ${OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR}
       image:
-        filter:
-          name: ${OPENSTACK_IMAGE_NAME}
+        id: ${OPENSTACK_IMAGE_ID}
       sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -195,6 +195,5 @@ spec:
     spec:
       flavor: ${OPENSTACK_NODE_MACHINE_FLAVOR}
       image:
-        filter:
-          name: ${OPENSTACK_IMAGE_NAME}
+        id: ${OPENSTACK_IMAGE_ID}
       sshKeyName: ${OPENSTACK_SSH_KEY_NAME}

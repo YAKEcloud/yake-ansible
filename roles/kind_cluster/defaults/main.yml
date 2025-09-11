@@ -8,5 +8,5 @@ kind_cluster_version: 'v1.33.4'
 kind_cluster_image: "kindest/node:{{ kind_cluster_version }}"
 kind_cluster_kubeconfig: "/var/lib/yake/kubeconfig.{{ kind_cluster_name }}"
 kind_cluster_api_server_address: "127.0.0.1"
-kind_cluster_uid: "{{ kind_install_uid | default(ansible_facts.user_uid) }}"
-kind_cluster_gid: "{{ kind_install_gid | default(ansible_facts.user_gid) }}"
+kind_cluster_uid: "{{ kind_install_uid | default(ansible_facts.user_uid) | int }}"
+kind_cluster_gid: "{{ kind_install_gid | default(ansible_facts.user_gid) | int }}"

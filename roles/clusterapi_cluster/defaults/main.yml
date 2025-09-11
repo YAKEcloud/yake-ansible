@@ -62,6 +62,8 @@ clusterapi_cluster_defaults:
   CONTAINER_REGISTRY_CACHE_GHCR: "{{ clusterapi_cluster_container_registry_cache_ghcr }}"
   CONTAINER_REGISTRY_CACHE_K8S: "{{ clusterapi_cluster_container_registry_cache_k8s }}"
 
+clusterapi_cluster_csi_snapshotter_enable: false
+
 clusterapi_cluster_extra: {}
 
 # network

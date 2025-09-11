@@ -286,6 +286,13 @@
     - cinder-csi-nodeplugin.yaml
     - csi-cinder-driver.yaml
 
+- name: Remove csi-snapshotter if disabled
+  ansible.builtin.replace:
+    path: /var/lib/yake/cinder-csi-controllerplugin.yaml
+    regexp: '(^\s*- name: csi-snapshotter(?:\n\s+.*)+?name: socket-dir\n)'
+    replace: ''
+  when: not clusterapi_cluster_csi_snapshotter_enable | bool
+
 - name: Apply CSI manifests
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"

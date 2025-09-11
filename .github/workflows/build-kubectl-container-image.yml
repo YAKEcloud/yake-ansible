@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - v1.32.5  # renovate: datasource=github-releases depName=kubernetes/kubernetes
+          - v1.33.5  # renovate: datasource=github-releases depName=kubernetes/kubernetes
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v4

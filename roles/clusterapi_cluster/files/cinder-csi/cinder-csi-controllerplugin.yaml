@@ -54,20 +54,20 @@ spec:
           volumeMounts:
             - name: socket-dir
               mountPath: /var/lib/csi/sockets/pluginproxy/
-        # - name: csi-snapshotter
-        #   image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
-        #   args:
-        #     - "--csi-address=$(ADDRESS)"
-        #     - "--timeout=3m"
-        #     - "--extra-create-metadata"
-        #     - "--leader-election=true"
-        #   env:
-        #     - name: ADDRESS
-        #       value: /var/lib/csi/sockets/pluginproxy/csi.sock
-        #   imagePullPolicy: Always
-        #   volumeMounts:
-        #     - mountPath: /var/lib/csi/sockets/pluginproxy/
-        #       name: socket-dir
+        - name: csi-snapshotter
+          image: registry.k8s.io/sig-storage/csi-snapshotter:v8.1.0
+          args:
+            - "--csi-address=$(ADDRESS)"
+            - "--timeout=3m"
+            - "--extra-create-metadata"
+            - "--leader-election=true"
+          env:
+            - name: ADDRESS
+              value: /var/lib/csi/sockets/pluginproxy/csi.sock
+          imagePullPolicy: Always
+          volumeMounts:
+            - mountPath: /var/lib/csi/sockets/pluginproxy/
+              name: socket-dir
         - name: csi-resizer
           image: registry.k8s.io/sig-storage/csi-resizer:v1.12.0
           args:
@@ -93,7 +93,7 @@ spec:
             - mountPath: /var/lib/csi/sockets/pluginproxy/
               name: socket-dir
         - name: cinder-csi-plugin
-          image: registry.k8s.io/provider-os/cinder-csi-plugin:v1.32.0
+          image: registry.k8s.io/provider-os/cinder-csi-plugin:v1.33.1
           args:
             - /bin/cinder-csi-plugin
             - "--endpoint=$(CSI_ENDPOINT)"

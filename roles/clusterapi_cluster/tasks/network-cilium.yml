@@ -1,7 +1,7 @@
 ---
 - name: Deploy cilium
   kubernetes.core.helm:
-    binary_path: "/usr/local/bin/yake-helm"
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     release_name: "{{ cilium_helm_release_name }}"
     chart_ref: "{{ cilium_helm_chart_ref }}"
     release_namespace: "{{ cilium_helm_release_namespace }}"

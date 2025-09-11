@@ -16,13 +16,13 @@
 
 - name: Check if the kind cluster exists
   become: "{{ kind_cluster_become }}"
-  ansible.builtin.command: "/usr/local/bin/yake-kind get clusters"
+  ansible.builtin.command: "{{ playbook_dir }}/.local/yake-kind get clusters"
   register: kind_clusters # noqa: var-naming[no-role-prefix]
   changed_when: false
 
 - name: Prepare kind create command
   ansible.builtin.set_fact:
-    _kind_create_cluster: "/usr/local/bin/yake-kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }} --config /var/lib/yake/config.{{ kind_cluster_name }}.yml" # noqa: var-naming[no-role-prefix]
+    _kind_create_cluster: "{{ playbook_dir }}/.local/yake-kind create cluster --name {{ kind_cluster_name }} --image {{ kind_cluster_image }} --kubeconfig {{ kind_cluster_kubeconfig }} --config /var/lib/yake/config.{{ kind_cluster_name }}.yml" # noqa: var-naming[no-role-prefix]
 
 - name: Print kind create command
   ansible.builtin.debug:
@@ -44,7 +44,7 @@
 - name: Wait for kind cluster to be ready
   become: "{{ kind_cluster_become }}"
   ansible.builtin.command: >
-    /usr/local/bin/yake-kubectl --kubeconfig {{ kind_cluster_kubeconfig }} wait --for=condition=Ready nodes --all --timeout=300s
+    {{ playbook_dir }}/.local/yake-kubectl --kubeconfig {{ kind_cluster_kubeconfig }} wait --for=condition=Ready nodes --all --timeout=300s
   register: wait_result # noqa: var-naming[no-role-prefix]
   until: wait_result.rc == 0
   retries: 10

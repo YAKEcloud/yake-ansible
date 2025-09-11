@@ -1,6 +1,7 @@
 # yake-ansible
 
 At the moment we only support Openstack as infrastructure and for DNS. Get in contact with us, if you need another Cloud.
+But it is possible to write your own cloudprofiles for AWS, Azure, or GCP (we have already implemented the extensions for this as an option).
 
 ## Installation
 
@@ -50,8 +51,8 @@ If you want to patch/upgrade your gardener, just run the playbook once again and
 
 ```
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
-yake-kubectl delete cluster garden
-yake-kind delete cluster --name clusterapi
+./.local/yake-kubectl delete cluster garden
+./.local/yake-kind delete cluster --name clusterapi
 docker rm -f $(docker ps -qa)
 sudo rm -rf /var/lib/yake/
 ```

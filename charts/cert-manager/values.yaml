@@ -33,9 +33,6 @@ global:
     create: true
     # Aggregate ClusterRoles to Kubernetes default user-facing roles. For more information, see [User-facing roles](https://kubernetes.io/docs/reference/access-authn-authz/rbac/#user-facing-roles)
     aggregateClusterRoles: true
-    # To use HTTP-01 ACME challenges, cert-manager needs extra permissions to create pods.
-    # If you want to avoid this added permission and disable HTTP-01 set this value.
-    disableHTTPChallengesRole: false
 
   podSecurityPolicy:
     # Create PodSecurityPolicy for cert-manager.
@@ -234,7 +231,7 @@ enableCertificateOwnerRef: false
 #    kubernetesAPIBurst: 9000
 #    numberOfConcurrentWorkers: 200
 #    enableGatewayAPI: true
-#    # Feature gates as of v1.18.0. Listed with their default values.
+#    # Feature gates as of v1.18.1. Listed with their default values.
 #    # See https://cert-manager.io/docs/cli/controller/
 #    featureGates:
 #      AdditionalCertificateOutputFormats: true # GA - default=true
@@ -251,6 +248,8 @@ enableCertificateOwnerRef: false
 #      UseCertificateRequestBasicConstraints: false # ALPHA - default=false
 #      UseDomainQualifiedFinalizer: true # GA - default=true
 #      ValidateCAA: false # ALPHA - default=false
+#      DefaultPrivateKeyRotationPolicyAlways: true # BETA - default=true
+#      ACMEHTTP01IngressPathTypeExact: true # BETA - default=true
 #    # Configure the metrics server for TLS
 #    # See https://cert-manager.io/docs/devops-tips/prometheus-metrics/#tls
 #    metricsTLSConfig:

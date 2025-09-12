@@ -4,7 +4,7 @@ gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
 gardener_operator_clusterapi_name: garden
 
 # renovate: datasource=github-releases depName=gardener/gardener
-gardener_operator_version: 1.126.0
+gardener_operator_version: 1.126.1
 gardener_operator_helm_values:
   replicaCount: 1
 
@@ -67,6 +67,27 @@ gardener_operator_provider_azure_version: 1.53.0
 gardener_operator_provider_gcp_enable: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
 gardener_operator_provider_gcp_version: 1.45.1
+
+gardener_operator_backup_s3_enable: false
+# renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3
+gardener_operator_backup_s3_version: 0.8.0
+
+gardener_operator_backups_enable: true
+gardener_operator_backups_provider: openstack
+gardener_operator_backups_region: "{{ gardener_operator_openstack_region_name }}"
+gardener_operator_backups_garden_bucket_name: gardener-operator
+gardener_operator_backups_seeds_bucket_name: gardener-internal-seed
+gardener_operator_backups_garden_credentials:
+  authURL: "{{ gardener_operator_openstack_auth_url }}"
+  tenantName: "{{ gardener_operator_openstack_project_name }}"
+  domainName: "{{ gardener_operator_openstack_domain_name }}"
+  regionName: "{{ gardener_operator_openstack_region_name }}"
+  applicationCredentialID: "{{ gardener_operator_openstack_application_credential_id }}"
+  applicationCredentialName: "{{ gardener_operator_openstack_application_credential_name }}"
+  applicationCredentialSecret: "{{ gardener_operator_openstack_application_credential_secret }}"
+  s3ForcePathStyle: true
+
+gardener_operator_backups_internal_seed_credentials: "{{ gardener_operator_backups_garden_credentials }}"
 
 gardener_operator_garden_project_name: seeds
 gardener_operator_garden_cluster_admin_email: info@demo.com

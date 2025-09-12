@@ -155,6 +155,10 @@
     merge_type:
       - merge
 
+- name: Wait 100 seconds for internal seed
+  ansible.builtin.pause:
+    seconds: 100
+
 - name: Get gardenlinux image info
   openstack.cloud.image_info:
     cloud: "{{ gardener_operator_openstack_cloud }}"

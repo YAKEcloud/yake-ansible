@@ -288,7 +288,7 @@
 
 - name: Remove csi-snapshotter if disabled
   ansible.builtin.shell: |
-    yq -i '.spec.template.spec.containers |= map(select(.name != "csi-snapshotter"))' /var/lib/yake/cinder-csi-controllerplugin.yaml
+    yq -yi '.spec.template.spec.containers |= map(select(.name != "csi-snapshotter"))' /var/lib/yake/cinder-csi-controllerplugin.yaml
   when: not clusterapi_cluster_csi_snapshotter_enable | bool
 
 - name: Apply CSI manifests

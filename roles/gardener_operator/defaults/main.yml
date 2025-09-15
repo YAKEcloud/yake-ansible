@@ -98,18 +98,11 @@ gardener_operator_excess_capacity_reservation: "false"
 
 gardener_operator_managed_seed_enable: true
 gardener_operator_managed_seed_name: "managed-seed-1"
-gardener_operator_openstack_cloud:
-  auth:
-    auth_url: "{{ gardener_operator_openstack_auth_url }}"
-    application_credential_id: "{{ gardener_operator_openstack_application_credential_id }}"
-    application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
-  region_name: "{{ gardener_operator_openstack_region_name }}"
-  interface: "public"
-  identity_api_version: 3
-  auth_type: "v3applicationcredential"
 
 gardener_operator_cloudprofile_name: regiocloud
+gardener_operator_openstack_gardenlinux_id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
 gardener_operator_openstack_gardenlinux_version: "1592.8"
+gardener_operator_openstack_ubuntu_id: "525075b6-6e32-421d-b7f1-4088b821cd85"
 gardener_operator_openstack_ubuntu_version: "24.04"
 gardener_operator_cloudprofile_kubernetes_versions:
   - version: 1.33.5

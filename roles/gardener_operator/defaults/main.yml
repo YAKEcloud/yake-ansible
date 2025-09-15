@@ -101,8 +101,10 @@ gardener_operator_managed_seed_name: "managed-seed-1"
 
 gardener_operator_cloudprofile_name: regiocloud
 gardener_operator_openstack_gardenlinux_id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
+gardener_operator_openstack_gardenlinux_image_name: "Garden Linux " # mind the whitespace at the end!
 gardener_operator_openstack_gardenlinux_version: "1592.8"
 gardener_operator_openstack_ubuntu_id: "525075b6-6e32-421d-b7f1-4088b821cd85"
+gardener_operator_openstack_ubuntu_image_name: "Ubuntu " # mind the whitespace at the end!
 gardener_operator_openstack_ubuntu_version: "24.04"
 gardener_operator_cloudprofile_kubernetes_versions:
   - version: 1.33.5

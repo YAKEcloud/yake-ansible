@@ -28,18 +28,18 @@ spec:
       - name: gardenlinux
         versions:
           - version: {{ gardener_operator_openstack_gardenlinux_version }}.0
-            image: "Garden Linux {{ gardener_operator_openstack_gardenlinux_version }}"
+            image: "{{ gardener_operator_openstack_gardenlinux_image_name }}{{ gardener_operator_openstack_gardenlinux_version }}"
             regions:
               - name: {{ gardener_operator_openstack_region_name }}
-                id: {{ gardener_operator_openstack_gardenlinux.id }}
+                id: {{ gardener_operator_openstack_gardenlinux_id }}
 {% if gardener_operator_os_ubuntu_enable %}
       - name: ubuntu
         versions:
           - version: {{ gardener_operator_os_ubuntu_version }}
-            image: "Ubuntu {{ gardener_operator_os_ubuntu_version }}"
+            image: "{{ gardener_operator_openstack_ubuntu_image_name }}{{ gardener_operator_os_ubuntu_version }}"
             regions:
               - name: {{ gardener_operator_openstack_region_name }}
-                id: {{ gardener_operator_openstack_ubuntu.id }}
+                id: {{ gardener_operator_openstack_ubuntu_id }}
 {% endif %}
     useOctavia: true
     serverGroupPolicies:

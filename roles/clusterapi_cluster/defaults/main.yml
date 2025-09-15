@@ -44,7 +44,6 @@ clusterapi_cluster_defaults:
   CLUSTER_NAME: "{{ clusterapi_cluster_name }}"
   CONTROL_PLANE_MACHINE_COUNT: 3
   KUBERNETES_VERSION: "{{ clusterapi_cluster_kubernetes_version }}"
-  OPENSTACK_CINDER_STORAGE_CLASS: ssd
   OPENSTACK_CLOUD: openstack
   OPENSTACK_CLOUD_CACERT_B64: "{{ clusterapi_cluster_cloud_cacert_b64 }}"
   OPENSTACK_CLOUD_YAML_B64: "{{ _clusterapi_cluster_cloud_yaml_b64 | default('') }}"
@@ -56,7 +55,6 @@ clusterapi_cluster_defaults:
   OPENSTACK_IMAGE_ID: "{{ clusterapi_cluster_openstack_image_id }}"
   OPENSTACK_NODE_MACHINE_FLAVOR: SCS-4V-8-50s
   OPENSTACK_SSH_KEY_NAME: "{{ clusterapi_cluster_ssh_key_name }}"
-  OPENSTACK_VOLUME_SIZE: 20
   WORKER_MACHINE_COUNT: 3
   CONTAINER_REGISTRY_CACHE_DOCKERHUB: "{{ clusterapi_cluster_container_registry_cache_dockerhub }}"
   CONTAINER_REGISTRY_CACHE_GHCR: "{{ clusterapi_cluster_container_registry_cache_ghcr }}"

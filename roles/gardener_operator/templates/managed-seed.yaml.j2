@@ -93,14 +93,17 @@ spec:
         taints:
           seed.gardener.cloud/protected: false
         spec:
-          backup:
-            provider: openstack
-            bucketName: {{ gardener_operator_openstack_backup_seed_bucket_name }}
-            credentialsRef:
-              apiVersion: v1
-              kind: Secret
-              name: openstack-cloud
-              namespace: garden
+{% if gardener_operator_backups_enable %}
+        backup:
+          provider: {{ gardener_operator_backups_provider }}
+          region: {{ gardener_operator_backups_region }}
+          bucketName: {{ gardener_operator_backups_seeds_bucket_name }}
+          credentialsRef:
+            apiVersion: v1
+            kind: Secret
+            name: backups-seeds
+            namespace: garden
+{% endif %}
           dns:
             provider:
               type: openstack-designate

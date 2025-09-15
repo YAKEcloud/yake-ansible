@@ -19,6 +19,7 @@
 
 - name: Install gardener operator
   kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     chart_ref: oci://europe-docker.pkg.dev/gardener-project/releases/charts/gardener/operator
     chart_version: "v{{ gardener_operator_version }}"
@@ -26,7 +27,6 @@
     release_name: gardener-operator
     release_namespace: garden
     release_state: present
-    update_repo_cache: true
     wait: true
     values: "{{ _gardener_operator_helm_values | combine(gardener_operator_helm_values, recursive=True) }}"
 
@@ -131,7 +131,7 @@
     - rbac.yaml
     - gardenlet.yaml
 
-- name: Create garden project and admin
+- name: Create garden project and internal seed
   kubernetes.core.k8s:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
     state: present
@@ -158,20 +158,6 @@
 - name: Wait 100 seconds for internal seed
   ansible.builtin.pause:
     seconds: 100
-
-- name: Get gardenlinux image info
-  openstack.cloud.image_info:
-    cloud: "{{ gardener_operator_openstack_cloud }}"
-    name: "Garden Linux {{ gardener_operator_openstack_gardenlinux_version }}"
-  register: gardener_operator_openstack_gardenlinux
-  when: gardener_operator_managed_seed_enable
-
-- name: Get ubuntu image info
-  openstack.cloud.image_info:
-    cloud: "{{ gardener_operator_openstack_cloud }}"
-    name: "Ubuntu {{ gardener_operator_os_ubuntu_version }}"
-  register: gardener_operator_openstack_ubuntu
-  when: gardener_operator_os_ubuntu_enable and gardener_operator_managed_seed_enable
 
 - name: Template managed-seed files
   ansible.builtin.template:

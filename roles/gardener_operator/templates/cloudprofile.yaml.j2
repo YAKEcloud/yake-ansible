@@ -31,7 +31,7 @@ spec:
             image: "Garden Linux {{ gardener_operator_openstack_gardenlinux_version }}"
             regions:
               - name: {{ gardener_operator_openstack_region_name }}
-                id: {{ gardener_operator_openstack_gardenlinux.images[0].id }}
+                id: {{ gardener_operator_openstack_gardenlinux.id }}
 {% if gardener_operator_os_ubuntu_enable %}
       - name: ubuntu
         versions:
@@ -39,7 +39,7 @@ spec:
             image: "Ubuntu {{ gardener_operator_os_ubuntu_version }}"
             regions:
               - name: {{ gardener_operator_openstack_region_name }}
-                id: {{ gardener_operator_openstack_ubuntu.images[0].id }}
+                id: {{ gardener_operator_openstack_ubuntu.id }}
 {% endif %}
     useOctavia: true
     serverGroupPolicies:
@@ -61,7 +61,7 @@ spec:
 {% if gardener_operator_os_ubuntu_enable %}
     - name: ubuntu
       versions:
-        - version: {{ gardener_operator_os_ubuntu_version }}
+        - version: {{ gardener_operator_openstack_ubuntu_version }}
 {% endif %}
   machineTypes:
 {% for type in gardener_operator_openstack_machinetypes %}

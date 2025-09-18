@@ -72,6 +72,7 @@ spec:
               email: {{ gardener_operator_shoot_cert_service_acme_email }}
               server: {{ gardener_operator_shoot_cert_service_acme_server }}
             name: default-issuer
+          precheckNameservers: 1.1.1.1,1.0.0.1
       values:
         certificateConfig:
           defaultIssuer:
@@ -79,6 +80,7 @@ spec:
               email: {{ gardener_operator_shoot_cert_service_acme_email }}
               server: {{ gardener_operator_shoot_cert_service_acme_server }}
             name: default-issuer
+          precheckNameservers: 1.1.1.1,1.0.0.1
   resources:
   - autoEnable:
     - shoot
@@ -105,11 +107,11 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/admission-shoot-dns-service-runtime:v{{ gardener_operator_shoot_dns_service_version }}
+            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/shoot-dns-service-admission-runtime:v{{ gardener_operator_shoot_dns_service_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/admission-shoot-dns-service-application:v{{ gardener_operator_shoot_dns_service_version }}
+            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/shoot-dns-service-admission-application:v{{ gardener_operator_shoot_dns_service_version }}
     extension:
       helm:
         ociRepository:

@@ -159,6 +159,21 @@
   ansible.builtin.pause:
     seconds: 100
 
+- name: Template terminal-cert file
+  ansible.builtin.template:
+    src: seed-terminal-certificate.yaml.j2
+    dest: "/var/lib/yake/gardener-operator/seed-terminal-certificate.yaml"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+
+- name: Create the certificate and secret
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    wait: true
+    src: /var/lib/yake/gardener-operator/seed-terminal-certificate.yaml
+
 - name: Template managed-seed files
   ansible.builtin.template:
     src: "{{ item }}.j2"

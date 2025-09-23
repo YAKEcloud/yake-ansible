@@ -6,4 +6,43 @@ clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
-clusterapi_cluster_openstack_use_existing_image: true
+clusterapi_cluster_openstack_image_id: "ba694dea-dc63-48a6-923f-d3a34d98fbfc"
+
+# renovate: datasource=github-releases depName=gardener/gardener
+gardener_operator_version: "1.127.2"
+gardener_operator_kubernetes_version: "{{ clusterapi_cluster_kubernetes_version }}"
+
+gardener_operator_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
+gardener_operator_openstack_project_name: ""
+gardener_operator_openstack_domain_name: "{{ clusterapi_cluster_openstack_domain_name }}"
+gardener_operator_openstack_region_name: "{{ clusterapi_cluster_openstack_region_name }}"
+gardener_operator_openstack_application_credential_id: "{{ clusterapi_cluster_openstack_application_credential_id }}"
+gardener_operator_openstack_application_credential_name: ""
+gardener_operator_openstack_application_credential_secret: "{{ clusterapi_cluster_openstack_application_credential_secret }}"
+gardener_operator_openstack_backup_gardener_bucket_name: "gardener-operator"
+gardener_operator_openstack_zones:
+  - "nova"
+gardener_operator_provider_openstack_storageclass_name: default
+gardener_operator_provider_openstack_storageclass_type: default
+
+gardener_operator_backups_enable: true
+
+gardener_operator_garden_auth_issuer_url: "https://auth.example.com/realms/gardener"
+gardener_operator_garden_auth_audiences:
+  - "gardener-client"
+gardener_operator_garden_auth_client_id: "gardener-client"
+gardener_operator_garden_auth_client_secret: ""
+gardener_operator_garden_auth_public_name: "keycloak"
+
+gardener_operator_garden_url: "example.com"
+gardener_operator_cluster_name: "my-garden"
+
+gardener_operator_shoot_cert_service_acme_email: "gardener@example.com"
+gardener_operator_shoot_cert_service_acme_server: "https://acme-v02.api.letsencrypt.org/directory"
+
+gardener_operator_garden_cluster_admin_email: "gardener@example.com"
+
+gardener_operator_openstack_gardenlinux_id: "234a6dab-6242-4926-a5e9-7b4d1414dd28"
+
+gardener_operator_managed_seed_enable: true
+gardener_operator_openstack_backup_seed_bucket_name: gardener-internal-seed

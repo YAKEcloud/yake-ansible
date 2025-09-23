@@ -142,13 +142,15 @@ spec:
           clientIDPublic: {{ gardener_operator_garden_auth_public_name }}
           issuerURL: {{ gardener_operator_garden_auth_issuer_url }}
           sessionLifetime: 12h
-          additionalScopes:
-            - openid
-            - email
-            - profile
-            - groups
+          additionalScopes: [ profile, offline_access ]
           secretRef:
             name: gardener-dashboard-oidc
+        terminal:
+          allowedHosts:
+          - "*.internal.{{ gardener_operator_garden_url }}"
+          - "*.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}"
+          container:
+            image: europe-docker.pkg.dev/gardener-project/releases/gardener/ops-toolbelt:latest
         ingress:
           enabled: true
         domain: dashboard.{{ gardener_operator_garden_url }}

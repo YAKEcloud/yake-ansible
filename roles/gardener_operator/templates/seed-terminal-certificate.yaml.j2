@@ -1,0 +1,28 @@
+---
+apiVersion: cert.gardener.cloud/v1alpha1
+kind: Certificate
+metadata:
+  annotations:
+    cert.gardener.cloud/class: garden
+    cert.gardener.cloud/dnsrecord-class: garden
+    cert.gardener.cloud/dnsrecord-provider-type: openstack-designate
+    cert.gardener.cloud/dnsrecord-secret-ref: openstack-cloud
+  name: seed-ingress
+  namespace: garden
+spec:
+  commonName: "*.internal.{{ gardener_operator_garden_url }}"
+  issuerRef:
+    name: default-issuer
+    namespace: garden
+  secretRef:
+    name: seed-ingress-certificate
+    namespace: garden
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  labels:
+    gardener.cloud/role: controlplane-cert
+  name: seed-ingress-certificate
+  namespace: garden
+type: Opaque

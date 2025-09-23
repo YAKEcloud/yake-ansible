@@ -38,7 +38,7 @@ spec:
       kind: InfrastructureConfig
       floatingPoolName: public
       networks:
-        workers: 10.250.0.0/16
+        workers: 10.120.0.0/16
     controlPlaneConfig:
       apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
       kind: ControlPlaneConfig
@@ -57,9 +57,9 @@ spec:
         size: 50Gi
       zones: {{ gardener_operator_openstack_zones }}
   networking:
-    nodes: 10.250.0.0/16
-    pods: 100.73.0.0/16
-    services: 100.88.0.0/13
+    nodes: 10.120.0.0/16
+    pods: 100.72.0.0/16
+    services: 100.80.0.0/13
     type: cilium
   kubernetes:
     version: {{ gardener_operator_kubernetes_version }}
@@ -115,12 +115,13 @@ spec:
             controller:
               kind: nginx
           networks:
-            nodes: 10.250.0.0/16
-            pods: 100.73.0.0/16
-            services: 100.88.0.0/13
+            nodes: 10.120.0.0/16
+            pods: 100.72.0.0/16
+            services: 100.80.0.0/13
             shootDefaults:
-              pods: 100.74.0.0/16
-              services: 100.96.0.0/13
+              nodes: 10.121.0.0/16
+              pods: 100.73.0.0/16
+              services: 100.88.0.0/13
           provider:
             type: openstack
             region: {{ gardener_operator_openstack_region_name }}

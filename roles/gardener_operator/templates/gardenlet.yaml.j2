@@ -111,14 +111,15 @@ spec:
         ingress:
           controller:
             kind: nginx
-          domain: ingress.seed.internal.{{ gardener_operator_garden_url }}
+          domain: internal.{{ gardener_operator_garden_url }}
         networks:
           nodes: {{ gardener_operator_nodes_cidr }}
           pods: 10.0.0.0/16
           services: {{ gardener_operator_services_cidr }}
           shootDefaults:
-            pods: 100.73.0.0/16
-            services: 100.88.0.0/13
+            nodes: 100.100.0.0/16
+            pods: 100.101.0.0/16
+            services: 100.102.0.0/16
         provider:
           region: {{ gardener_operator_openstack_region_name }}
           type: openstack

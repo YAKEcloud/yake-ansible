@@ -1,16 +1,18 @@
 ---
-apiVersion: core.gardener.cloud/v1beta1
-kind: SecretBinding
+apiVersion: security.gardener.cloud/v1alpha1
+kind: CredentialsBinding
 metadata:
   labels:
     cloudprofile.garden.sapcloud.io/name: {{ gardener_operator_cloudprofile_name }}
   name: seeds
   namespace: garden
-provider:
-  type: openstack
-secretRef:
+credentialsRef:
+  apiVersion: v1
+  kind: Secret
   name: openstack-cloud
   namespace: garden
+provider:
+  type: openstack
 ---
 apiVersion: core.gardener.cloud/v1beta1
 kind: Shoot
@@ -25,7 +27,7 @@ spec:
   cloudProfile:
     name: {{ gardener_operator_cloudprofile_name }}
   region: {{ gardener_operator_openstack_region_name }}
-  secretBindingName: seeds
+  credentialsBindingName: seeds
   dns:
     domain: {{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}
     providers:

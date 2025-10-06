@@ -5,7 +5,7 @@ name = "pypi"
 
 [packages]
 PyYAML = "==6.0.3"
-ansible-core = "==2.19.2"
+ansible-core = "==2.19.3"
 docker = "==7.1.0"
 kubernetes = "==33.1.0"
 openstacksdk = "==4.7.1"

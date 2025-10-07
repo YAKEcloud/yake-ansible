@@ -7,6 +7,6 @@ charts:
       url: https://helm.cilium.io/
   - name: cert-manager
     # renovate: datasource=github-releases depName=cert-manager/cert-manager
-    version: '1.18.2'
+    version: '1.19.0'
     repository:
       url: https://charts.jetstack.io

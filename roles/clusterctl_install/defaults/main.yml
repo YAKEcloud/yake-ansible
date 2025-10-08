@@ -3,6 +3,6 @@ clusterctl_install_become: false
 clusterctl_install_container_registry: ghcr.io
 clusterctl_install_container_image: yakecloud/clusterctl
 # renovate: datasource=docker depName=ghcr.io/yakecloud/clusterctl
-clusterctl_install_container_tag: 'v1.11.1'
+clusterctl_install_container_tag: 'v1.11.2'
 clusterctl_install_uid: "{{ ansible_facts.user_uid | string }}"
 clusterctl_install_gid: "{{ ansible_facts.user_gid | string }}"

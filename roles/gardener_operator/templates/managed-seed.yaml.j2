@@ -1,4 +1,19 @@
 ---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: managed-seed-cloud
+  namespace: garden
+type: Opaque
+data:
+  authURL: {{ gardener_operator_managed_seed_openstack_auth_url | b64encode }}
+  tenantName: {{ gardener_operator_managed_seed_openstack_project_name | b64encode }}
+  domainName: {{ gardener_operator_managed_seed_openstack_domain_name | b64encode }}
+  regionName: {{ gardener_operator_managed_seed_openstack_region_name | b64encode }}
+  applicationCredentialID: {{ gardener_operator_managed_seed_openstack_application_credential_id | b64encode }}
+  applicationCredentialName: {{ gardener_operator_managed_seed_openstack_application_credential_name | b64encode }}
+  applicationCredentialSecret: {{ gardener_operator_managed_seed_openstack_application_credential_secret | b64encode }}
+---
 apiVersion: security.gardener.cloud/v1alpha1
 kind: CredentialsBinding
 metadata:
@@ -9,7 +24,7 @@ metadata:
 credentialsRef:
   apiVersion: v1
   kind: Secret
-  name: openstack-cloud
+  name: managed-seed-cloud
   namespace: garden
 provider:
   type: openstack
@@ -32,7 +47,7 @@ spec:
     domain: {{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}
     providers:
       - type: openstack-designate
-        secretName: openstack-cloud
+        secretName: managed-seed-cloud
   provider:
     type: openstack
     infrastructureConfig:
@@ -110,7 +125,7 @@ spec:
             provider:
               type: openstack-designate
               secretRef:
-                name: openstack-cloud
+                name: managed-seed-cloud
                 namespace: garden
           ingress:
             domain: ingress.{{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}

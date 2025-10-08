@@ -121,4 +121,13 @@ gardener_operator_openstack_machinetypes:
     gpu: "0"
     memory: 16Gi
 gardener_operator_openstack_backup_seed_bucket_name: seed-example-container
+
+gardener_operator_managed_seed_openstack_auth_url: "{{ gardener_operator_openstack_auth_url }}"
+gardener_operator_managed_seed_openstack_project_name: "{{ gardener_operator_openstack_project_name }}"
+gardener_operator_managed_seed_openstack_domain_name: "{{ gardener_operator_openstack_domain_name }}"
+gardener_operator_managed_seed_openstack_region_name: "{{ gardener_operator_openstack_region_name }}"
+gardener_operator_managed_seed_openstack_application_credential_id: "{{ gardener_operator_openstack_application_credential_id }}"
+gardener_operator_managed_seed_openstack_application_credential_name: "{{ gardener_operator_openstack_application_credential_name }}"
+gardener_operator_managed_seed_openstack_application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
+
 gardener_operator_managed_seed_machinetype: SCS-4V-8

@@ -39,9 +39,9 @@ spec:
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
-            provider-id: openstack:///'{{ instance_id }}'
+            provider-id: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
             node-labels: "topology.kubernetes.io/zone={{ clusterapi_cluster_openstack_failure_domain }}"
-          name: "{{ local_hostname }}"
+          name: "{% raw %}{{ local_hostname }}{% endraw %}"
           taints:
             - key: "node.cilium.io/agent-not-ready"
               value: "true"
@@ -130,8 +130,8 @@ spec:
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          provider-id: openstack:///'{{ instance_id }}'
-        name: "{{ local_hostname }}"
+          provider-id: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
+        name: "{% raw %}{{ local_hostname }}{% endraw %}"
         taints:
           - key: "node.cilium.io/agent-not-ready"
             effect: "NoSchedule"
@@ -140,8 +140,8 @@ spec:
     joinConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          provider-id: openstack:///'{{ instance_id }}'
-        name: "{{ local_hostname }}"
+          provider-id: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
+        name: "{% raw %}{{ local_hostname }}{% endraw %}"
         taints:
           - key: "node.cilium.io/agent-not-ready"
             effect: "NoSchedule"

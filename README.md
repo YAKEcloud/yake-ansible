@@ -6,6 +6,7 @@ But it is possible to write your own cloudprofiles for AWS, Azure, or GCP (we ha
 ## Installation
 
 ```bash
+sudo apt install python3-virtualenv -y
 virtualenv .venv
 source .venv/bin/activate
 pip install -r requirements.txt

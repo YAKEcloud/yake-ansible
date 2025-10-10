@@ -60,8 +60,8 @@
   when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Copy cluster template file
-  ansible.builtin.copy:
-    src: cluster-template.yaml
+  ansible.builtin.template:
+    src: cluster-template.yaml.j2
     dest: /var/lib/yake/cluster-template.yaml
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"

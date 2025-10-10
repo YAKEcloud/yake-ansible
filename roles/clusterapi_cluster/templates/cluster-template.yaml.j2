@@ -1,7 +1,7 @@
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
 kind: KubeadmConfigTemplate
 metadata:
-  name: ${CLUSTER_NAME}-md-0
+  name: {{ clusterapi_cluster_name }}-md-0
 spec:
   template:
     spec:
@@ -12,7 +12,7 @@ spec:
           content: |
             server = "https://docker.io"
 
-            [host."${CONTAINER_REGISTRY_CACHE_DOCKERHUB}"]
+            [host."{{ clusterapi_cluster_container_registry_cache_dockerhub }}"]
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
@@ -22,7 +22,7 @@ spec:
           content: |
             server = "https://ghcr.io"
 
-            [host."${CONTAINER_REGISTRY_CACHE_GHCR}"]
+            [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
@@ -32,7 +32,7 @@ spec:
           content: |
             server = "https://registry.k8s.io"
 
-            [host."${CONTAINER_REGISTRY_CACHE_K8S}"]
+            [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
@@ -40,7 +40,7 @@ spec:
         nodeRegistration:
           kubeletExtraArgs:
             provider-id: openstack:///'{{ instance_id }}'
-            node-labels: "topology.kubernetes.io/zone=${OPENSTACK_FAILURE_DOMAIN}"
+            node-labels: "topology.kubernetes.io/zone={{ clusterapi_cluster_openstack_failure_domain }}"
           name: "{{ local_hostname }}"
           taints:
             - key: "node.cilium.io/agent-not-ready"
@@ -50,7 +50,7 @@ spec:
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: Cluster
 metadata:
-  name: ${CLUSTER_NAME}
+  name: {{ clusterapi_cluster_name }}
 spec:
   clusterNetwork:
     pods:
@@ -60,19 +60,19 @@ spec:
   controlPlaneRef:
     apiVersion: controlplane.cluster.x-k8s.io/v1beta1
     kind: KubeadmControlPlane
-    name: ${CLUSTER_NAME}-control-plane
+    name: {{ clusterapi_cluster_name }}-control-plane
   infrastructureRef:
     apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
     kind: OpenStackCluster
-    name: ${CLUSTER_NAME}
+    name: {{ clusterapi_cluster_name }}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
 kind: MachineDeployment
 metadata:
-  name: ${CLUSTER_NAME}-md-0
+  name: {{ clusterapi_cluster_name }}-md-0
 spec:
-  clusterName: ${CLUSTER_NAME}
-  replicas: ${WORKER_MACHINE_COUNT}
+  clusterName: {{ clusterapi_cluster_name }}
+  replicas: {{ clusterapi_cluster_worker_machine_count }}
   selector:
     matchLabels: null
   template:
@@ -81,19 +81,19 @@ spec:
         configRef:
           apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
           kind: KubeadmConfigTemplate
-          name: ${CLUSTER_NAME}-md-0
-      clusterName: ${CLUSTER_NAME}
-      failureDomain: ${OPENSTACK_FAILURE_DOMAIN}
+          name: {{ clusterapi_cluster_name }}-md-0
+      clusterName: {{ clusterapi_cluster_name }}
+      failureDomain: {{ clusterapi_cluster_openstack_failure_domain }}
       infrastructureRef:
         apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
         kind: OpenStackMachineTemplate
-        name: ${CLUSTER_NAME}-md-0
-      version: ${KUBERNETES_VERSION}
+        name: {{ clusterapi_cluster_name }}-md-0
+      version: {{ clusterapi_cluster_kubernetes_version }}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta1
 kind: KubeadmControlPlane
 metadata:
-  name: ${CLUSTER_NAME}-control-plane
+  name: {{ clusterapi_cluster_name }}-control-plane
 spec:
   kubeadmConfigSpec:
     files:
@@ -103,7 +103,7 @@ spec:
         content: |
           server = "https://docker.io"
 
-          [host."${CONTAINER_REGISTRY_CACHE_DOCKERHUB}"]
+          [host."{{ clusterapi_cluster_container_registry_cache_dockerhub }}"]
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
@@ -113,7 +113,7 @@ spec:
         content: |
           server = "https://ghcr.io"
 
-          [host."${CONTAINER_REGISTRY_CACHE_GHCR}"]
+          [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
@@ -123,7 +123,7 @@ spec:
         content: |
           server = "https://registry.k8s.io"
 
-          [host."${CONTAINER_REGISTRY_CACHE_K8S}"]
+          [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
@@ -151,49 +151,63 @@ spec:
     infrastructureRef:
       apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
       kind: OpenStackMachineTemplate
-      name: ${CLUSTER_NAME}-control-plane
-  replicas: ${CONTROL_PLANE_MACHINE_COUNT}
-  version: ${KUBERNETES_VERSION}
+      name: {{ clusterapi_cluster_name }}-control-plane
+  replicas: {{ clusterapi_cluster_control_plane_machine_count }}
+  version: {{ clusterapi_cluster_kubernetes_version }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackCluster
 metadata:
-  name: ${CLUSTER_NAME}
+  name: {{ clusterapi_cluster_name }}
 spec:
   apiServerLoadBalancer:
     enabled: true
   externalNetwork:
-    id: ${OPENSTACK_EXTERNAL_NETWORK_ID}
+    id: {{ clusterapi_cluster_openstack_external_network_id }}
   identityRef:
-    cloudName: ${OPENSTACK_CLOUD}
-    name: ${CLUSTER_NAME}-cloud-config
+    cloudName: {{ clusterapi_cluster_openstack_cloud_name }}
+    name: {{ clusterapi_cluster_name }}-cloud-config
   managedSecurityGroups:
     allowAllInClusterTraffic: True
   managedSubnets:
     - cidr: 192.168.0.23/24
       dnsNameservers:
-        - ${OPENSTACK_DNS_NAMESERVERS}
+        - {{ clusterapi_cluster_openstack_dns_nameservers }}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate
 metadata:
-  name: ${CLUSTER_NAME}-control-plane
+  name: {{ clusterapi_cluster_name }}-control-plane
 spec:
   template:
     spec:
-      flavor: ${OPENSTACK_CONTROL_PLANE_MACHINE_FLAVOR}
+      flavor: {{ clusterapi_cluster_control_plane_machine_flavor }}
       image:
-        id: ${OPENSTACK_IMAGE_ID}
-      sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
+        id: {{ clusterapi_cluster_image_id }}
+      sshKeyName: {{ clusterapi_cluster_ssh_key_name }}
+{% if clusterapi_cluster_enable_boot_volume | default(false) %}
+      rootVolume:
+        sizeGiB: {{ clusterapi_cluster_root_volume_size | default(50) }}
+        type: {{ clusterapi_cluster_root_volume_type }}
+        availabilityZone:
+          name: {{ clusterapi_cluster_availability_zone }}
+{% endif %}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate
 metadata:
-  name: ${CLUSTER_NAME}-md-0
+  name: {{ clusterapi_cluster_name }}-md-0
 spec:
   template:
     spec:
-      flavor: ${OPENSTACK_NODE_MACHINE_FLAVOR}
+      flavor: {{ clusterapi_cluster_node_machine_flavor }}
       image:
-        id: ${OPENSTACK_IMAGE_ID}
-      sshKeyName: ${OPENSTACK_SSH_KEY_NAME}
+        id: {{ clusterapi_cluster_image_id }}
+      sshKeyName: {{ clusterapi_cluster_ssh_key_name }}
+{% if clusterapi_cluster_enable_boot_volume | default(false) %}
+      rootVolume:
+        sizeGiB: {{ clusterapi_cluster_root_volume_size | default(50) }}
+        type: {{ clusterapi_cluster_root_volume_type }}
+        availabilityZone:
+          name: {{ clusterapi_cluster_availability_zone }}
+{% endif %}

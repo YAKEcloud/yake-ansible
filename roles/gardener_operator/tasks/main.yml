@@ -8,6 +8,11 @@
     mode: 0755
     state: directory
 
+- name: Include network tasks
+  ansible.builtin.include_tasks:
+    - keycloak.yml
+  when: gardener_operator_install_keycloak
+
 - name: Create garden namespace
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"

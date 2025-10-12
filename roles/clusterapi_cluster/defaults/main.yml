@@ -39,11 +39,12 @@ clusterapi_cluster_openstack_cloud:
   interface: "public"
   identity_api_version: 3
   auth_type: "v3applicationcredential"
+clusterapi_cluster_openstack_loadbalancer_provider: ovn # or amphora
 
 clusterapi_cluster_worker_machine_count: "3"
 clusterapi_cluster_openstack_failure_domain: "nova"
 clusterapi_cluster_control_plane_machine_count: "3"
-clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_external_network_id | default('') }}"
+clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_external_network_id }}"
 clusterapi_cluster_openstack_cloud_name: openstack
 clusterapi_cluster_openstack_dns_nameservers: "1.1.1.1"
 clusterapi_cluster_control_plane_machine_flavor: "SCS-4V-8"

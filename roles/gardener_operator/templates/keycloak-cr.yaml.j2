@@ -85,8 +85,8 @@ spec:
         emailVerified: true
         firstName: Admin
         lastName: User
-        email: {{ gardener_operator_garden_cluster_admin_email }}
+        email: "{{ gardener_operator_garden_cluster_admin_email }}"
         credentials:
           - type: password
-            value: {{ gardener_operator_garden_cluster_admin_password }}
+            value: "{{ gardener_operator_garden_cluster_admin_password }}"
             temporary: false

@@ -47,7 +47,7 @@ spec:
     domain: {{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}
     providers:
       - type: openstack-designate
-        secretName: managed-seed-cloud
+        secretName: openstack-cloud
   provider:
     type: openstack
     infrastructureConfig:

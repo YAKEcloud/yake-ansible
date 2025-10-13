@@ -1,3 +1,24 @@
+---
+- name: Run cloud-provider-kind container
+  community.docker.docker_container:
+    name: cloud-provider-kind
+    image: registry.k8s.io/cloud-provider-kind/cloud-controller-manager:v0.7.0
+    env:
+      USER_ID: "{{ gardener_operator_uid }}"
+      GROUP_ID: "{{ gardener_operator_gid }}"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
+    state: started
+    restart_policy: always
+
+- name: Service aktivieren und starten
+  ansible.builtin.systemd:
+    name: cloud-provider-kind
+    enabled: true
+    daemon_reload: true
+    state: started
+
 - name: Template keycloak files
   ansible.builtin.template:
     src: "{{ item }}.j2"
@@ -16,6 +37,8 @@
     repo_url: "https://kubernetes.github.io/ingress-nginx"
 
 - name: Install ingress-nginx
+  environment:
+    DISABLE_CERT_VALIDATION: "true"
   kubernetes.core.helm:
     binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
@@ -24,6 +47,7 @@
     release_name: ingress-nginx
     release_namespace: ingress-nginx
     release_state: present
+    validate_certs: false
     wait: true
     values:
       controller:
@@ -51,6 +75,8 @@
     repo_url: "https://cloudnative-pg.github.io/charts"
 
 - name: Install cnpg-operator
+  environment:
+    DISABLE_CERT_VALIDATION: "true"
   kubernetes.core.helm:
     binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
@@ -60,6 +86,7 @@
     release_name: cnpg
     release_namespace: cnpg-system
     release_state: present
+    validate_certs: false
     wait: true
 
 - name: Create keycloak namespace
@@ -72,6 +99,8 @@
     wait: true
 
 - name: Install cnpg-cluster
+  environment:
+    DISABLE_CERT_VALIDATION: "true"
   kubernetes.core.helm:
     binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
@@ -81,6 +110,7 @@
     release_name: kc-database
     release_namespace: keycloak
     release_state: present
+    validate_certs: false
     wait: true
     values:
       version:

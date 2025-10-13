@@ -25,4 +25,8 @@ while IFS='=' read -r name value; do
     fi
 done < <(env)
 
-exec docker exec $PARAMETERS "${ENV_ARGS[@]}" helm helm "$@"
+if [[ "${DISABLE_CERT_VALIDATION:-false}" == "true" ]]; then
+    exec docker exec $PARAMETERS "${ENV_ARGS[@]}" helm helm --kube-insecure-skip-tls-verify "$@"
+else
+    exec docker exec $PARAMETERS "${ENV_ARGS[@]}" helm helm "$@"
+fi

@@ -8,9 +8,8 @@
     mode: 0755
     state: directory
 
-- name: Include network tasks
-  ansible.builtin.include_tasks:
-    - keycloak.yml
+- name: Include keycloak tasks
+  ansible.builtin.include_tasks: keycloak.yml
   when: gardener_operator_install_keycloak
 
 - name: Create garden namespace

@@ -162,6 +162,7 @@ metadata:
 spec:
   apiServerLoadBalancer:
     enabled: true
+    provider: {{ clusterapi_cluster_openstack_loadbalancer_provider }}
   externalNetwork:
     id: {{ clusterapi_cluster_openstack_external_network_id }}
   identityRef:

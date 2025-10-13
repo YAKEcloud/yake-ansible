@@ -1,0 +1,110 @@
+- name: Template keycloak files
+  ansible.builtin.template:
+    src: "{{ item }}.j2"
+    dest: "/var/lib/yake/gardener-operator/{{ item }}"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop:
+    - clusterissuer.yaml
+    - keycloak-cr.yaml
+
+- name: Add ingress-nginx chart repo
+  kubernetes.core.helm_repository:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    repo_name: ingress-nginx
+    repo_url: "https://kubernetes.github.io/ingress-nginx"
+
+- name: Install ingress-nginx
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
+    chart_ref: ingress-nginx/ingress-nginx
+    create_namespace: true
+    release_name: ingress-nginx
+    release_namespace: ingress-nginx
+    release_state: present
+    wait: true
+    values:
+      controller:
+        admissionWebhooks:
+          patch:
+            enabled: true
+          failurePolicy: Ignore
+        allowSnippetAnnotations: true
+        config:
+          annotations-risk-level: Critical
+          enable-underscores-in-headers: "true"
+          strict-validate-path-type: "false"
+
+- name: Create clusterissuer
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.clusterapi
+    state: present
+    wait: true
+    src: /var/lib/yake/gardener-operator/clusterissuer.yaml
+
+- name: Add cnpg chart repo
+  kubernetes.core.helm_repository:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    repo_name: cnpg
+    repo_url: "https://cloudnative-pg.github.io/charts"
+
+- name: Install cnpg-operator
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
+    chart_ref: cnpg/cloudnative-pg
+    chart_version: "{{ gardener_operator_cloudnative_pg_version }}"
+    create_namespace: true
+    release_name: cnpg
+    release_namespace: cnpg-system
+    release_state: present
+    wait: true
+
+- name: Create keycloak namespace
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
+    name: keycloak
+    api_version: v1
+    kind: Namespace
+    state: present
+    wait: true
+
+- name: Install cnpg-cluster
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
+    chart_ref: cnpg/cluster
+    chart_version: "{{ gardener_operator_cloudnative_pg_cluster_version }}"
+    create_namespace: true
+    release_name: kc-database
+    release_namespace: keycloak
+    release_state: present
+    wait: true
+    values:
+      version:
+        postgresql: "17"
+      cluster:
+        initdb:
+          database: keycloak
+          owner: keycloak
+
+- name: Install keycloak-operator
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.clusterapi
+    state: present
+    namespace: keycloak
+    src: "{{ item }}"
+    wait: true
+  loop:
+    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_version }}/kubernetes/keycloaks.k8s.keycloak.org-v1.yml"
+    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_version }}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml"
+    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_version }}/kubernetes/kubernetes.yml"
+
+- name: Create keycloak CR
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.clusterapi
+    state: present
+    wait: true
+    src: /var/lib/yake/gardener-operator/keycloak-cr.yaml

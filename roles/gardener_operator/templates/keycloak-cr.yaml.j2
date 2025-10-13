@@ -1,0 +1,92 @@
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: Keycloak
+metadata:
+  name: keycloak
+  namespace: keycloak
+spec:
+  instances: 1
+  db:
+    vendor: postgres
+    usernameSecret:
+      name: kc-database-cluster-superuser
+      key: username
+    passwordSecret:
+      name: kc-database-cluster-superuser
+      key: password
+    host: kc-database-cluster-rw.keycloak.svc.cluster.local
+    database: keycloak
+    port: 5432
+  http:
+    tlsSecret: keycloak-tls
+  ingress:
+    enabled: false
+  hostname:
+    hostname: {{ gardener_operator_keycloak_domain }}
+  proxy:
+    headers: xforwarded
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: keycloak
+  namespace: keycloak
+  annotations:
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      proxy_set_header X-Forwarded-Proto https;
+      proxy_set_header X-Forwarded-Host $host;
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - {{ gardener_operator_keycloak_domain }}
+      secretName: keycloak-tls
+  rules:
+    - host: {{ gardener_operator_keycloak_domain }}
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: keycloak-service
+                port:
+                  number: 8443
+---
+apiVersion: k8s.keycloak.org/v2alpha1
+kind: KeycloakRealmImport
+metadata:
+  name: gardener-realm
+  namespace: keycloak
+spec:
+  keycloakCRName: keycloak
+  realm:
+    id: gardener
+    realm: gardener
+    enabled: true
+    displayName: Gardener Realm
+    clients:
+      - clientId: gardener-client
+        name: gardener-client
+        description: OIDC Client for Gardener
+        rootUrl: "https://dashboard.{{ gardener_operator_garden_url }}"
+        redirectUris:
+          - "https://dashboard.{{ gardener_operator_garden_url }}/auth/callback"
+        webOrigins:
+          - "https://dashboard.{{ gardener_operator_garden_url }}"
+          - "+"
+        secret: {{ gardener_operator_keycloak_client_secret }}
+        standardFlowEnabled: true
+        directAccessGrantsEnabled: true
+    users:
+      - username: admin
+        enabled: true
+        emailVerified: true
+        firstName: Admin
+        lastName: User
+        email: {{ gardener_operator_garden_cluster_admin_email }}
+        credentials:
+          - type: password
+            value: {{ gardener_operator_garden_cluster_admin_password }}
+            temporary: false

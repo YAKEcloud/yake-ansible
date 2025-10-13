@@ -2,7 +2,7 @@
 - name: Run cloud-provider-kind container
   community.docker.docker_container:
     name: cloud-provider-kind
-    image: registry.k8s.io/cloud-provider-kind/cloud-controller-manager:v0.7.0
+    image: registry.k8s.io/cloud-provider-kind/cloud-controller-manager:v0.8.0
     env:
       USER_ID: "{{ gardener_operator_uid }}"
       GROUP_ID: "{{ gardener_operator_gid }}"

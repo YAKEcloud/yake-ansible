@@ -171,12 +171,12 @@
     group: "{{ gardener_operator_gid }}"
     mode: 0644
 
-# - name: Create the certificate and secret
-#   kubernetes.core.k8s:
-#     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-#     state: present
-#     wait: true
-#     src: /var/lib/yake/gardener-operator/seed-ingress-certificate.yaml
+- name: Create the certificate and secret
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    wait: true
+    src: /var/lib/yake/gardener-operator/seed-ingress-certificate.yaml
 
 - name: Template managed-seed files
   ansible.builtin.template:

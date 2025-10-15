@@ -35,6 +35,8 @@ metadata:
   name: {{ gardener_operator_managed_seed_name }}
   namespace: garden
 spec:
+  tolerations:
+    - key: seed.gardener.cloud/protected
   extensions:
     - type: shoot-cert-service
     - type: shoot-dns-service
@@ -107,6 +109,7 @@ spec:
         metadata:
           labels:
             name: {{ gardener_operator_managed_seed_name }}
+            yake.cloud/generate-controlplane-cert: "true"
         taints:
           seed.gardener.cloud/protected: false
         spec:

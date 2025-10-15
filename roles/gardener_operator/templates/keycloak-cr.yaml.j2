@@ -73,10 +73,12 @@ spec:
         rootUrl: "https://dashboard.{{ gardener_operator_garden_url }}"
         redirectUris:
           - "https://dashboard.{{ gardener_operator_garden_url }}/auth/callback"
+          - "http://localhost:8000"
         webOrigins:
           - "https://dashboard.{{ gardener_operator_garden_url }}"
           - "+"
         secret: {{ gardener_operator_keycloak_client_secret }}
+        publicClient: true
         standardFlowEnabled: true
         directAccessGrantsEnabled: true
     users:
@@ -90,3 +92,5 @@ spec:
           - type: password
             value: "{{ gardener_operator_garden_cluster_admin_password }}"
             temporary: false
+        realmRoles:
+          - default-roles-gardener

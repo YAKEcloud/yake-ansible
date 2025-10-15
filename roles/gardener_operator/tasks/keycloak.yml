@@ -1,4 +1,5 @@
 ---
+# For now you need to setup helm as binary on your machine
 - name: Download k3s install script
   ansible.builtin.get_url:
     url: https://get.k3s.io
@@ -39,13 +40,11 @@
 
 - name: Add ingress-nginx chart repo
   kubernetes.core.helm_repository:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     repo_name: ingress-nginx
     repo_url: https://kubernetes.github.io/ingress-nginx
 
 - name: Install ingress-nginx
   kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: ingress-nginx/ingress-nginx
     create_namespace: true
@@ -67,7 +66,6 @@
 
 - name: Install cert-manager
   kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: oci://quay.io/jetstack/charts/cert-manager
     create_namespace: true
@@ -88,13 +86,11 @@
 
 - name: Add cnpg chart repo
   kubernetes.core.helm_repository:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     repo_name: cnpg
     repo_url: https://cloudnative-pg.github.io/charts
 
 - name: Install cnpg-operator
   kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: cnpg/cloudnative-pg
     chart_version: "{{ gardener_operator_cloudnative_pg_version }}"
@@ -115,7 +111,6 @@
 
 - name: Install cnpg-cluster
   kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: cnpg/cluster
     chart_version: "{{ gardener_operator_cloudnative_pg_cluster_version }}"

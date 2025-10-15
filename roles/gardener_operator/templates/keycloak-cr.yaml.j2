@@ -77,7 +77,7 @@ spec:
         webOrigins:
           - "https://dashboard.{{ gardener_operator_garden_url }}"
           - "+"
-        secret: {{ gardener_operator_keycloak_client_secret }}
+        secret: "{{ gardener_operator_keycloak_client_secret }}"
         publicClient: true
         standardFlowEnabled: true
         directAccessGrantsEnabled: true

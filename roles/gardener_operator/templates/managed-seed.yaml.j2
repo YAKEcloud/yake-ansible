@@ -128,7 +128,7 @@ spec:
             provider:
               type: openstack-designate
               secretRef:
-                name: managed-seed-cloud
+                name: openstack-cloud
                 namespace: garden
           ingress:
             domain: ingress.{{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}

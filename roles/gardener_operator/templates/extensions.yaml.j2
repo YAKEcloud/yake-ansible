@@ -71,7 +71,7 @@ spec:
             acme:
               email: {{ gardener_operator_shoot_cert_service_acme_email }}
               server: {{ gardener_operator_shoot_cert_service_acme_server }}
-            name: default-issuer
+            name: garden
           precheckNameservers: 1.1.1.1,1.0.0.1
       values:
         certificateConfig:
@@ -79,7 +79,7 @@ spec:
             acme:
               email: {{ gardener_operator_shoot_cert_service_acme_email }}
               server: {{ gardener_operator_shoot_cert_service_acme_server }}
-            name: default-issuer
+            name: garden
           precheckNameservers: 1.1.1.1,1.0.0.1
   resources:
   - autoEnable:

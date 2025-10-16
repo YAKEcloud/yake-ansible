@@ -6,13 +6,13 @@ metadata:
     cert.gardener.cloud/class: garden
     cert.gardener.cloud/dnsrecord-class: garden
     cert.gardener.cloud/dnsrecord-provider-type: openstack-designate
-    cert.gardener.cloud/dnsrecord-secret-ref: openstack-cloud
+    cert.gardener.cloud/dnsrecord-secret-ref: control-plane-cloud
   name: seed-ingress
   namespace: garden
 spec:
   commonName: "*.internal.{{ gardener_operator_garden_url }}"
   issuerRef:
-    name: default-issuer
+    name: garden
     namespace: garden
   secretRef:
     name: seed-ingress-certificate

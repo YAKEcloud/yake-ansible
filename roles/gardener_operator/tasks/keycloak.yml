@@ -1,23 +1,31 @@
 ---
-- name: Run cloud-provider-kind container
-  community.docker.docker_container:
-    name: cloud-provider-kind
-    image: registry.k8s.io/cloud-provider-kind/cloud-controller-manager:v0.7.0
-    env:
-      USER_ID: "{{ gardener_operator_uid }}"
-      GROUP_ID: "{{ gardener_operator_gid }}"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-    network_mode: host
-    state: started
-    restart_policy: always
+# For now you need to setup helm as binary on your machine
+- name: Download k3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s-install.sh
+    mode: '0755'
 
-- name: Service aktivieren und starten
-  ansible.builtin.systemd:
-    name: cloud-provider-kind
-    enabled: true
-    daemon_reload: true
-    state: started
+- name: Run k3s installer with Traefik disabled
+  ansible.builtin.command: >
+    sh /tmp/k3s-install.sh
+  environment:
+    INSTALL_K3S_EXEC: "--disable=traefik"
+  args:
+    creates: /usr/local/bin/k3s
+
+- name: Remove install script
+  ansible.builtin.file:
+    path: /tmp/k3s-install.sh
+    state: absent
+
+- name: Copy k3s kubeconfig to yake dir
+  ansible.builtin.copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: /var/lib/yake/gardener-operator/kubeconfig.k3s
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
 
 - name: Template keycloak files
   ansible.builtin.template:
@@ -32,22 +40,17 @@
 
 - name: Add ingress-nginx chart repo
   kubernetes.core.helm_repository:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     repo_name: ingress-nginx
-    repo_url: "https://kubernetes.github.io/ingress-nginx"
+    repo_url: https://kubernetes.github.io/ingress-nginx
 
 - name: Install ingress-nginx
-  environment:
-    DISABLE_CERT_VALIDATION: "true"
   kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
-    kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: ingress-nginx/ingress-nginx
     create_namespace: true
     release_name: ingress-nginx
     release_namespace: ingress-nginx
     release_state: present
-    validate_certs: false
     wait: true
     values:
       controller:
@@ -61,37 +64,45 @@
           enable-underscores-in-headers: "true"
           strict-validate-path-type: "false"
 
+- name: Install cert-manager
+  kubernetes.core.helm:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
+    chart_ref: oci://quay.io/jetstack/charts/cert-manager
+    create_namespace: true
+    release_name: cert-manager
+    release_namespace: cert-manager
+    release_state: present
+    wait: true
+    values:
+      crds:
+        enabled: true
+
 - name: Create clusterissuer
   kubernetes.core.k8s:
-    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.clusterapi
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     state: present
     wait: true
     src: /var/lib/yake/gardener-operator/clusterissuer.yaml
 
 - name: Add cnpg chart repo
   kubernetes.core.helm_repository:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     repo_name: cnpg
-    repo_url: "https://cloudnative-pg.github.io/charts"
+    repo_url: https://cloudnative-pg.github.io/charts
 
 - name: Install cnpg-operator
-  environment:
-    DISABLE_CERT_VALIDATION: "true"
   kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
-    kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: cnpg/cloudnative-pg
     chart_version: "{{ gardener_operator_cloudnative_pg_version }}"
     create_namespace: true
     release_name: cnpg
     release_namespace: cnpg-system
     release_state: present
-    validate_certs: false
     wait: true
 
 - name: Create keycloak namespace
   kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     name: keycloak
     api_version: v1
     kind: Namespace
@@ -99,18 +110,14 @@
     wait: true
 
 - name: Install cnpg-cluster
-  environment:
-    DISABLE_CERT_VALIDATION: "true"
   kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
-    kubeconfig: "/var/lib/yake/kubeconfig.clusterapi"
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: cnpg/cluster
     chart_version: "{{ gardener_operator_cloudnative_pg_cluster_version }}"
     create_namespace: true
     release_name: kc-database
     release_namespace: keycloak
     release_state: present
-    validate_certs: false
     wait: true
     values:
       version:
@@ -122,7 +129,7 @@
 
 - name: Install keycloak-operator
   kubernetes.core.k8s:
-    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.clusterapi
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     state: present
     namespace: keycloak
     src: "{{ item }}"
@@ -134,7 +141,7 @@
 
 - name: Create keycloak CR
   kubernetes.core.k8s:
-    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.clusterapi
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     state: present
     wait: true
     src: /var/lib/yake/gardener-operator/keycloak-cr.yaml

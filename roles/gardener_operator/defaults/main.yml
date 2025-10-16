@@ -61,7 +61,7 @@ gardener_operator_networking_calico_version: '1.51.0'
 
 gardener_operator_os_ubuntu_enable: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu
-gardener_operator_os_ubuntu_version: '1.32.0'
+gardener_operator_os_ubuntu_version: '1.33.0'
 
 gardener_operator_provider_aws_enable: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws

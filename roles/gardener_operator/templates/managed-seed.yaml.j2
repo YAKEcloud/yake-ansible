@@ -109,7 +109,7 @@ spec:
         metadata:
           labels:
             name: {{ gardener_operator_managed_seed_name }}
-            # yake.cloud/generate-controlplane-cert: "true"
+            yake.cloud/generate-controlplane-cert: "true"
         taints:
           seed.gardener.cloud/protected: false
         spec:

@@ -49,47 +49,6 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.garden
 ### Patch/Upgrade
 If you want to patch/upgrade your gardener, just run the playbook once again and set the variable `gardener_operator_version` to the next version you like. Your gardener will be patched/upgraded to this version.
 
-### Managed Seed Terminal
-If you want to use the web terminal for shoots running on a managed seed, you need to add a certificate and a secret there.
-
-Use the Gardener dashboard to access the shoot that acts as a managed seed.
-
-Once you have access, you can add the following to the cluster (please adapt it to your infrastructure):
-
-```bash
-kubectl apply -f - <<EOF
-apiVersion: cert.gardener.cloud/v1alpha1
-kind: Certificate
-metadata:
-  annotations:
-    cert.gardener.cloud/class: garden
-    cert.gardener.cloud/dnsrecord-class: garden
-    cert.gardener.cloud/dnsrecord-provider-type: openstack-designate
-    cert.gardener.cloud/dnsrecord-secret-ref: openstack-cloud
-  name: seed-ingress
-  namespace: garden
-spec:
-  commonName: "*.<SEED_PROJECT>.<GARDENER_URL>"
-  issuerRef:
-    name: default-issuer
-    namespace: garden
-  secretRef:
-    name: seed-ingress-certificate
-    namespace: garden
----
-apiVersion: v1
-kind: Secret
-metadata:
-  labels:
-    gardener.cloud/role: controlplane-cert
-  name: seed-ingress-certificate
-  namespace: garden
-type: Opaque
-EOF
-```
-
-You should then be able to access all shoots running on the managed seed via the terminal.
-
 ### Cleanup
 
 ```bash

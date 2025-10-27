@@ -138,4 +138,6 @@ gardener_operator_managed_seed_openstack_application_credential_id: "{{ gardener
 gardener_operator_managed_seed_openstack_application_credential_name: "{{ gardener_operator_openstack_application_credential_name }}"
 gardener_operator_managed_seed_openstack_application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
 
-gardener_operator_managed_seed_machinetype: SCS-4V-8
+gardener_operator_managed_seed_machinetype: SCS-4V-16
+gardener_operator_managed_seed_minimum_workers: "3"
+gardener_operator_managed_seed_maximum_workers: "15"

@@ -69,8 +69,8 @@ spec:
         image:
           name: gardenlinux
           version: {{ gardener_operator_openstack_gardenlinux_version }}.0
-      minimum: 2
-      maximum: 5
+      minimum: {{ gardener_operator_managed_seed_minimum_workers }}
+      maximum: {{ gardener_operator_managed_seed_maximum_workers }}
       volume:
         type: {{ gardener_operator_provider_openstack_storageclass_type }}
         size: 50Gi

@@ -47,8 +47,8 @@ clusterapi_cluster_control_plane_machine_count: "3"
 clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_external_network_id }}"
 clusterapi_cluster_openstack_cloud_name: openstack
 clusterapi_cluster_openstack_dns_nameservers: "1.1.1.1"
-clusterapi_cluster_control_plane_machine_flavor: "SCS-4V-8"
-clusterapi_cluster_node_machine_flavor: "SCS-4V-8"
+clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4"
+clusterapi_cluster_node_machine_flavor: "SCS-4V-16"
 clusterapi_cluster_image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 clusterapi_cluster_enable_boot_volume: true
 clusterapi_cluster_root_volume_size: 50

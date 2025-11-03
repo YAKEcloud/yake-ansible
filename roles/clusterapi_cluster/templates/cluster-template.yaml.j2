@@ -1,4 +1,4 @@
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
   name: {{ clusterapi_cluster_name }}-md-0
@@ -39,15 +39,18 @@ spec:
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
-            provider-id: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
-            node-labels: "topology.kubernetes.io/zone={{ clusterapi_cluster_openstack_failure_domain }}"
+          - name: cloud-provider
+            value: external
+          - name: provider-id
+            value: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
           name: "{% raw %}{{ local_hostname }}{% endraw %}"
+          node-labels: "topology.kubernetes.io/zone={{ clusterapi_cluster_openstack_failure_domain }}"
           taints:
-            - key: "node.cilium.io/agent-not-ready"
-              value: "true"
-              effect: "NoSchedule"
+          - key: "node.cilium.io/agent-not-ready"
+            value: "true"
+            effect: "NoSchedule"
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
   name: {{ clusterapi_cluster_name }}
@@ -58,15 +61,15 @@ spec:
         - 10.244.0.0/16
     serviceDomain: cluster.local
   controlPlaneRef:
-    apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+    apiGroup: controlplane.cluster.x-k8s.io
     kind: KubeadmControlPlane
     name: {{ clusterapi_cluster_name }}-control-plane
   infrastructureRef:
-    apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+    apiGroup: infrastructure.cluster.x-k8s.io
     kind: OpenStackCluster
     name: {{ clusterapi_cluster_name }}
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
 metadata:
   name: {{ clusterapi_cluster_name }}-md-0
@@ -79,18 +82,18 @@ spec:
     spec:
       bootstrap:
         configRef:
-          apiVersion: bootstrap.cluster.x-k8s.io/v1beta1
+          apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
           name: {{ clusterapi_cluster_name }}-md-0
       clusterName: {{ clusterapi_cluster_name }}
       failureDomain: {{ clusterapi_cluster_openstack_failure_domain }}
       infrastructureRef:
-        apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+        apiGroup: infrastructure.cluster.x-k8s.io
         kind: OpenStackMachineTemplate
         name: {{ clusterapi_cluster_name }}-md-0
       version: {{ clusterapi_cluster_kubernetes_version }}
 ---
-apiVersion: controlplane.cluster.x-k8s.io/v1beta1
+apiVersion: controlplane.cluster.x-k8s.io/v1beta2
 kind: KubeadmControlPlane
 metadata:
   name: {{ clusterapi_cluster_name }}-control-plane
@@ -127,31 +130,43 @@ spec:
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
+    clusterConfiguration:
+      controllerManager:
+        extraArgs:
+        - name: cloud-provider
+          value: external
     initConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          provider-id: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
+        - name: cloud-provider
+          value: external
+        - name: provider-id
+          value: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
         name: "{% raw %}{{ local_hostname }}{% endraw %}"
         taints:
-          - key: "node.cilium.io/agent-not-ready"
-            effect: "NoSchedule"
-          - key: "node-role.kubernetes.io/control-plane"
-            effect: "NoSchedule"
+        - key: "node.cilium.io/agent-not-ready"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          effect: "NoSchedule"
     joinConfiguration:
       nodeRegistration:
         kubeletExtraArgs:
-          provider-id: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
+        - name: cloud-provider
+          value: external
+        - name: provider-id
+          value: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
         name: "{% raw %}{{ local_hostname }}{% endraw %}"
         taints:
-          - key: "node.cilium.io/agent-not-ready"
-            effect: "NoSchedule"
-          - key: "node-role.kubernetes.io/control-plane"
-            effect: "NoSchedule"
+        - key: "node.cilium.io/agent-not-ready"
+          effect: "NoSchedule"
+        - key: "node-role.kubernetes.io/control-plane"
+          effect: "NoSchedule"
   machineTemplate:
-    infrastructureRef:
-      apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
-      kind: OpenStackMachineTemplate
-      name: {{ clusterapi_cluster_name }}-control-plane
+    spec:
+      infrastructureRef:
+        apiGroup: infrastructure.cluster.x-k8s.io
+        kind: OpenStackMachineTemplate
+        name: {{ clusterapi_cluster_name }}-control-plane
   replicas: {{ clusterapi_cluster_control_plane_machine_count }}
   version: {{ clusterapi_cluster_kubernetes_version }}
 ---

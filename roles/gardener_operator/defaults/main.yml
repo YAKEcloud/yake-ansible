@@ -43,7 +43,7 @@ gardener_operator_provider_openstack_storageclass_name: default
 gardener_operator_provider_openstack_storageclass_type: default
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-cert-service
-gardener_operator_shoot_cert_service_version: '1.54.0'
+gardener_operator_shoot_cert_service_version: '1.55.0'
 gardener_operator_shoot_cert_service_acme_email: ""
 # Staging: https://acme-staging-v02.api.letsencrypt.org/directory
 gardener_operator_shoot_cert_service_acme_server: https://acme-v02.api.letsencrypt.org/directory

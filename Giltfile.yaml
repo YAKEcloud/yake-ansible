@@ -35,7 +35,7 @@ repositories:
         dstFile: roles/clusterapi_cluster/files/calico/calico.yaml
   - git: https://github.com/k-orc/openstack-resource-controller
     # renovate: datasource=github-releases depName=k-orc/openstack-resource-controller
-    version: 'v2.2.0'
+    version: 'v2.3.0'
     sources:
       - src: dist/install.yaml
         dstFile: roles/clusterapi_install/files/orc.yaml

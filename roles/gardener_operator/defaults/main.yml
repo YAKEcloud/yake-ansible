@@ -149,6 +149,7 @@ gardener_operator_managed_seed_openstack_application_credential_id: "{{ gardener
 gardener_operator_managed_seed_openstack_application_credential_name: "{{ gardener_operator_openstack_application_credential_name }}"
 gardener_operator_managed_seed_openstack_application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
 
+gardener_operator_managed_seed_openstack_gardenlinux_version: "{{ gardener_operator_cloudprofile_gardener_versions[0].version }}" # take the first version of the variable
 gardener_operator_managed_seed_openstack_storageclass_name: "{{ gardener_operator_provider_openstack_storageclass_name }}"
 gardener_operator_managed_seed_openstack_storageclass_type: "{{ gardener_operator_provider_openstack_storageclass_type }}"
 gardener_operator_managed_seed_openstack_zones: "{{ gardener_operator_openstack_zones }}"

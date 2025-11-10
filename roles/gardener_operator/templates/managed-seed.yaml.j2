@@ -68,7 +68,7 @@ spec:
         type: {{ gardener_operator_managed_seed_machinetype }}
         image:
           name: gardenlinux
-          version: {{ gardener_operator_openstack_gardenlinux_version }}.0
+          version: {{ gardener_operator_managed_seed_openstack_gardenlinux_version }}.0
       minimum: {{ gardener_operator_managed_seed_minimum_workers }}
       maximum: {{ gardener_operator_managed_seed_maximum_workers }}
       volume:

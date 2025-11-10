@@ -61,11 +61,15 @@ spec:
   machineImages:
     - name: gardenlinux
       versions:
-        - version: {{ gardener_operator_openstack_gardenlinux_version }}.0
+{% for v in gardener_operator_cloudprofile_gardener_versions %}
+        - version: {{ v.version }}.0
+{% endfor %}
 {% if gardener_operator_os_ubuntu_enable %}
     - name: ubuntu
       versions:
-        - version: {{ gardener_operator_openstack_ubuntu_version }}
+{% for v in gardener_operator_cloudprofile_ubuntu_versions %}
+        - version: {{ v.version }}
+{% endfor %}
 {% endif %}
   machineTypes:
 {% for type in gardener_operator_openstack_machinetypes %}

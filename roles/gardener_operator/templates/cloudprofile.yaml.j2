@@ -2,44 +2,48 @@
 apiVersion: core.gardener.cloud/v1beta1
 kind: CloudProfile
 metadata:
-  name: {{ gardener_operator_cloudprofile_name }}
+  name: {{ gardener_operator_openstack_cloudprofile_name }}
 spec:
   type: openstack
   providerConfig:
     apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
     kind: CloudProfileConfig
     storageClasses:
-      - name: {{ gardener_operator_provider_openstack_storageclass_name }}
+      - name: {{ gardener_operator_managed_seed_openstack_storageclass_name }}
         default: true
         provisioner: cinder.csi.openstack.org
         volumeBindingMode: WaitForFirstConsumer
         parameters:
-          type: {{ gardener_operator_provider_openstack_storageclass_type }}
-          availability: {{ gardener_operator_openstack_zones[0] }}
+          type: {{ gardener_operator_managed_seed_openstack_storageclass_type }}
+          availability: {{ gardener_operator_managed_seed_openstack_zones[0] }}
     constraints:
       floatingPools:
         - name: public
       loadBalancerProviders:
         - name: amphora
     keystoneURLs:
-      - region: {{ gardener_operator_openstack_region_name }}
-        url: {{ gardener_operator_openstack_auth_url }}
+      - region: {{ gardener_operator_managed_seed_openstack_region_name }}
+        url: {{ gardener_operator_managed_seed_openstack_auth_url }}
     machineImages:
       - name: gardenlinux
         versions:
-          - version: {{ gardener_operator_openstack_gardenlinux_version }}.0
-            image: "{{ gardener_operator_openstack_gardenlinux_image_name }}{{ gardener_operator_openstack_gardenlinux_version }}"
+{% for v in gardener_operator_cloudprofile_gardener_versions %}
+          - version: {{ v.version }}.0
+            image: "{{ v.image_name }}"
             regions:
               - name: {{ gardener_operator_openstack_region_name }}
-                id: {{ gardener_operator_openstack_gardenlinux_id }}
+                id: {{ v.id }}
+{% endfor %}
 {% if gardener_operator_os_ubuntu_enable %}
       - name: ubuntu
         versions:
-          - version: {{ gardener_operator_os_ubuntu_version }}
-            image: "{{ gardener_operator_openstack_ubuntu_image_name }}{{ gardener_operator_os_ubuntu_version }}"
+{% for v in gardener_operator_cloudprofile_ubuntu_versions %}
+          - version: {{ v.version }}
+            image: "{{ v.image_name }}"
             regions:
               - name: {{ gardener_operator_openstack_region_name }}
-                id: {{ gardener_operator_openstack_ubuntu_id }}
+                id: {{ v.id }}
+{% endfor %}
 {% endif %}
     useOctavia: true
     serverGroupPolicies:
@@ -71,9 +75,9 @@ spec:
       memory: {{ type.memory }}
 {% endfor %}
   volumeTypes:
-    - name: {{ gardener_operator_provider_openstack_storageclass_type }}
-      class: {{ gardener_operator_provider_openstack_storageclass_name }}
+    - name: {{ gardener_operator_managed_seed_openstack_storageclass_type }}
+      class: {{ gardener_operator_managed_seed_openstack_storageclass_name }}
   regions:
-    - name: {{ gardener_operator_openstack_region_name }}
+    - name: {{ gardener_operator_managed_seed_openstack_region_name }}
       zones:
-        - name: {{ gardener_operator_openstack_zones[0] }}
+        - name: {{ gardener_operator_managed_seed_openstack_zones[0] }}

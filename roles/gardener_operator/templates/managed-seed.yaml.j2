@@ -18,7 +18,7 @@ apiVersion: security.gardener.cloud/v1alpha1
 kind: CredentialsBinding
 metadata:
   labels:
-    cloudprofile.garden.sapcloud.io/name: {{ gardener_operator_cloudprofile_name }}
+    cloudprofile.garden.sapcloud.io/name: {{ gardener_operator_openstack_cloudprofile_name }}
   name: seeds
   namespace: garden
 credentialsRef:
@@ -42,8 +42,8 @@ spec:
     - type: shoot-dns-service
   seedName: internal-seed
   cloudProfile:
-    name: {{ gardener_operator_cloudprofile_name }}
-  region: {{ gardener_operator_openstack_region_name }}
+    name: {{ gardener_operator_openstack_cloudprofile_name }}
+  region: {{ gardener_operator_managed_seed_openstack_region_name }}
   credentialsBindingName: seeds
   dns:
     domain: {{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}
@@ -72,9 +72,9 @@ spec:
       minimum: {{ gardener_operator_managed_seed_minimum_workers }}
       maximum: {{ gardener_operator_managed_seed_maximum_workers }}
       volume:
-        type: {{ gardener_operator_provider_openstack_storageclass_type }}
+        type: {{ gardener_operator_managed_seed_openstack_storageclass_type }}
         size: 50Gi
-      zones: {{ gardener_operator_openstack_zones }}
+      zones: {{ gardener_operator_managed_seed_openstack_zones }}
   networking:
     nodes: 10.120.0.0/16
     pods: 100.72.0.0/16
@@ -144,7 +144,7 @@ spec:
               services: 100.88.0.0/13
           provider:
             type: openstack
-            region: {{ gardener_operator_openstack_region_name }}
+            region: {{ gardener_operator_managed_seed_openstack_region_name }}
           settings:
             scheduling:
               visible: true

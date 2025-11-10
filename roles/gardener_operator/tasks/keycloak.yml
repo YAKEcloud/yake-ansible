@@ -11,6 +11,7 @@
     sh /tmp/k3s-install.sh
   environment:
     INSTALL_K3S_EXEC: "--disable=traefik"
+    K3S_KUBECONFIG_MODE: "644"
   args:
     creates: /usr/local/bin/k3s
 

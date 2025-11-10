@@ -14,6 +14,7 @@ gardener_operator_cloudnative_pg_cluster_version: '0.3.1'
 gardener_operator_keycloak_version: '26.4.2'
 gardener_operator_keycloak_domain: keycloak.example.com
 gardener_operator_keycloak_client_secret: ""
+gardener_operator_keycloak_display_name: "Gardener Realm"
 
 gardener_operator_openstack_auth_url: "https://keystone.example.com"
 gardener_operator_openstack_project_name: example
@@ -107,16 +108,20 @@ gardener_operator_excess_capacity_reservation: "false"
 gardener_operator_managed_seed_enable: true
 gardener_operator_managed_seed_name: "managed-seed-1"
 
-gardener_operator_cloudprofile_name: regiocloud
-gardener_operator_openstack_gardenlinux_id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
-gardener_operator_openstack_gardenlinux_image_name: "Garden Linux " # mind the whitespace at the end!
-gardener_operator_openstack_gardenlinux_version: "1877.2"
-gardener_operator_openstack_ubuntu_id: "525075b6-6e32-421d-b7f1-4088b821cd85"
-gardener_operator_openstack_ubuntu_image_name: "Ubuntu " # mind the whitespace at the end!
-gardener_operator_openstack_ubuntu_version: "24.04"
+gardener_operator_openstack_cloudprofile_name: regiocloud
+
+gardener_operator_cloudprofile_gardener_versions:
+  - version: "1877.2"
+    image_name: "Garden Linux 1877.2" # mind the whitespace
+    id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
+
+# ubuntu need to be enabled by gardener_operator_os_ubuntu_enable
+gardener_operator_cloudprofile_ubuntu_versions:
+  - version: "24.04"
+    image_name: "Ubuntu 24.04"
+    id: "525075b6-6e32-421d-b7f1-4088b821cd85"
+
 gardener_operator_cloudprofile_kubernetes_versions:
-  - version: 1.34.1
-    classification: supported
   - version: 1.33.5
     classification: supported
   - version: 1.32.9
@@ -143,6 +148,10 @@ gardener_operator_managed_seed_openstack_region_name: "{{ gardener_operator_open
 gardener_operator_managed_seed_openstack_application_credential_id: "{{ gardener_operator_openstack_application_credential_id }}"
 gardener_operator_managed_seed_openstack_application_credential_name: "{{ gardener_operator_openstack_application_credential_name }}"
 gardener_operator_managed_seed_openstack_application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
+
+gardener_operator_managed_seed_openstack_storageclass_name: "{{ gardener_operator_provider_openstack_storageclass_name }}"
+gardener_operator_managed_seed_openstack_storageclass_type: "{{ gardener_operator_provider_openstack_storageclass_type }}"
+gardener_operator_managed_seed_openstack_zones: "{{ gardener_operator_openstack_zones }}"
 
 gardener_operator_managed_seed_machinetype: SCS-4V-16
 gardener_operator_managed_seed_minimum_workers: "3"

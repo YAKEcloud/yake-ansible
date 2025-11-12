@@ -154,6 +154,13 @@ gardener_operator_managed_seed_openstack_storageclass_name: "{{ gardener_operato
 gardener_operator_managed_seed_openstack_storageclass_type: "{{ gardener_operator_provider_openstack_storageclass_type }}"
 gardener_operator_managed_seed_openstack_zones: "{{ gardener_operator_openstack_zones }}"
 
+gardener_operator_cloudprofile_openstack_floating_pools:
+  - name: public
+  # - name: wireguard
+gardener_operator_cloudprofile_openstack_loadbalancer_providers:
+  - name: amphora
+  # - name: ovn
+
 gardener_operator_managed_seed_machinetype: SCS-4V-16
 gardener_operator_managed_seed_minimum_workers: "3"
 gardener_operator_managed_seed_maximum_workers: "15"

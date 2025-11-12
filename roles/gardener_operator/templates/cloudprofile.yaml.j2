@@ -18,9 +18,13 @@ spec:
           availability: {{ gardener_operator_managed_seed_openstack_zones[0] }}
     constraints:
       floatingPools:
-        - name: public
+{% for p in gardener_operator_cloudprofile_openstack_floating_pools %}
+        - name: {{ p.name }}
+{% endfor %}
       loadBalancerProviders:
-        - name: amphora
+{% for p in gardener_operator_cloudprofile_openstack_loadbalancer_providers %}
+        - name: {{ p.name }}
+{% endfor %}
     keystoneURLs:
       - region: {{ gardener_operator_managed_seed_openstack_region_name }}
         url: {{ gardener_operator_managed_seed_openstack_auth_url }}

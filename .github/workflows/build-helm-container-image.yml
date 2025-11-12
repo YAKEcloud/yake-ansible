@@ -25,7 +25,7 @@ jobs:
     strategy:
       matrix:
         version:
-          - v3.19.1  # renovate: datasource=github-releases depName=helm/helm
+          - v3.19.2  # renovate: datasource=github-releases depName=helm/helm
     steps:
       - name: Checkout the repository
         uses: actions/checkout@v5

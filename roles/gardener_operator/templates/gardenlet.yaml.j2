@@ -84,6 +84,8 @@ spec:
   config:
     apiVersion: gardenlet.config.gardener.cloud/v1alpha1
     kind: GardenletConfiguration
+    gardenClientConnection:
+      gardenClusterAdress: https://api.garden.{{ gardener_operator_garden_url }}
     controllers:
       shoot:
         reconcileInMaintenanceOnly: true

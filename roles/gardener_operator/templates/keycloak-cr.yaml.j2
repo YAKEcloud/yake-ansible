@@ -62,8 +62,8 @@ metadata:
 spec:
   keycloakCRName: keycloak
   realm:
-    id: gardener
-    realm: gardener
+    id: {{ gardener_operator_keycloak_realm_name }}
+    realm: {{ gardener_operator_keycloak_realm_name }}
     enabled: true
     displayName: {{ gardener_operator_keycloak_display_name }}
     clients:

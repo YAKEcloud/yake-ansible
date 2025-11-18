@@ -14,6 +14,7 @@ gardener_operator_cloudnative_pg_cluster_version: '0.3.1'
 gardener_operator_keycloak_version: '26.4.2'
 gardener_operator_keycloak_domain: keycloak.example.com
 gardener_operator_keycloak_client_secret: ""
+gardener_operator_keycloak_realm_name: "gardener"
 gardener_operator_keycloak_display_name: "Gardener Realm"
 
 gardener_operator_openstack_auth_url: "https://keystone.example.com"

@@ -59,7 +59,7 @@ gardener_operator_os_gardenlinux_version: '0.34.0'
 
 gardener_operator_networking_calico_enable: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-calico
-gardener_operator_networking_calico_version: '1.53.0'
+gardener_operator_networking_calico_version: '1.53.1'
 
 gardener_operator_os_ubuntu_enable: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu

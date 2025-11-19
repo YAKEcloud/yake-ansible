@@ -51,7 +51,7 @@ gardener_operator_shoot_cert_service_acme_email: ""
 gardener_operator_shoot_cert_service_acme_server: https://acme-v02.api.letsencrypt.org/directory
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-dns-service
-gardener_operator_shoot_dns_service_version: '1.73.2'
+gardener_operator_shoot_dns_service_version: '1.75.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
 gardener_operator_networking_cilium_version: '1.45.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux

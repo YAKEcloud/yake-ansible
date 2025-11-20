@@ -5,8 +5,7 @@
   ],
   "separateMinorPatch": true,
   "lockFileMaintenance": {
-    "enabled": true,
-    "schedule": ["nightly"]
+    "enabled": true
   },
   "dependencyDashboard": true,
   "rebaseWhen": "behind-base-branch",

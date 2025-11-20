@@ -10,7 +10,7 @@
 
 - name: Include keycloak tasks
   ansible.builtin.include_tasks: keycloak.yml
-  when: gardener_operator_install_keycloak
+  when: gardener_operator_keycloak_enabled | bool
 
 - name: Create garden namespace
   kubernetes.core.k8s:
@@ -178,27 +178,57 @@
     wait: true
     src: /var/lib/yake/gardener-operator/seed-ingress-certificate.yaml
 
-- name: Template managed-seed files
-  ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "/var/lib/yake/gardener-operator/{{ item }}"
+- name: Render project.yaml (optional)
+  template:
+    src: project.yaml.j2
+    dest: /var/lib/yake/gardener-operator/project.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
     mode: 0644
-  loop:
-    - project.yaml
-    - cloudprofile.yaml
-    - managed-seed.yaml
-  when: gardener_operator_managed_seed_enable
+  when: gardener_operator_managed_seeds_enabled | bool
 
-- name: Create managed-seed if wanted
+- name: Apply project.yaml
   kubernetes.core.k8s:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
     state: present
     wait: true
-    src: "/var/lib/yake/gardener-operator/{{ item }}"
-  loop:
-    - project.yaml
-    - cloudprofile.yaml
-    - managed-seed.yaml
-  when: gardener_operator_managed_seed_enable
+    src: /var/lib/yake/gardener-operator/project.yaml
+  when: gardener_operator_managed_seeds_enabled | bool
+
+- name: Render CloudProfile
+  template:
+    src: cloudprofile.yaml.j2
+    dest: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop: "{{ gardener_operator_cloudprofiles }}"
+  when: gardener_operator_cloudprofiles_enabled | bool or gardener_operator_managed_seeds_enabled | bool
+
+- name: Apply CloudProfile
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
+  loop: "{{ gardener_operator_cloudprofiles }}"
+  when: gardener_operator_cloudprofiles_enabled | bool or gardener_operator_managed_seeds_enabled | bool
+
+- name: Render ManagedSeed
+  template:
+    src: managed-seed.yaml.j2
+    dest: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop: "{{ gardener_operator_managed_seeds }}"
+  when: gardener_operator_cloudprofiles_enabled | bool and gardener_operator_managed_seeds_enabled | bool
+
+- name: Apply ManagedSeed
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
+  loop: "{{ gardener_operator_managed_seeds }}"
+  when: gardener_operator_cloudprofiles_enabled | bool and gardener_operator_managed_seeds_enabled | bool

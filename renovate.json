@@ -1,12 +1,19 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
-    "config:recommended"
+    "config:best-practices"
   ],
+  "separateMinorPatch": true,
+  "lockFileMaintenance": {
+    "enabled": true,
+    "schedule": ["nightly"]
+  },
+  "dependencyDashboard": true,
+  "rebaseWhen": "behind-base-branch",
+  "schedule": ["at any time"],
+  "labels": ["renovate"],
+  "automerge": false,
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
-  "labels": [
-    "renovate"
-  ],
   "ignorePaths": [
     "charts/**"
   ],
@@ -16,18 +23,6 @@
         "^.charts.yml"
       ],
       "versioning": "loose"
-    },
-    {
-      "matchDatasources": ["github-releases"],
-      "matchPackageNames": ["kubernetes/kubernetes"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true
-    },
-    {
-      "matchDatasources": ["docker"],
-      "matchPackageNames": ["kindest/node"],
-      "matchUpdateTypes": ["patch"],
-      "automerge": true
     }
   ],
   "customManagers": [

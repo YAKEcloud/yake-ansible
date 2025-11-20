@@ -14,6 +14,16 @@
     K3S_KUBECONFIG_MODE: "644"
   args:
     creates: /usr/local/bin/k3s
+  when: gardener_operator_keycloak_k3s_traefik_disabled | bool
+
+- name: Run k3s installer
+  ansible.builtin.command: >
+    sh /tmp/k3s-install.sh
+  environment:
+    K3S_KUBECONFIG_MODE: "644"
+  args:
+    creates: /usr/local/bin/k3s
+  when: not gardener_operator_keycloak_k3s_traefik_disabled | bool
 
 - name: Remove install script
   ansible.builtin.file:
@@ -43,6 +53,7 @@
   kubernetes.core.helm_repository:
     repo_name: ingress-nginx
     repo_url: https://kubernetes.github.io/ingress-nginx
+  when: gardener_operator_keycloak_k3s_traefik_disabled | bool
 
 - name: Install ingress-nginx
   kubernetes.core.helm:
@@ -64,6 +75,7 @@
           annotations-risk-level: Critical
           enable-underscores-in-headers: "true"
           strict-validate-path-type: "false"
+  when: gardener_operator_keycloak_k3s_traefik_disabled | bool
 
 - name: Install cert-manager
   kubernetes.core.helm:
@@ -94,7 +106,7 @@
   kubernetes.core.helm:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: cnpg/cloudnative-pg
-    chart_version: "{{ gardener_operator_cloudnative_pg_version }}"
+    chart_version: "{{ gardener_operator_keycloak_cnpg_version }}"
     create_namespace: true
     release_name: cnpg
     release_namespace: cnpg-system
@@ -114,7 +126,7 @@
   kubernetes.core.helm:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: cnpg/cluster
-    chart_version: "{{ gardener_operator_cloudnative_pg_cluster_version }}"
+    chart_version: "{{ gardener_operator_keycloak_cnpg_cluster_version }}"
     create_namespace: true
     release_name: kc-database
     release_namespace: keycloak
@@ -136,9 +148,9 @@
     src: "{{ item }}"
     wait: true
   loop:
-    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_version }}/kubernetes/keycloaks.k8s.keycloak.org-v1.yml"
-    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_version }}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml"
-    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_version }}/kubernetes/kubernetes.yml"
+    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_operator_version }}/kubernetes/keycloaks.k8s.keycloak.org-v1.yml"
+    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_operator_version }}/kubernetes/keycloakrealmimports.k8s.keycloak.org-v1.yml"
+    - "https://raw.githubusercontent.com/keycloak/keycloak-k8s-resources/{{ gardener_operator_keycloak_operator_version }}/kubernetes/kubernetes.yml"
 
 - name: Create keycloak CR
   kubernetes.core.k8s:

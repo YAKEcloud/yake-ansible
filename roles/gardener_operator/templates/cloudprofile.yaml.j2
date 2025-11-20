@@ -2,53 +2,50 @@
 apiVersion: core.gardener.cloud/v1beta1
 kind: CloudProfile
 metadata:
-  name: {{ gardener_operator_openstack_cloudprofile_name }}
+  name: {{ item.name }}
 spec:
   type: openstack
   providerConfig:
     apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
     kind: CloudProfileConfig
     storageClasses:
-      - name: {{ gardener_operator_managed_seed_openstack_storageclass_name }}
-        default: true
+{% for sc in item.storageclasses %}
+      - name: {{ sc.name }}
+        default: {{ sc.default }}
         provisioner: cinder.csi.openstack.org
         volumeBindingMode: WaitForFirstConsumer
         parameters:
-          type: {{ gardener_operator_managed_seed_openstack_storageclass_type }}
-          availability: {{ gardener_operator_managed_seed_openstack_zones[0] }}
+          type: {{ sc.type }}
+          availability: {{ sc.availability }}
+{% endfor %}
     constraints:
       floatingPools:
-{% for p in gardener_operator_cloudprofile_openstack_floating_pools %}
-        - name: {{ p.name }}
+{% for fp in item.floating_pools %}
+        - name: {{ fp.name }}
 {% endfor %}
       loadBalancerProviders:
-{% for p in gardener_operator_cloudprofile_openstack_loadbalancer_providers %}
-        - name: {{ p.name }}
+{% for lb in item.loadbalancer_providers %}
+        - name: {{ lb.name }}
 {% endfor %}
     keystoneURLs:
-      - region: {{ gardener_operator_managed_seed_openstack_region_name }}
-        url: {{ gardener_operator_managed_seed_openstack_auth_url }}
+{% for url in item.keystone_urls %}
+      - region: {{ url.region }}
+        url: "{{ url.url }}"
+{% endfor %}
     machineImages:
-      - name: gardenlinux
+{% for mi in item.machine_images %}
+      - name: {{ mi.name }}
         versions:
-{% for v in gardener_operator_cloudprofile_gardener_versions %}
-          - version: {{ v.version }}.0
-            image: "{{ v.image_name }}"
-            regions:
-              - name: {{ gardener_operator_openstack_region_name }}
-                id: {{ v.id }}
-{% endfor %}
-{% if gardener_operator_os_ubuntu_enable %}
-      - name: ubuntu
-        versions:
-{% for v in gardener_operator_cloudprofile_ubuntu_versions %}
+{% for v in mi.versions %}
           - version: {{ v.version }}
-            image: "{{ v.image_name }}"
+            image: "{{ v.image }}"
             regions:
-              - name: {{ gardener_operator_openstack_region_name }}
-                id: {{ v.id }}
+{% for r in v.regions %}
+              - name: {{ r.name }}
+                id: {{ r.id }}
 {% endfor %}
-{% endif %}
+{% endfor %}
+{% endfor %}
     serverGroupPolicies:
       - affinity
       - soft-affinity
@@ -57,34 +54,35 @@ spec:
     nodeVolumeAttachLimit: 20
   kubernetes:
     versions:
-{% for v in gardener_operator_cloudprofile_kubernetes_versions %}
+{% for v in item.kubernetes_versions %}
       - version: {{ v.version }}
         classification: {{ v.classification }}
 {% endfor %}
   machineImages:
-    - name: gardenlinux
+{% for mi in item.machine_images %}
+    - name: {{ mi.name }}
       versions:
-{% for v in gardener_operator_cloudprofile_gardener_versions %}
-        - version: {{ v.version }}.0
-{% endfor %}
-{% if gardener_operator_os_ubuntu_enable %}
-    - name: ubuntu
-      versions:
-{% for v in gardener_operator_cloudprofile_ubuntu_versions %}
+{% for v in mi.versions %}
         - version: {{ v.version }}
 {% endfor %}
-{% endif %}
+{% endfor %}
   machineTypes:
-{% for type in gardener_operator_openstack_machinetypes %}
-    - name: {{ type.name }}
-      cpu: {{ type.cpu }}
-      gpu: {{ type.gpu }}
-      memory: {{ type.memory }}
+{% for mt in item.machinetypes %}
+    - name: {{ mt.name }}
+      cpu: {{ mt.cpu }}
+      gpu: {{ mt.gpu }}
+      memory: {{ mt.memory }}
 {% endfor %}
   volumeTypes:
-    - name: {{ gardener_operator_managed_seed_openstack_storageclass_type }}
-      class: {{ gardener_operator_managed_seed_openstack_storageclass_name }}
+{% for sc in item.storageclasses %}
+    - name: {{ sc.type }}
+      class: {{ sc.name }}
+{% endfor %}
   regions:
-    - name: {{ gardener_operator_managed_seed_openstack_region_name }}
+{% for region in item.regions %}
+    - name: {{ region.name }}
       zones:
-        - name: {{ gardener_operator_managed_seed_openstack_zones[0] }}
+{% for zone in region.zones %}
+        - name: {{ zone }}
+{% endfor %}
+{% endfor %}

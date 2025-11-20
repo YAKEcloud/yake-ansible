@@ -2,7 +2,7 @@ ARG ALPINE_VERSION=3.22
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v4.0.0  # renovate: datasource=github-releases depName=helm/helm
+ARG VERSION=v3.19.2  # renovate: datasource=github-releases depName=helm/helm
 ADD https://get.helm.sh/helm-${VERSION}-linux-amd64.tar.gz /helm.tar.gz
 
 ENV USER_NAME=helm

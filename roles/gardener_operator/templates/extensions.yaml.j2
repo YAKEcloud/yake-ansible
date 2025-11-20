@@ -161,7 +161,7 @@ spec:
   resources:
   - kind: OperatingSystemConfig
     type: gardenlinux
-{% if gardener_operator_os_ubuntu_enable %}
+{% if gardener_operator_os_ubuntu_enabled %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -177,7 +177,7 @@ spec:
   - kind: OperatingSystemConfig
     type: ubuntu
 {% endif %}
-{% if gardener_operator_provider_aws_enable %}
+{% if gardener_operator_provider_aws_enabled %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -215,7 +215,7 @@ spec:
   - kind: Worker
     type: aws
 {% endif %}
-{% if gardener_operator_provider_azure_enable %}
+{% if gardener_operator_provider_azure_enabled %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -253,7 +253,7 @@ spec:
   - kind: Worker
     type: azure
 {% endif %}
-{% if gardener_operator_provider_gcp_enable %}
+{% if gardener_operator_provider_gcp_enabled %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -293,7 +293,7 @@ spec:
   - kind: Worker
     type: gcp
 {% endif %}
-{% if gardener_operator_networking_calico_enable %}
+{% if gardener_operator_networking_calico_enabled %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -318,7 +318,7 @@ spec:
   - kind: Network
     type: calico
 {% endif %}
-{% if gardener_operator_backup_s3_enable %}
+{% if gardener_operator_backup_s3_enabled %}
 ---
 apiVersion: core.gardener.cloud/v1
 kind: ControllerDeployment

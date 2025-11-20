@@ -31,13 +31,19 @@ metadata:
   name: keycloak
   namespace: keycloak
   annotations:
+{% if gardener_operator_keycloak_k3s_traefik_disabled %}
     nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
     nginx.ingress.kubernetes.io/configuration-snippet: |
       proxy_set_header X-Forwarded-Proto https;
       proxy_set_header X-Forwarded-Host $host;
+{% endif %}
     cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
+{% if gardener_operator_keycloak_k3s_traefik_disabled %}
   ingressClassName: nginx
+{% else %}
+  ingressClassName: traefik
+{% endif %}
   tls:
     - hosts:
         - {{ gardener_operator_keycloak_domain }}

@@ -2,37 +2,48 @@
 apiVersion: v1
 kind: Secret
 metadata:
-  name: managed-seed-cloud
+  name: openstack-credentials-{{ item.name }}
   namespace: garden
 type: Opaque
 data:
-  authURL: {{ gardener_operator_managed_seed_openstack_auth_url | b64encode }}
-  tenantName: {{ gardener_operator_managed_seed_openstack_project_name | b64encode }}
-  domainName: {{ gardener_operator_managed_seed_openstack_domain_name | b64encode }}
-  regionName: {{ gardener_operator_managed_seed_openstack_region_name | b64encode }}
-  applicationCredentialID: {{ gardener_operator_managed_seed_openstack_application_credential_id | b64encode }}
-  applicationCredentialName: {{ gardener_operator_managed_seed_openstack_application_credential_name | b64encode }}
-  applicationCredentialSecret: {{ gardener_operator_managed_seed_openstack_application_credential_secret | b64encode }}
+  authURL: {{ item.openstack.auth_url | b64encode }}
+  tenantName: {{ item.openstack.project_name | b64encode }}
+  domainName: {{ item.openstack.domain_name | b64encode }}
+  regionName: {{ item.openstack.region_name | b64encode }}
+  applicationCredentialID: {{ item.openstack.application_credential_id | b64encode }}
+  applicationCredentialName: {{ item.openstack.application_credential_name | b64encode }}
+  applicationCredentialSecret: {{ item.openstack.application_credential_secret | b64encode }}
 ---
 apiVersion: security.gardener.cloud/v1alpha1
 kind: CredentialsBinding
 metadata:
   labels:
-    cloudprofile.garden.sapcloud.io/name: {{ gardener_operator_openstack_cloudprofile_name }}
-  name: seeds
+    cloudprofile.garden.sapcloud.io/name: {{ item.cloudprofile_name }}
+  name: credentialsbinding-{{ item.name }}
   namespace: garden
 credentialsRef:
   apiVersion: v1
   kind: Secret
-  name: managed-seed-cloud
+  name: openstack-credentials-{{ item.name }}
   namespace: garden
 provider:
   type: openstack
+{% if item.settings.backup_enabled %}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: backup-credentials-{{ item.name }}
+  namespace: garden
+type: Opaque
+stringData:
+  {{ item.settings.backup.credentials | to_nice_yaml(indent=2) | indent(2) }}
+{% endif %}
 ---
 apiVersion: core.gardener.cloud/v1beta1
 kind: Shoot
 metadata:
-  name: {{ gardener_operator_managed_seed_name }}
+  name: {{ item.name }}
   namespace: garden
 spec:
   tolerations:
@@ -42,11 +53,11 @@ spec:
     - type: shoot-dns-service
   seedName: internal-seed
   cloudProfile:
-    name: {{ gardener_operator_openstack_cloudprofile_name }}
-  region: {{ gardener_operator_managed_seed_openstack_region_name }}
-  credentialsBindingName: seeds
+    name: {{ item.cloudprofile_name }}
+  region: {{ item.openstack.region_name }}
+  credentialsBindingName: credentialsbinding-{{ item.name }}
   dns:
-    domain: {{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}
+    domain: {{ item.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}
     providers:
       - type: openstack-designate
         secretName: openstack-cloud
@@ -63,25 +74,27 @@ spec:
       kind: ControlPlaneConfig
       loadBalancerProvider: amphora
     workers:
-    - name: worker-hpd5z
-      machine:
-        type: {{ gardener_operator_managed_seed_machinetype }}
-        image:
-          name: gardenlinux
-          version: {{ gardener_operator_managed_seed_openstack_gardenlinux_version }}.0
-      minimum: {{ gardener_operator_managed_seed_minimum_workers }}
-      maximum: {{ gardener_operator_managed_seed_maximum_workers }}
-      volume:
-        type: {{ gardener_operator_managed_seed_openstack_storageclass_type }}
-        size: 50Gi
-      zones: {{ gardener_operator_managed_seed_openstack_zones }}
+{% for w in item.workers %}
+      - name: {{ w.name }}
+        machine:
+          type: {{ w.machinetype }}
+          image:
+            name: {{ w.image_name }}
+            version: {{ w.image_version }}
+        minimum: {{ w.minimum }}
+        maximum: {{ w.maximum }}
+        volume:
+          type: {{ w.volume_type }}
+          size: {{ w.volume_size }}
+        zones: {{ w.zones }}
+{% endfor %}
   networking:
     nodes: 10.120.0.0/16
     pods: 100.72.0.0/16
     services: 100.80.0.0/13
-    type: cilium
+    type: {{ item.networking_type }}
   kubernetes:
-    version: {{ gardener_operator_kubernetes_version }}
+    version: {{ item.kubernetes_version }}
   maintenance:
     autoUpdate:
       kubernetesVersion: true
@@ -96,11 +109,11 @@ spec:
 apiVersion: seedmanagement.gardener.cloud/v1alpha1
 kind: ManagedSeed
 metadata:
-  name: {{ gardener_operator_managed_seed_name }}
+  name: {{ item.name }}
   namespace: garden
 spec:
   shoot:
-    name: {{ gardener_operator_managed_seed_name }}
+    name: {{ item.name }}
   gardenlet:
     config:
       apiVersion: gardenlet.config.gardener.cloud/v1alpha1
@@ -108,21 +121,21 @@ spec:
       seedConfig:
         metadata:
           labels:
-            name: {{ gardener_operator_managed_seed_name }}
+            name: {{ item.name }}
             yake.cloud/generate-controlplane-cert: "true"
         taints:
           seed.gardener.cloud/protected: false
         spec:
-{% if gardener_operator_backups_enable %}
-        backup:
-          provider: {{ gardener_operator_backups_provider }}
-          region: {{ gardener_operator_backups_region }}
-          bucketName: {{ gardener_operator_backups_seeds_bucket_name }}
-          credentialsRef:
-            apiVersion: v1
-            kind: Secret
-            name: backups-seeds
-            namespace: garden
+{% if item.settings.backup_enabled %}
+          backup:
+            provider: {{ item.settings.backup.provider }}
+            region: {{ item.settings.backup.region }}
+            bucketName: {{ item.settings.backup.bucket_name }}
+            credentialsRef:
+              apiVersion: v1
+              kind: Secret
+              name: backup-credentials-{{ item.name }}
+              namespace: garden
 {% endif %}
           dns:
             provider:
@@ -131,7 +144,7 @@ spec:
                 name: openstack-cloud
                 namespace: garden
           ingress:
-            domain: ingress.{{ gardener_operator_managed_seed_name }}.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}
+            domain: ingress.{{ item.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}
             controller:
               kind: nginx
           networks:
@@ -144,9 +157,9 @@ spec:
               services: 100.88.0.0/13
           provider:
             type: openstack
-            region: {{ gardener_operator_managed_seed_openstack_region_name }}
+            region: {{ item.openstack.region_name }}
           settings:
             scheduling:
               visible: true
             excessCapacityReservation:
-              enabled: {{ gardener_operator_excess_capacity_reservation }}
+              enabled: {{ item.settings.excess_capacity_reservation }}

@@ -1,48 +1,113 @@
 ---
-# renovate: datasource=github-releases depName=kubernetes/kubernetes
-clusterapi_cluster_kubernetes_version: 'v1.33.5'
-clusterapi_cluster_openstack_auth_url: ""
+clusterapi_cluster_kubernetes_version: "1.33.6"
+
+clusterapi_cluster_openstack_auth_url: "https://keystone.example.com/v3"
 clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
-clusterapi_cluster_openstack_domain_name: ""
-clusterapi_cluster_openstack_region_name: ""
-clusterapi_cluster_openstack_image_id: "ba694dea-dc63-48a6-923f-d3a34d98fbfc"
-
-# renovate: datasource=github-releases depName=gardener/gardener
-gardener_operator_version: "1.127.2"
-gardener_operator_kubernetes_version: "{{ clusterapi_cluster_kubernetes_version }}"
+clusterapi_cluster_openstack_domain_name: "domain"
+clusterapi_cluster_openstack_region_name: "region"
+clusterapi_cluster_openstack_image_id: ""
+clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4-20s"
+clusterapi_cluster_node_machine_flavor: "SCS-4V-8-50s"
+clusterapi_cluster_enable_boot_volume: false
 
 gardener_operator_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
-gardener_operator_openstack_project_name: ""
+gardener_operator_openstack_project_name: "project"
 gardener_operator_openstack_domain_name: "{{ clusterapi_cluster_openstack_domain_name }}"
 gardener_operator_openstack_region_name: "{{ clusterapi_cluster_openstack_region_name }}"
 gardener_operator_openstack_application_credential_id: "{{ clusterapi_cluster_openstack_application_credential_id }}"
-gardener_operator_openstack_application_credential_name: ""
+gardener_operator_openstack_application_credential_name: "creds"
 gardener_operator_openstack_application_credential_secret: "{{ clusterapi_cluster_openstack_application_credential_secret }}"
-gardener_operator_openstack_backup_gardener_bucket_name: "gardener-operator"
 gardener_operator_openstack_zones:
   - "nova"
-gardener_operator_provider_openstack_storageclass_name: default
-gardener_operator_provider_openstack_storageclass_type: default
 
-gardener_operator_backups_enable: true
+gardener_operator_provider_openstack_storageclass_name: ssd
+gardener_operator_provider_openstack_storageclass_type: ssd
 
-gardener_operator_garden_auth_issuer_url: "https://auth.example.com/realms/gardener"
+gardener_operator_garden_auth_issuer_url: "https://keycloak.example.com/realms/gardener"
 gardener_operator_garden_auth_audiences:
   - "gardener-client"
 gardener_operator_garden_auth_client_id: "gardener-client"
 gardener_operator_garden_auth_client_secret: ""
 gardener_operator_garden_auth_public_name: "keycloak"
 
-gardener_operator_garden_url: "example.com"
-gardener_operator_cluster_name: "my-garden"
+gardener_operator_garden_url: "botany.example.com"
+gardener_operator_cluster_name: "garden"
+gardener_operator_kubernetes_version: "{{ clusterapi_cluster_kubernetes_version }}"
 
-gardener_operator_shoot_cert_service_acme_email: "gardener@example.com"
-gardener_operator_shoot_cert_service_acme_server: "https://acme-v02.api.letsencrypt.org/directory"
+gardener_operator_garden_cluster_admin_email: "demo@example.com"
 
-gardener_operator_garden_cluster_admin_email: "gardener@example.com"
+gardener_operator_shoot_cert_service_acme_email: "operations@example.com"
+gardener_operator_shoot_cert_service_acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
 
-gardener_operator_openstack_gardenlinux_id: "234a6dab-6242-4926-a5e9-7b4d1414dd28"
+gardener_operator_cloudprofiles_enabled: true
+gardener_operator_managed_seeds_enabled: true
 
-gardener_operator_managed_seed_enable: true
-gardener_operator_openstack_backup_seed_bucket_name: gardener-internal-seed
+gardener_operator_cloudprofiles:
+  - name: cloudprofile
+    storageclasses:
+      - name: ssd
+        default: "true"
+        type: ssd
+        availability: nova
+    floating_pools:
+      - name: public
+    loadbalancer_providers:
+      - name: amphora
+    keystone_urls:
+      - region: "{{ clusterapi_cluster_openstack_region_name }}"
+        url: "{{ clusterapi_cluster_openstack_auth_url }}"
+    machine_images:
+      - name: gardenlinux
+        versions:
+          - version: "1877.7.0"
+            image: "Garden Linux 1877.7"
+            regions:
+              - name: "{{ clusterapi_cluster_openstack_region_name }}"
+                id: ""
+    kubernetes_versions:
+      - version: 1.33.6
+        classification: supported
+    machinetypes:
+      - name: SCS-4V-8
+        cpu: "4"
+        gpu: "0"
+        memory: 8Gi
+      - name: SCS-4V-16
+        cpu: "4"
+        gpu: "0"
+        memory: 16Gi
+    regions:
+      - name: "{{ clusterapi_cluster_openstack_region_name }}"
+        zones:
+          - nova
+
+gardener_operator_managed_seeds_project_name: seeds
+
+gardener_operator_managed_seeds:
+  - name: managed-seed-a
+    cloudprofile_name: cloudprofile
+    networking_type: cilium
+    kubernetes_version: 1.33.6
+    openstack:
+      auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
+      project_name: "{{ gardener_operator_openstack_project_name }}"
+      domain_name: "{{ gardener_operator_openstack_domain_name }}"
+      region_name: "{{ clusterapi_cluster_openstack_region_name }}"
+      application_credential_id: "{{ gardener_operator_openstack_application_credential_id }}"
+      application_credential_name: "{{ gardener_operator_openstack_application_credential_name }}"
+      application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
+    workers:
+      - name: worker-4v8
+        machinetype: SCS-4V-8
+        image_name: gardenlinux
+        image_version: 1877.7.0
+        minimum: 3
+        maximum: 15
+        volume_type: ssd
+        volume_size: 50Gi
+        zones:
+          - nova
+    settings:
+      backup_enabled: false
+      excess_capacity_reservation: true

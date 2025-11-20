@@ -13,16 +13,16 @@ data:
   applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
   applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
   applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
-{% if gardener_operator_backups_enable %}
+{% if gardener_operator_garden_backup_enabled %}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: backups-garden
+  name: backup-credentials-garden
   namespace: garden
 type: Opaque
 stringData:
-  {{ gardener_operator_backups_garden_credentials }}
+  {{ gardener_operator_garden_backup_credentials }}
 {% endif %}
 ---
 apiVersion: v1
@@ -103,13 +103,13 @@ spec:
         provider: designate
     etcd:
       main:
-{% if gardener_operator_backups_enable %}
+{% if gardener_operator_garden_backup_enabled %}
         backup:
-          provider: {{ gardener_operator_backups_provider }}
-          region: {{ gardener_operator_backups_region }}
-          bucketName: {{ gardener_operator_backups_garden_bucket_name }}
+          provider: {{ gardener_operator_garden_backup_provider }}
+          region: {{ gardener_operator_garden_backup_region }}
+          bucketName: {{ gardener_operator_garden_backup_bucket_name }}
           secretRef:
-            name: backups-garden
+            name: backup-credentials-garden
 {% endif %}
         storage:
           capacity: 25Gi
@@ -147,7 +147,7 @@ spec:
         terminal:
           allowedHosts:
           - "*.internal.{{ gardener_operator_garden_url }}"
-          - "*.{{ gardener_operator_garden_project_name }}.{{ gardener_operator_garden_url }}"
+          - "*.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}"
           container:
             image: europe-docker.pkg.dev/gardener-project/releases/gardener/ops-toolbelt:latest
         ingress:

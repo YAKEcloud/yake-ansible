@@ -36,16 +36,16 @@ data:
   applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
   applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
   applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
-{% if gardener_operator_backups_enable %}
+{% if gardener_operator_internal_seed_backup_enabled %}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: backups-seeds
+  name: backup-credentials-internal-seed
   namespace: garden
 type: Opaque
 stringData:
-  {{ gardener_operator_backups_internal_seed_credentials }}
+  {{ gardener_operator_internal_seed_backup_credentials }}
 {% endif %}
 ---
 apiVersion: core.gardener.cloud/v1beta1
@@ -108,15 +108,15 @@ spec:
       spec:
         taints:
           - key: seed.gardener.cloud/protected
-{% if gardener_operator_backups_enable %}
+{% if gardener_operator_internal_seed_backup_enabled %}
         backup:
-          provider: {{ gardener_operator_backups_provider }}
-          region: {{ gardener_operator_backups_region }}
-          bucketName: {{ gardener_operator_backups_internal_seed_bucket_name }}
+          provider: {{ gardener_operator_internal_seed_backup_provider }}
+          region: {{ gardener_operator_internal_seed_backup_region }}
+          bucketName: {{ gardener_operator_internal_seed_backup_bucket_name }}
           credentialsRef:
             apiVersion: v1
             kind: Secret
-            name: backups-seeds
+            name: backup-credentials-internal-seed
             namespace: garden
 {% endif %}
         dns:
@@ -151,7 +151,7 @@ spec:
           zones: {{ gardener_operator_openstack_zones }}
         settings:
           excessCapacityReservation:
-            enabled: {{ gardener_operator_excess_capacity_reservation }}
+            enabled: {{ gardener_operator_internal_seed_excess_capacity_reservation }}
           scheduling:
             visible: false
           verticalPodAutoscaler:

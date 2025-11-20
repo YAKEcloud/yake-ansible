@@ -8,10 +8,13 @@ gardener_operator_version: '1.132.1'
 gardener_operator_helm_values:
   replicaCount: 1
 
-gardener_operator_install_keycloak: true
-gardener_operator_cloudnative_pg_version: '0.26.1'
-gardener_operator_cloudnative_pg_cluster_version: '0.3.1'
-gardener_operator_keycloak_version: '26.4.2'
+gardener_operator_keycloak_enabled: false
+# Will install ingress-nginx. Set to false to install with the default traefik.
+gardener_operator_keycloak_k3s_traefik_disabled: true
+gardener_operator_keycloak_cnpg_version: '0.26.1'
+gardener_operator_keycloak_cnpg_cluster_version: '0.3.1'
+# renovate: datasource=github-releases depName=keycloak/keycloak
+gardener_operator_keycloak_operator_version: '26.4.5'
 gardener_operator_keycloak_domain: keycloak.example.com
 gardener_operator_keycloak_client_secret: ""
 gardener_operator_keycloak_realm_name: "gardener"
@@ -24,7 +27,6 @@ gardener_operator_openstack_region_name: RegionOne
 gardener_operator_openstack_application_credential_id: ""
 gardener_operator_openstack_application_credential_name: example-creds
 gardener_operator_openstack_application_credential_secret: ""
-gardener_operator_openstack_backup_gardener_bucket_name: example-container
 gardener_operator_openstack_zones:
   - zone1
 
@@ -37,7 +39,8 @@ gardener_operator_garden_auth_public_name: keycloak
 
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
-gardener_operator_kubernetes_version: 1.33.5
+# renovate: datasource=github-releases depName=kubernetes/kubernetes
+gardener_operator_kubernetes_version: 1.33.6
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
 gardener_operator_provider_openstack_version: '1.51.0'
@@ -53,115 +56,143 @@ gardener_operator_shoot_cert_service_acme_server: https://acme-v02.api.letsencry
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-dns-service
 gardener_operator_shoot_dns_service_version: '1.75.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
-gardener_operator_networking_cilium_version: '1.45.1'
+gardener_operator_networking_cilium_version: '1.45.2'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
 gardener_operator_os_gardenlinux_version: '0.34.0'
 
-gardener_operator_networking_calico_enable: false
+gardener_operator_networking_calico_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-calico
 gardener_operator_networking_calico_version: '1.53.1'
 
-gardener_operator_os_ubuntu_enable: false
+gardener_operator_os_ubuntu_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu
 gardener_operator_os_ubuntu_version: '1.33.0'
 
-gardener_operator_provider_aws_enable: false
+gardener_operator_provider_aws_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws
 gardener_operator_provider_aws_version: '1.66.0'
 
-gardener_operator_provider_azure_enable: false
+gardener_operator_provider_azure_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure
 gardener_operator_provider_azure_version: '1.56.2'
 
-gardener_operator_provider_gcp_enable: false
+gardener_operator_provider_gcp_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
 gardener_operator_provider_gcp_version: '1.47.0'
 
-gardener_operator_backup_s3_enable: false
+gardener_operator_backup_s3_enabled: false
 # renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3
 gardener_operator_backup_s3_version: '0.8.1'
 
-gardener_operator_backups_enable: true
-gardener_operator_backups_provider: openstack
-gardener_operator_backups_region: "{{ gardener_operator_openstack_region_name }}"
-gardener_operator_backups_garden_bucket_name: gardener-operator
-gardener_operator_backups_seeds_bucket_name: gardener-internal-seed
-gardener_operator_backups_garden_credentials:
-  authURL: "{{ gardener_operator_openstack_auth_url }}"
-  tenantName: "{{ gardener_operator_openstack_project_name }}"
-  domainName: "{{ gardener_operator_openstack_domain_name }}"
-  regionName: "{{ gardener_operator_openstack_region_name }}"
-  applicationCredentialID: "{{ gardener_operator_openstack_application_credential_id }}"
-  applicationCredentialName: "{{ gardener_operator_openstack_application_credential_name }}"
-  applicationCredentialSecret: "{{ gardener_operator_openstack_application_credential_secret }}"
-  s3ForcePathStyle: true
+gardener_operator_garden_backup_enabled: false
+gardener_operator_garden_backup_provider: openstack
+gardener_operator_garden_backup_region: "{{ gardener_operator_openstack_region_name }}"
+gardener_operator_garden_backup_bucket_name: gardener-operator
+# Look up your credentials scheme for your provider
+gardener_operator_garden_backup_credentials: ""
 
-gardener_operator_backups_internal_seed_credentials: "{{ gardener_operator_backups_garden_credentials }}"
+gardener_operator_internal_seed_backup_enabled: false
+gardener_operator_internal_seed_backup_provider: openstack
+gardener_operator_internal_seed_backup_region: "{{ gardener_operator_openstack_region_name }}"
+gardener_operator_internal_seed_backup_bucket_name: gardener-internal-seed
+# Look up your credentials scheme for your provider
+gardener_operator_internal_seed_backup_credentials: ""
+# Activate this only on hosts with more than 16Gi of RAM. It defaults to a config reserving 2 CPUs and 6Gi of memory for each pod with no nodeSelector and no tolerations.
+gardener_operator_internal_seed_excess_capacity_reservation: "false"
 
-gardener_operator_garden_project_name: seeds
-gardener_operator_garden_cluster_admin_email: info@demo.com
+gardener_operator_garden_cluster_admin_email: admin@example.com
 gardener_operator_garden_cluster_admin_password: ""
 
-# Activate this only on hosts with more than 16Gi of RAM. If "true" will be cativated
-# for the internal- and the optional managed-seed.
-gardener_operator_excess_capacity_reservation: "false"
+gardener_operator_cloudprofiles_enabled: true
+gardener_operator_managed_seeds_enabled: true
 
-gardener_operator_managed_seed_enable: true
-gardener_operator_managed_seed_name: "managed-seed-1"
+gardener_operator_cloudprofiles:
+  - name: openstack-a
+    storageclasses:
+      - name: ssd
+        default: "true"
+        type: ssd
+        availability: nova
+    floating_pools:
+      - name: public
+    loadbalancer_providers:
+      - name: amphora
+    keystone_urls:
+      - region: region-a
+        url: "https://openstack.a.example.com:5000"
+    machine_images:
+      - name: gardenlinux
+        versions:
+          - version: 1877.7.0
+            image: "Garden Linux 1877.7"
+            regions:
+              - name: region-a
+                id: 6ed7d8aa-e770-4061-a8d7-461a83e41c31
+    kubernetes_versions:
+      - version: 1.33.6
+        classification: supported
+      - version: 1.32.10
+        classification: supported
+    machinetypes:
+      - name: SCS-4V-8
+        cpu: "4"
+        gpu: "0"
+        memory: 8Gi
+      - name: SCS-4V-16
+        cpu: "4"
+        gpu: "0"
+        memory: 16Gi
+      - name: SCS-8V-16
+        cpu: "8"
+        gpu: "0"
+        memory: 16Gi
+    regions:
+      - name: region-a
+        zones:
+          - nova
 
-gardener_operator_openstack_cloudprofile_name: regiocloud
+gardener_operator_managed_seeds_project_name: seeds
 
-gardener_operator_cloudprofile_gardener_versions:
-  - version: "1877.2"
-    image_name: "Garden Linux 1877.2" # mind the whitespace
-    id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
-
-# ubuntu need to be enabled by gardener_operator_os_ubuntu_enable
-gardener_operator_cloudprofile_ubuntu_versions:
-  - version: "24.04"
-    image_name: "Ubuntu 24.04"
-    id: "525075b6-6e32-421d-b7f1-4088b821cd85"
-
-gardener_operator_cloudprofile_kubernetes_versions:
-  - version: 1.33.5
-    classification: supported
-  - version: 1.32.9
-    classification: supported
-gardener_operator_openstack_machinetypes:
-  - name: SCS-4V-8
-    cpu: "4"
-    gpu: "0"
-    memory: 8Gi
-  - name: SCS-4V-16
-    cpu: "4"
-    gpu: "0"
-    memory: 16Gi
-  - name: SCS-8V-16
-    cpu: "8"
-    gpu: "0"
-    memory: 16Gi
-gardener_operator_openstack_backup_seed_bucket_name: seed-example-container
-
-gardener_operator_managed_seed_openstack_auth_url: "{{ gardener_operator_openstack_auth_url }}"
-gardener_operator_managed_seed_openstack_project_name: "{{ gardener_operator_openstack_project_name }}"
-gardener_operator_managed_seed_openstack_domain_name: "{{ gardener_operator_openstack_domain_name }}"
-gardener_operator_managed_seed_openstack_region_name: "{{ gardener_operator_openstack_region_name }}"
-gardener_operator_managed_seed_openstack_application_credential_id: "{{ gardener_operator_openstack_application_credential_id }}"
-gardener_operator_managed_seed_openstack_application_credential_name: "{{ gardener_operator_openstack_application_credential_name }}"
-gardener_operator_managed_seed_openstack_application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
-
-gardener_operator_managed_seed_openstack_gardenlinux_version: "{{ gardener_operator_cloudprofile_gardener_versions[0].version }}" # take the first version of the variable
-gardener_operator_managed_seed_openstack_storageclass_name: "{{ gardener_operator_provider_openstack_storageclass_name }}"
-gardener_operator_managed_seed_openstack_storageclass_type: "{{ gardener_operator_provider_openstack_storageclass_type }}"
-gardener_operator_managed_seed_openstack_zones: "{{ gardener_operator_openstack_zones }}"
-
-gardener_operator_cloudprofile_openstack_floating_pools:
-  - name: public
-  # - name: wireguard
-gardener_operator_cloudprofile_openstack_loadbalancer_providers:
-  - name: amphora
-  # - name: ovn
-
-gardener_operator_managed_seed_machinetype: SCS-4V-16
-gardener_operator_managed_seed_minimum_workers: "3"
-gardener_operator_managed_seed_maximum_workers: "15"
+gardener_operator_managed_seeds:
+  - name: seed-a
+    cloudprofile_name: openstack-a
+    networking_type: cilium
+    kubernetes_version: 1.33.6
+    openstack:
+      auth_url: "https://openstack.a.example.com:5000"
+      project_name: "project-a"
+      domain_name: "domain-a"
+      region_name: "region-a"
+      application_credential_id: "cred-id-a"
+      application_credential_name: "cred-name-a"
+      application_credential_secret: "secret-a"
+    worker:
+      - name: worker-4v16
+        machinetype: SCS-4V-16
+        image_name: gardenlinux
+        image_version: 1877.7.0
+        minimum: 3
+        maximum: 15
+        volume_type: ssd
+        volume_size: 50Gi
+        zones:
+          - nova
+    settings:
+      backup_enabled: false
+      backup:
+        provider: openstack
+        region: region-a
+        bucket_name: bucket-a
+        credentials: # for openstack
+          # authURL: "https://openstack.a.example.com:5000"
+          # tenantName: "project-a"
+          # domainName: "domain-a"
+          # regionName: "region-a"
+          # applicationCredentialID: "cred-id-a"
+          # applicationCredentialName: "cred-name-a"
+          # applicationCredentialSecret: "secret-a"
+          # s3ForcePathStyle: true
+      excess_capacity_reservation: true
+  # - name: seed-b
+  #   cloudprofile_name: openstack-b
+  #   ...

@@ -1,53 +1,44 @@
-name: Run Ansible
+name: Yake-Ansible install
 
 on:
   pull_request:
-    types: [opened, reopened, synchronize, ready_for_review]
+    types: [opened, reopened, synchronize]
   workflow_dispatch:
 
 jobs:
-  yake-ansible-site:
+  yake-ansible-install:
     runs-on: ubuntu-latest
-    concurrency:
-      group: ansible-${{ github.head_ref || github.ref }}
-      cancel-in-progress: false
+    timeout-minutes: 60
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
           python-version: '3.14'
 
-      - name: Install system deps
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y ssh git curl ca-certificates
+      - name: Install dependencies
+        run: sudo apt-get update && sudo apt-get install -y ssh git curl ca-certificates
 
       - name: Install requirements
-        run: |
-          pip install -r requirements.txt
-          ansible-galaxy install -f -r requirements.yml
+        run: pip install -r requirements.txt && ansible-galaxy install -f -r requirements.yml
 
       - name: Create group_vars/all.yml from ALL_YML_BASE64 secret
-        id: create_all
         env:
           ALL_BASE64: ${{ secrets.ALL_YML_BASE64 }}
-        run: |
-          printf '%s' "$ALL_BASE64" | base64 -d > group_vars/all.yml
-          chmod 600 group_vars/all.yml
+        run: printf '%s' "$ALL_BASE64" | base64 -d > group_vars/all.yml && chmod 600 group_vars/all.yml
 
       - name: Run ansible-playbook site.yml
-        id: run_playbook
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          command: ansible-playbook -i localhost, -c local site.yml -e "@group_vars/all.yml"
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
-        run: ansible-playbook -i localhost, -c local site.yml -e "@group_vars/all.yml"
 
       - name: Check shoot status
-        id: check_shoot_status
         env:
           SHOOT_NAME: managed-seed-1
           KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
@@ -73,14 +64,16 @@ jobs:
           echo "Shoot is healthy"
 
       - name: Annotate, delete and wait for shoot deletion
+        env:
+          SHOOT_NAME: managed-seed-1
+          KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
         if: always()
         run: |
-          export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
-          ./.local/yake-kubectl annotate shoot managed-seed-1 -n garden confirmation.gardener.cloud/deletion=true --overwrite
-          ./.local/yake-kubectl delete managedseed managed-seed-1 -n garden
-          ./.local/yake-kubectl delete shoot managed-seed-1 -n garden
+          ./.local/yake-kubectl annotate shoot $SHOOT_NAME -n garden confirmation.gardener.cloud/deletion=true --overwrite
+          ./.local/yake-kubectl delete managedseed $SHOOT_NAME -n garden
+          ./.local/yake-kubectl delete shoot $SHOOT_NAME -n garden
           for i in {1..20}; do
-            if ! ./.local/yake-kubectl get shoot managed-seed-1 -n garden >/dev/null 2>&1; then
+            if ! ./.local/yake-kubectl get shoot $SHOOT_NAME -n garden >/dev/null 2>&1; then
               echo "Shoot deleted."
               exit 0
             else
@@ -92,9 +85,10 @@ jobs:
           exit 1
 
       - name: Delete all clusters and files
+        env:
+          KUBECONFIG: /var/lib/yake/kubeconfig.clusterapi
         if: always()
         run: |
-          export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
           ./.local/yake-kubectl delete cluster garden
           ./.local/yake-kind delete cluster --name clusterapi
           docker rm -f $(docker ps -qa)

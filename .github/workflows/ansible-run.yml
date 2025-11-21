@@ -6,7 +6,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  ansible-pr:
+  yake-ansible-site:
     runs-on: ubuntu-latest
     concurrency:
       group: ansible-${{ github.head_ref || github.ref }}
@@ -40,7 +40,7 @@ jobs:
           printf '%s' "$ALL_BASE64" | base64 -d > group_vars/all.yml
           chmod 600 group_vars/all.yml
 
-      - name: Run ansible-playboo
+      - name: Run ansible-playbook site.yml
         id: run_playbook
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
@@ -98,5 +98,5 @@ jobs:
           ./.local/yake-kubectl delete cluster garden
           ./.local/yake-kind delete cluster --name clusterapi
           docker rm -f $(docker ps -qa)
-          sudo rm -f /var/lib/yake/
+          sudo rm -rf /var/lib/yake/
           sudo rm -f group_vars/all.yml

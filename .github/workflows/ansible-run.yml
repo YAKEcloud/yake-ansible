@@ -14,14 +14,14 @@ jobs:
       cancel-in-progress: false
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v6
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v4
+        uses: actions/setup-python@v6
         with:
-          python-version: '3.11'
+          python-version: '3.14'
 
       - name: Install system deps
         run: |
@@ -41,7 +41,7 @@ jobs:
           printf '%s' "$ALL_BASE64" | base64 -d > group_vars/all.yml
           chmod 600 group_vars/all.yml
 
-      - name: Run ansible-playbook (local)
+      - name: Run ansible-playboo
         id: run_playbook
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"

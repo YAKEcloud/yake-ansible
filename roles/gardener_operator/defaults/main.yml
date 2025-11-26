@@ -14,7 +14,7 @@ gardener_operator_keycloak_k3s_traefik_disabled: true
 gardener_operator_keycloak_cnpg_version: '0.26.1'
 gardener_operator_keycloak_cnpg_cluster_version: '0.3.1'
 # renovate: datasource=github-releases depName=keycloak/keycloak
-gardener_operator_keycloak_operator_version: '26.4.5'
+gardener_operator_keycloak_operator_version: '26.4.6'
 gardener_operator_keycloak_domain: keycloak.example.com
 gardener_operator_keycloak_client_secret: ""
 gardener_operator_keycloak_realm_name: "gardener"

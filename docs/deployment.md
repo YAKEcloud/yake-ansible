@@ -41,6 +41,17 @@ A minimum of the following resources is required to run a productive Gardener + 
 - 150 GB RAM
 - 50 VCPUs
 
+In addition, at least two projects are required:
+
+- One for control plane + managed seed
+- Another for shoots for testing
+
+The following services are required:
+
+- A load balancer service such as Octavia (currently only supported)
+- A DNS service such as Designate
+- If you want to use backups, an S3 service such as Openstack's Object Store, Hetzner Object Storage, or Backblaze
+
 The rest is not as critical, but should be adjusted in case of bottlenecks. With the specifications mentioned above, the number of shoots is of course limited. If you want to build many large shoots, the resources must be adapted accordingly.
 
 ## Prerequisites

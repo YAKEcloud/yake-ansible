@@ -179,7 +179,7 @@
     src: /var/lib/yake/gardener-operator/seed-ingress-certificate.yaml
 
 - name: Render project.yaml (optional)
-  template:
+  ansible.builtin.template:
     src: project.yaml.j2
     dest: /var/lib/yake/gardener-operator/project.yaml
     owner: "{{ gardener_operator_uid }}"
@@ -196,7 +196,7 @@
   when: gardener_operator_managed_seeds_enabled | bool
 
 - name: Render CloudProfile
-  template:
+  ansible.builtin.template:
     src: cloudprofile.yaml.j2
     dest: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
     owner: "{{ gardener_operator_uid }}"
@@ -215,7 +215,7 @@
   when: gardener_operator_cloudprofiles_enabled | bool or gardener_operator_managed_seeds_enabled | bool
 
 - name: Render ManagedSeed
-  template:
+  ansible.builtin.template:
     src: managed-seed.yaml.j2
     dest: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
     owner: "{{ gardener_operator_uid }}"

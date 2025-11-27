@@ -27,6 +27,21 @@ This repository automates the preparation of a Kubernetes host environment and t
 - `docs/` - this documentation
 - `/` - playbooks which will be used
 
+## Requirements
+
+A minimum of the following resources is required to run a productive Gardener + Managed Seed + Shoots:
+
+- 10 routers (each cluster requires its own router)
+- 10 networks (each cluster requires its own network)
+- 15 security groups
+- 15 floating IPs
+- 1.5 TB volume storage
+- 40 volumes
+- 150 GB RAM
+- 50 VCPUs
+
+The rest is not as critical, but should be adjusted in case of bottlenecks. With the specifications mentioned above, the number of shoots is of course limited. If you want to build many large shoots, the resources must be adapted accordingly.
+
 ## Prerequisites
 
 - Python 3 on control and target hosts.

@@ -92,6 +92,9 @@ spec:
       region: {{ gardener_operator_openstack_region_name }}
       zones: {{ gardener_operator_openstack_zones }}
     settings:
+      loadBalancerServices:
+        annotations:
+          loadbalancer.openstack.org/class: floatingPool
       verticalPodAutoscaler:
         enabled: true
       topologyAwareRouting:

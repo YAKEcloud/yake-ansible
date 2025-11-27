@@ -150,6 +150,9 @@ spec:
           type: openstack
           zones: {{ gardener_operator_openstack_zones }}
         settings:
+          loadBalancerServices:
+            annotations:
+              loadbalancer.openstack.org/class: floatingPool
           excessCapacityReservation:
             enabled: {{ gardener_operator_internal_seed_excess_capacity_reservation }}
           scheduling:

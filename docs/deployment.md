@@ -6,6 +6,7 @@ This repository contains Ansible roles and playbooks to prepare a Kubernetes clu
 
 - [Overview](#overview)
 - [Repository layout](#repository-layout)
+- [Requirements](#requirements)
 - [Prerequisites](#prerequisites)
 - [Configuration](#configuration)
 - [Quick start](#quick-start)

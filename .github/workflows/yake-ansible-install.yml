@@ -70,4 +70,4 @@ jobs:
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: ansible-playbook -i localhost, -c local hack/cleanup.yml -e "@group_vars/all.yml"
+          command: ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/all.yml"

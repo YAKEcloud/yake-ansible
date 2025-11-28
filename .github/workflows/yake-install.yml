@@ -42,55 +42,18 @@ jobs:
         env:
           SHOOT_NAME: managed-seed-1
           KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+          TIMEOUT: 600s
         run: |
-          status=$(kubectl get shoot $SHOOT_NAME -o jsonpath='{.metadata.labels.shoot\.gardener\.cloud/status}')
-          echo "Shoot Status Label: $status"
+          ./.local/yake-kubectl --kubeconfig "$KUBECONFIG" -n garden \
+            wait shoot "$SHOOT_NAME" \
+            --for=condition=EveryNodeReady=True \
+            --for=condition=ControlPlaneHealthy=True \
+            --for=condition=SystemComponentsHealthy=True \
+            --timeout="$TIMEOUT"
 
-          if [ "$status" != "healthy" ]; then
-            echo "Shoot not healthy! Status: $status"
-            exit 1
-          fi
-
-          conditions=("APIServerAvailable" "ControlPlaneHealthy" "EveryNodeReady" "ObservabilityComponentsHealthy" "SystemComponentsHealthy")
-          for cond in "${conditions[@]}"; do
-            cond_status=$(kubectl get shoot $SHOOT_NAME -o jsonpath="{.status.conditions[?(@.type=='$cond')].status}")
-            echo "$cond Status: $cond_status"
-            if [ "$cond_status" != "True" ]; then
-              echo "Condition $cond is not True"
-              exit 1
-            fi
-          done
-
-          echo "Shoot is healthy"
-
-      - name: Annotate, delete and wait for shoot deletion
-        env:
-          SHOOT_NAME: managed-seed-1
-          KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-        if: always()
-        run: |
-          ./.local/yake-kubectl annotate shoot $SHOOT_NAME -n garden confirmation.gardener.cloud/deletion=true --overwrite
-          ./.local/yake-kubectl delete managedseed $SHOOT_NAME -n garden
-          ./.local/yake-kubectl delete shoot $SHOOT_NAME -n garden
-          for i in {1..20}; do
-            if ! ./.local/yake-kubectl get shoot $SHOOT_NAME -n garden >/dev/null 2>&1; then
-              echo "Shoot deleted."
-              exit 0
-            else
-              echo "Shoot still running, wait 30 seconds..."
-              sleep 30
-            fi
-          done
-          echo "Timeout: Shoot could not deleted within 10 minutes."
-          exit 1
-
-      - name: Delete all clusters and files
-        env:
-          KUBECONFIG: /var/lib/yake/kubeconfig.clusterapi
-        if: always()
-        run: |
-          ./.local/yake-kubectl delete cluster garden
-          ./.local/yake-kind delete cluster --name clusterapi
-          docker rm -f $(docker ps -qa)
-          sudo rm -rf /var/lib/yake/
-          sudo rm -f group_vars/all.yml
+      - name: Run cleanup
+        uses: nick-fields/retry@v3
+        with:
+          timeout_minutes: 20
+          max_attempts: 3
+          command: ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/all.yml"

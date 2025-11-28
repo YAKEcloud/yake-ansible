@@ -1,0 +1,189 @@
+---
+- name: Gather servers
+  openstack.cloud.server_info:
+    cloud: "{{ cleanup_openstack_cloud }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+  register: server_list
+
+- name: Delete servers
+  openstack.cloud.server:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+    wait: true
+  loop: "{{ server_list.servers }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Gather volumes
+  openstack.cloud.volume_info:
+    cloud: "{{ cleanup_openstack_cloud }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+  register: volume_list
+
+- name: Delete volumes
+  openstack.cloud.volume:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+    wait: true
+    timeout: 300
+  loop: "{{ volume_list.volumes }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Gather loadbalancers via CLI
+  ansible.builtin.command: openstack loadbalancer list -f json
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+    OS_CLOUD: "{{ cleanup_openstack_cloud }}"
+  register: lb_list_raw
+
+- name: Parse loadbalancer list
+  ansible.builtin.set_fact:
+    lb_list: "{{ lb_list_raw.stdout | from_json }}"
+
+- name: Delete loadbalancers
+  openstack.cloud.loadbalancer:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+    delete_floating_ip: true
+  loop: "{{ lb_list }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Gather routers
+  openstack.cloud.routers_info:
+    cloud: "{{ cleanup_openstack_cloud }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+  register: router_list
+
+- name: Detach router interfaces
+  openstack.cloud.port:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+  loop: "{{ router_list.routers | map(attribute='interfaces') | select('defined') | sum(start=[]) }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Delete routers
+  openstack.cloud.router:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+  loop: "{{ router_list.routers }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Gather ports
+  openstack.cloud.port_info:
+    cloud: "{{ cleanup_openstack_cloud }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+  register: port_list
+
+- name: Delete remaining ports
+  openstack.cloud.port:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+  loop: "{{ port_list.ports | rejectattr('device_owner', 'equalto', 'network:router_interface') }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Gather networks
+  openstack.cloud.networks_info:
+    cloud: "{{ cleanup_openstack_cloud }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+  register: network_list
+
+- name: Build whitelist network IDs
+  ansible.builtin.set_fact:
+    preserve_network_ids: >-
+      {{ network_list.networks
+         | selectattr('name', 'in', cleanup_openstack_preserve_networks)
+         | map(attribute='id') | list }}
+
+- name: Gather subnets
+  openstack.cloud.subnets_info:
+    cloud: "{{ cleanup_openstack_cloud }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+  register: subnet_list
+
+- name: Delete subnets not in preserved networks
+  openstack.cloud.subnet:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+  loop: "{{ subnet_list.subnets | rejectattr('network_id', 'in', preserve_network_ids) }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Delete networks not in preserved list
+  openstack.cloud.network:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+  loop: "{{ network_list.networks | rejectattr('name', 'in', cleanup_openstack_preserve_networks) }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Gather security groups
+  openstack.cloud.security_group_info:
+    cloud: "{{ cleanup_openstack_cloud }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+  register: sg_list
+
+- name: Delete security groups
+  openstack.cloud.security_group:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+  loop: "{{ sg_list.security_groups | rejectattr('name', 'in', cleanup_openstack_preserve_security_groups) }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Gather DNS recordsets via CLI
+  ansible.builtin.command: openstack recordset list -f json {{ gardener_operator_garden_url }}.
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+    OS_CLOUD: "{{ cleanup_openstack_cloud }}"
+  register: recordset_list_raw
+
+- name: Parse recordset list
+  ansible.builtin.set_fact:
+    recordset_list: "{{ recordset_list_raw.stdout | from_json }}"
+
+- name: Delete DNS recordsets (except preserved types)
+  openstack.cloud.recordset:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    zone: "{{ gardener_operator_garden_url }}."
+    name: "{{ item.name }}"
+  loop: "{{ recordset_list | rejectattr('type', 'in', cleanup_openstack_preserve_dns_record_types) }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+
+- name: Gather SSH keys
+  openstack.cloud.keypair_info:
+    cloud: "{{ cleanup_openstack_cloud }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+  register: key_list
+
+- name: Delete SSH keys
+  openstack.cloud.keypair:
+    cloud: "{{ cleanup_openstack_cloud }}"
+    state: absent
+    name: "{{ item.name }}"
+  loop: "{{ key_list.keypairs }}"
+  environment:
+    OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"

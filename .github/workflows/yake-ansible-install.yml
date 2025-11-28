@@ -55,18 +55,17 @@ jobs:
         env:
           SHOOT_NAME: managed-seed-1
           KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-        uses: nick-fields/retry@v3
-        with:
-          timeout_minutes: 15
-          max_attempts: 3
-          command: >
-            ./.local/yake-kubectl --kubeconfig "$KUBECONFIG" -n garden
-            wait shoot "$SHOOT_NAME"
-            --for=condition=EveryNodeReady=True
-            --for=condition=ControlPlaneHealthy=True
-            --for=condition=SystemComponentsHealthy=True
+          TIMEOUT: 900s
+        run: |
+          ./.local/yake-kubectl --kubeconfig "$KUBECONFIG" -n garden \
+            wait shoot "$SHOOT_NAME" \
+            --for=condition=EveryNodeReady=True \
+            --for=condition=ControlPlaneHealthy=True \
+            --for=condition=SystemComponentsHealthy=True \
+            --timeout="$TIMEOUT"
 
       - name: Run cleanup
+        if: always()
         uses: nick-fields/retry@v3
         with:
           timeout_minutes: 20

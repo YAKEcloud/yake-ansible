@@ -111,3 +111,18 @@ gardener_operator_managed_seeds:
     settings:
       backup_enabled: false
       excess_capacity_reservation: true
+
+# cleanup
+cleanup_openstack_cloud: openstack
+cleanup_clouds_file: /var/lib/yake/clouds.garden.yaml
+
+cleanup_openstack_preserve_security_groups:
+  - default
+
+cleanup_openstack_preserve_networks:
+  - public
+  - wireguard
+
+cleanup_openstack_preserve_dns_record_types:
+  - SOA
+  - NS

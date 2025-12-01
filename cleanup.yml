@@ -44,6 +44,25 @@
       environment:
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
 
+    - name: Gather floating ips via CLI
+      ansible.builtin.command: openstack floating ip list -f json
+      environment:
+        OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+        OS_CLOUD: "{{ cleanup_openstack_cloud }}"
+      register: ip_list_raw
+      changed_when: ip_list_raw.rc != 0
+
+    - name: Parse floating ip list
+      ansible.builtin.set_fact:
+        ip_list: "{{ ip_list_raw.stdout | from_json }}"
+
+    - name: Delete floating ips
+      ansible.builtin.command: openstack floating ip delete {{ item.ID }}
+      loop: "{{ ip_list }}"
+      environment:
+        OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+        OS_CLOUD: "{{ cleanup_openstack_cloud }}"
+
     - name: Gather loadbalancers via CLI
       ansible.builtin.command: openstack loadbalancer list -f json
       environment:

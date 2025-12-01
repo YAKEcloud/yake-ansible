@@ -59,3 +59,5 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 docker rm -f $(docker ps -qa)
 sudo rm -rf /var/lib/yake/
 ```
+
+For advanced cleanup have a look at hack/cleanup.yml

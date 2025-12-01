@@ -15,7 +15,7 @@
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     kind: Pod
     namespace: default
-  register: cilium_pods
+  register: cilium_pods  # noqa: var-naming[no-role-prefix]
   until: >
     cilium_pods.resources is defined and
     (

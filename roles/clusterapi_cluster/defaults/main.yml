@@ -27,7 +27,7 @@ clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
-clusterapi_cluster_openstack_swift_image_url:  https://swift.example.com/swift/v1/AUTH_cda7bdba271d27a9499900be9319984f/openstack-k8s-capi-images/ubuntu-2404-kube-1.33/ubuntu-2404-kube-v1.33.4.qcow2
+clusterapi_cluster_openstack_swift_image_url: https://swift.example.com/swift/v1/AUTH_cda7bdba271d27a9499900be9319984f/openstack-k8s-capi-images/ubuntu-2404-kube-1.33/ubuntu-2404-kube-v1.33.4.qcow2
 clusterapi_cluster_openstack_upload_image: false
 clusterapi_cluster_openstack_image_id: "fe820408-b646-46bb-8988-1d889723987"
 clusterapi_cluster_cloud_cacert_b64: ""
@@ -40,7 +40,7 @@ clusterapi_cluster_openstack_cloud:
   interface: "public"
   identity_api_version: 3
   auth_type: "v3applicationcredential"
-clusterapi_cluster_openstack_loadbalancer_provider: ovn # or amphora
+clusterapi_cluster_openstack_loadbalancer_provider: ovn  # or amphora
 
 clusterapi_cluster_worker_machine_count: "3"
 clusterapi_cluster_openstack_failure_domain: "nova"
@@ -64,8 +64,8 @@ clusterapi_cluster_extra: {}
 
 clusterapi_cluster_network: cilium
 
-cilium_helm_chart_ref: /var/lib/yake/charts/cilium # noqa: var-naming[no-role-prefix]
-cilium_helm_release_name: cilium # noqa: var-naming[no-role-prefix]
-cilium_helm_release_namespace: kube-system # noqa: var-naming[no-role-prefix]
-cilium_helm_values: # noqa: var-naming[no-role-prefix]
+cilium_helm_chart_ref: /var/lib/yake/charts/cilium  # noqa: var-naming[no-role-prefix]
+cilium_helm_release_name: cilium  # noqa: var-naming[no-role-prefix]
+cilium_helm_release_namespace: kube-system  # noqa: var-naming[no-role-prefix]
+cilium_helm_values:  # noqa: var-naming[no-role-prefix]
   policyCIDRMatchMode: nodes

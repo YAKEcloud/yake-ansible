@@ -1,1 +1,2 @@
+---
 _gardener_operator_helm_values: {}  # noqa: var-naming[no-role-prefix]

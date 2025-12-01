@@ -36,42 +36,51 @@
 
 - name: Extract node CIDR from first InternalIP
   ansible.builtin.shell: |
-    {{ playbook_dir }}/.local/yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' \
-    | awk -F. '{print $1"."$2"."$3".0/24"}'
+    set -o pipefail
+    {{ playbook_dir }}/.local/yake-kubectl get nodes -o jsonpath='{.items[0].status.addresses[?(@.type=="InternalIP")].address}' | awk -F. '{print $1"."$2"."$3".0/24"}'
+  args:
+    executable: /bin/bash
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: node_cidr_output # noqa: var-naming[no-role-prefix]
+  register: node_cidr_output  # noqa: var-naming[no-role-prefix]
   changed_when: false
+  failed_when: node_cidr_output.stdout | trim == ""
 
 - name: Set node_cidr fact
   ansible.builtin.set_fact:
-    gardener_operator_nodes_cidr: "{{ node_cidr_output.stdout }}"
+    gardener_operator_nodes_cidr: "{{ node_cidr_output.stdout | trim }}"
 
 - name: Extract service CIDR from API server flags
   ansible.builtin.shell: |
-    {{ playbook_dir }}/.local/yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' \
-    | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'
+    set -o pipefail
+    {{ playbook_dir }}/.local/yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'
+  args:
+    executable: /bin/bash
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: service_cidr_output # noqa: var-naming[no-role-prefix]
+  register: service_cidr_output  # noqa: var-naming[no-role-prefix]
   changed_when: false
+  failed_when: service_cidr_output.stdout | trim == ""
 
 - name: Set service_cidr fact
   ansible.builtin.set_fact:
-    gardener_operator_services_cidr: "{{ service_cidr_output.stdout }}"
+    gardener_operator_services_cidr: "{{ service_cidr_output.stdout | trim }}"
 
 - name: Extract pod CIDR from API server output
   ansible.builtin.shell: |
-    {{ playbook_dir }}/.local/yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' \
-    | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'
+    set -o pipefail
+    {{ playbook_dir }}/.local/yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'
+  args:
+    executable: /bin/bash
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: pod_cidr_output # noqa: var-naming[no-role-prefix]
+  register: pod_cidr_output  # noqa: var-naming[no-role-prefix]
   changed_when: false
+  failed_when: pod_cidr_output.stdout | trim == ""
 
 - name: Set pod_cidr fact
   ansible.builtin.set_fact:
-    gardener_operator_pods_cidr: "{{ pod_cidr_output.stdout }}"
+    gardener_operator_pods_cidr: "{{ pod_cidr_output.stdout | trim }}"
 
 - name: Fail if any CIDR could not be extracted
   ansible.builtin.fail:
@@ -108,7 +117,7 @@
     kind: Secret
     name: gardener
     namespace: garden
-  register: gardener_secret # noqa: var-naming[no-role-prefix]
+  register: gardener_secret  # noqa: var-naming[no-role-prefix]
   until: gardener_secret.resources | length > 0 and gardener_secret.resources[0].data is defined and gardener_secret.resources[0].data.kubeconfig is defined
   retries: 60
   delay: 10

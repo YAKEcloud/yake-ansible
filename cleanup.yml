@@ -80,7 +80,6 @@
         cloud: "{{ cleanup_openstack_cloud }}"
         state: absent
         name: "{{ item.name }}"
-        delete_floating_ip: true
       loop: "{{ lb_list }}"
       environment:
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"

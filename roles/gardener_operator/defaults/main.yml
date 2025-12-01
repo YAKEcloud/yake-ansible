@@ -181,16 +181,13 @@ gardener_operator_managed_seeds:
         provider: openstack
         region: region-a
         bucket_name: bucket-a
-        credentials: # for openstack
-          # authURL: "https://openstack.a.example.com:5000"
-          # tenantName: "project-a"
-          # domainName: "domain-a"
-          # regionName: "region-a"
-          # applicationCredentialID: "cred-id-a"
-          # applicationCredentialName: "cred-name-a"
-          # applicationCredentialSecret: "secret-a"
-          # s3ForcePathStyle: true
+        credentials:  # for openstack
+        # authURL: "https://openstack.a.example.com:5000"
+        # tenantName: "project-a"
+        # domainName: "domain-a"
+        # regionName: "region-a"
+        # applicationCredentialID: "cred-id-a"
+        # applicationCredentialName: "cred-name-a"
+        # applicationCredentialSecret: "secret-a"
+        # s3ForcePathStyle: true
       excess_capacity_reservation: true
-  # - name: seed-b
-  #   cloudprofile_name: openstack-b
-  #   ...

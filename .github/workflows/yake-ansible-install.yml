@@ -1,6 +1,7 @@
+---
 name: Yake-Ansible install
 
-on:
+"on":
   pull_request:
     types: [opened, reopened, synchronize]
     paths:
@@ -29,7 +30,7 @@ jobs:
       - name: Set up Python
         uses: actions/setup-python@v6
         with:
-          python-version: '3.14'
+          python-version: '3.x'
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y ssh git curl ca-certificates
@@ -63,6 +64,9 @@ jobs:
             --for=condition=ControlPlaneHealthy=True \
             --for=condition=SystemComponentsHealthy=True \
             --timeout="$TIMEOUT"
+
+      - name: Wait 5 minutes after shoot ready
+        run: sleep 300
 
       - name: Run cleanup
         if: always()

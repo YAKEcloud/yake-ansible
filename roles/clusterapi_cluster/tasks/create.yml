@@ -24,7 +24,7 @@
 - name: Slurp clouds.yaml file
   ansible.builtin.slurp:
     src: "/var/lib/yake/clouds.{{ clusterapi_cluster_name }}.yaml"
-  register: result_clouds_yaml
+  register: result_clouds_yaml  # noqa: var-naming[no-role-prefix]
 
 - name: Set _clusterapi_cluster_cloud_yaml_b64 fact
   ansible.builtin.set_fact:
@@ -33,8 +33,8 @@
 - name: Get SHA256 hash for the image
   ansible.builtin.uri:
     url: "{{ clusterapi_cluster_openstack_swift_image_url }}.CHECKSUM"
-    return_content: yes
-  register: image_hash_raw
+    return_content: true
+  register: image_hash_raw  # noqa: var-naming[no-role-prefix]
   when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Get only the hash
@@ -63,7 +63,7 @@
   openstack.cloud.networks_info:
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     name: "{{ clusterapi_cluster_external_network }}"
-  register: result_external_network
+  register: result_external_network  # noqa: var-naming[no-role-prefix]
 
 - name: Set _clusterapi_cluster_external_network fact
   ansible.builtin.set_fact:
@@ -75,7 +75,7 @@
 
 - name: Combine clusterapi_cluster_defaults and clusterapi_cluster_extra
   ansible.builtin.set_fact:
-    _clusterapi_cluster: "{{ clusterapi_cluster_extra }}"
+    _clusterapi_cluster: "{{ clusterapi_cluster_extra }}"  # noqa: var-naming[no-role-prefix]
 
 - name: Copy cluster template file
   ansible.builtin.template:
@@ -90,7 +90,7 @@
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     state: present
     name: "{{ clusterapi_cluster_ssh_key_name }}"
-  register: result_keypair
+  register: result_keypair  # noqa: var-naming[no-role-prefix]
 
 - name: Write private ssh key
   ansible.builtin.copy:
@@ -139,7 +139,7 @@
   openstack.cloud.image_info:
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     name: "{{ clusterapi_cluster_openstack_image_name }}"
-  register: image_check
+  register: image_check  # noqa: var-naming[no-role-prefix]
   when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Upload image to OpenStack
@@ -148,14 +148,14 @@
     state: present
     wait: true
     src: "/var/lib/yake/image.{{ clusterapi_cluster_name }}.yaml"
-  register: image_upload
+  register: image_upload  # noqa: var-naming[no-role-prefix]
   when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Wait untill the image is uploaded (can take a long time)
   openstack.cloud.image_info:
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     name: "{{ clusterapi_cluster_openstack_image_name }}"
-  register: uploaded_image
+  register: uploaded_image  # noqa: var-naming[no-role-prefix]
   until: uploaded_image.images[0].status == "active"
   retries: 60
   delay: 60
@@ -170,7 +170,7 @@
 
 - name: Get kubeconfig
   ansible.builtin.command: "{{ playbook_dir }}/.local/yake-clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
-  register: result_kubeconfig
+  register: result_kubeconfig  # noqa: var-naming[no-role-prefix]
   changed_when: false
   until: result_kubeconfig.rc == 0
   environment:
@@ -190,7 +190,7 @@
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     kind: Node
-  register: result_k8s_nodes
+  register: result_k8s_nodes  # noqa: var-naming[no-role-prefix]
   until: result_k8s_nodes.resources is defined
   retries: 60
   delay: 10
@@ -209,7 +209,7 @@
 - name: Slurp cloud.conf file
   ansible.builtin.slurp:
     src: "/var/lib/yake/cloud.{{ clusterapi_cluster_name }}.conf"
-  register: register_cloud_conf
+  register: register_cloud_conf  # noqa: var-naming[no-role-prefix]
 
 - name: Create cloud-config secret
   kubernetes.core.k8s:
@@ -253,7 +253,7 @@
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     kind: Pod
     namespace: kube-system
-  register: coredns_pods
+  register: coredns_pods  # noqa: var-naming[no-role-prefix]
   until: >
     coredns_pods.resources is defined and
     (
@@ -287,8 +287,13 @@
     - csi-cinder-driver.yaml
 
 - name: Remove csi-snapshotter if disabled
-  ansible.builtin.shell: |
-    yq -yi '.spec.template.spec.containers |= map(select(.name != "csi-snapshotter"))' /var/lib/yake/cinder-csi-controllerplugin.yaml
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      yq -yi '.spec.template.spec.containers |= map(select(.name != "csi-snapshotter"))' /var/lib/yake/cinder-csi-controllerplugin.yaml
+    executable: /bin/bash
+  register: disabled_csi_snapshotter  # noqa: var-naming[no-role-prefix]
+  changed_when: disabled_csi_snapshotter.rc != 0  # noqa: var-naming[no-role-prefix]
   when: not clusterapi_cluster_csi_snapshotter_enable | bool
 
 - name: Apply CSI manifests
@@ -312,7 +317,7 @@
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     kind: Pod
     namespace: kube-system
-  register: csi_pods
+  register: csi_pods  # noqa: var-naming[no-role-prefix]
   until: >
     csi_pods.resources is defined and
     (

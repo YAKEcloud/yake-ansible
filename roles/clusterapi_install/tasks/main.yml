@@ -26,7 +26,7 @@
     {{ playbook_dir }}/.local/yake-clusterctl --kubeconfig {{ clusterapi_install_kubeconfig }} init --infrastructure {{ clusterapi_install_infrastructure }}
   args:
     executable: /bin/bash
-  register: result
+  register: result  # noqa: var-naming[no-role-prefix]
   changed_when: "'Your management cluster has been initialized successfully' in result.stdout"
 
 - name: Apply orc controller manifest
@@ -39,7 +39,7 @@
   become: "{{ clusterapi_install_become }}"
   ansible.builtin.command: >
     {{ playbook_dir }}/.local/yake-kubectl --kubeconfig {{ clusterapi_install_kubeconfig }} wait --for=condition=Ready pods --all --all-namespaces --timeout=300s
-  register: wait_result
+  register: wait_result  # noqa: var-naming[no-role-prefix]
   until: wait_result.rc == 0
   retries: 10
   delay: 10

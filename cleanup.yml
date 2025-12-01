@@ -5,6 +5,8 @@
   tasks:
     - name: Delete kind cluster
       ansible.builtin.command: "{{ playbook_dir }}/.local/yake-kind delete cluster --name clusterapi"
+      register: kind_delete
+      changed_when: kind_delete.rc != 0
       timeout: 300
 
     - name: Gather servers
@@ -48,6 +50,7 @@
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
         OS_CLOUD: "{{ cleanup_openstack_cloud }}"
       register: lb_list_raw
+      changed_when: lb_list_raw.rc != 0
 
     - name: Parse loadbalancer list
       ansible.builtin.set_fact:
@@ -165,6 +168,7 @@
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
         OS_CLOUD: "{{ cleanup_openstack_cloud }}"
       register: recordset_list_raw
+      changed_when: recordset_list_raw.rc != 0
 
     - name: Parse recordset list
       ansible.builtin.set_fact:

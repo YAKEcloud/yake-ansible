@@ -22,7 +22,7 @@
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     kind: Pod
     namespace: kube-system
-  register: calico_pods
+  register: calico_pods  # noqa: var-naming[no-role-prefix]
   until: >
     calico_pods.resources is defined and
     (

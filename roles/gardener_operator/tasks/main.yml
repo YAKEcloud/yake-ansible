@@ -42,7 +42,7 @@
     executable: /bin/bash
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: node_cidr_output
+  register: node_cidr_output  # noqa: var-naming[no-role-prefix]
   changed_when: false
   failed_when: node_cidr_output.stdout | trim == ""
 
@@ -58,7 +58,7 @@
     executable: /bin/bash
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: service_cidr_output
+  register: service_cidr_output  # noqa: var-naming[no-role-prefix]
   changed_when: false
   failed_when: service_cidr_output.stdout | trim == ""
 
@@ -74,7 +74,7 @@
     executable: /bin/bash
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: pod_cidr_output
+  register: pod_cidr_output  # noqa: var-naming[no-role-prefix]
   changed_when: false
   failed_when: pod_cidr_output.stdout | trim == ""
 

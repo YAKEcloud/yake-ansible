@@ -62,6 +62,7 @@
       environment:
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
         OS_CLOUD: "{{ cleanup_openstack_cloud }}"
+      changed_when: ip_list.rc != 0
 
     - name: Gather loadbalancers via CLI
       ansible.builtin.command: openstack loadbalancer list -f json

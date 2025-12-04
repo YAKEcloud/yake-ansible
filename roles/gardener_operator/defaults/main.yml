@@ -78,7 +78,7 @@ gardener_operator_provider_azure_version: '1.57.0'
 
 gardener_operator_provider_gcp_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
-gardener_operator_provider_gcp_version: '1.47.0'
+gardener_operator_provider_gcp_version: '1.48.0'
 
 gardener_operator_backup_s3_enabled: false
 # renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3

@@ -4,7 +4,7 @@ gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
 gardener_operator_clusterapi_name: garden
 
 # renovate: datasource=github-releases depName=gardener/gardener
-gardener_operator_version: '1.133.0'
+gardener_operator_version: '1.134.0'
 gardener_operator_helm_values:
   replicaCount: 1
 

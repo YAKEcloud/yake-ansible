@@ -1,99 +1,97 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": [
-    "config:best-practices"
-  ],
-  "separateMinorPatch": true,
-  "lockFileMaintenance": {
-    "enabled": true
-  },
+  "extends": ["config:recommended"],
   "dependencyDashboard": true,
   "rebaseWhen": "behind-base-branch",
   "schedule": ["at any time"],
   "labels": ["renovate"],
   "automerge": false,
+  "separateMinorPatch": true,
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
-  "ignorePaths": [
-    "charts/**"
-  ],
-  "packageRules": [
-    {
-      "matchFileNames": [
-        "^.charts.yml"
-      ],
-      "versioning": "loose"
-    },
-    {
-      "matchStrings": ["gardener_operator_keycloak_cnpg_version"],
-      "datasource": "github-releases",
-      "depName": "cloudnative-pg/charts",
-      "versioning": "semver",
-      "extractVersion": "^cloudnative-pg-(?<version>\\d+\\.\\d+\\.\\d+)"
-    },
-    {
-      "matchStrings": ["gardener_operator_keycloak_cnpg_cluster_version"],
-      "datasource": "github-releases",
-      "depName": "cloudnative-pg/charts",
-      "versioning": "semver",
-      "extractVersion": "^cluster-v(?<version>\\d+\\.\\d+\\.\\d+)"
-    },
-    {
-      "matchStrings": ["gardener_operator_keycloak_ingress_nginx_version"],
-      "datasource": "github-releases",
-      "depName": "kubernetes/ingress-nginx",
-      "versioning": "semver",
-      "extractVersion": "^helm-chart-(?<version>\\d+\\.\\d+\\.\\d+)"
-    }
-  ],
+  "ignorePaths": ["charts/**"],
+
   "customManagers": [
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/helm_install\\/defaults\\/main.yml$/",
-        "/^roles\\/kind_install\\/defaults\\/main.yml$/",
-        "/^roles\\/kubectl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/kind_cluster\\/defaults\\/main.yml$/",
-        "/^group_vars\\/all\\.yml\\.example/",
-        "/^roles\\/clusterapi_cluster\\/defaults\\/main.yml$/",
-        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/gardener_operator\\/defaults\\/main.yml$/"
+        "^roles/gardener_operator/defaults/main.yml$"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\n.*?(_tag|_version): '(?<currentValue>.*?)'"
+        "gardener_operator_keycloak_cnpg_version: (?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "cloudnative-pg/charts",
+      "extractVersionTemplate": "cloudnative-pg-(?<version>\\d+\\.\\d+\\.\\d+)",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "^roles/gardener_operator/defaults/main.yml$"
+      ],
+      "matchStrings": [
+        "gardener_operator_keycloak_cnpg_cluster_version: (?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "cloudnative-pg/charts",
+      "extractVersionTemplate": "cluster-v(?<version>\\d+\\.\\d+\\.\\d+)",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "^roles/gardener_operator/defaults/main.yml$"
+      ],
+      "matchStrings": [
+        "gardener_operator_keycloak_ingress_nginx_version: (?<currentValue>\\S+)"
+      ],
+      "datasourceTemplate": "github-releases",
+      "depNameTemplate": "kubernetes/ingress-nginx",
+      "extractVersionTemplate": "helm-chart-(?<version>\\d+\\.\\d+\\.\\d+)",
+      "versioningTemplate": "semver"
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": [
+        "^roles/clusterctl_install/defaults/main.yml$",
+        "^roles/helm_install/defaults/main.yml$",
+        "^roles/kind_install/defaults/main.yml$",
+        "^roles/kubectl_install/defaults/main.yml$",
+        "^roles/kind_cluster/defaults/main.yml$",
+        "^group_vars/all.yml.example$",
+        "^roles/clusterapi_cluster/defaults/main.yml$",
+        "^roles/gardener_operator/defaults/main.yml$"
+      ],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)[\\r\\n]+.*?(_tag|_version): '(?<currentValue>[^']+)'"
+      ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^\\.github/workflows/build-.*\\.yml$"],
+      "matchStrings": [
+        "- (?<currentValue>\\S+)\\s+# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)"
+      ]
+    },
+    {
+      "customType": "regex",
+      "managerFilePatterns": ["^Giltfile.yaml$", "^\\.charts.yml$"],
+      "matchStrings": [
+        "# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)[\\r\\n]+.*?version: '(?<currentValue>[^']+)'"
       ]
     },
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^\\.github\\/workflows\\/build-.*\\.yml/"
+        "^images/clusterctl/Containerfile$",
+        "^images/flux/Containerfile$",
+        "^images/helm/Containerfile$",
+        "^images/k9s/Containerfile$",
+        "^images/kind/Containerfile$",
+        "^images/kubectl/Containerfile$"
       ],
       "matchStrings": [
-        "- (?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
-      ]
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^Giltfile.yaml/",
-        "/^.charts.yml/"
-      ],
-      "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?version: '(?<currentValue>.*?)'"
-      ]
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^images\\/clusterctl\\/Containerfile$/",
-        "/^images\\/flux\\/Containerfile$/",
-        "/^images\\/helm\\/Containerfile$/",
-        "/^images\\/k9s\\/Containerfile$/",
-        "/^images\\/kind\\/Containerfile$/",
-        "/^images\\/kubectl\\/Containerfile$/"
-      ],
-      "matchStrings": [
-        "ARG VERSION=(?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
+        "ARG VERSION=(?<currentValue>\\S+)\\s+# renovate: datasource=(?<datasource>\\S+) depName=(?<depName>\\S+)"
       ]
     }
   ]

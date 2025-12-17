@@ -11,8 +11,11 @@ gardener_operator_helm_values:
 gardener_operator_keycloak_enabled: false
 # Will install ingress-nginx. Set to false to install with the default traefik.
 gardener_operator_keycloak_k3s_traefik_disabled: true
-gardener_operator_keycloak_cnpg_version: '0.26.1'
-gardener_operator_keycloak_cnpg_cluster_version: '0.3.1'
+gardener_operator_keycloak_ingress_nginx_version: 4.14.1
+# renovate: datasource=github-releases depName=cert-manager/cert-manager
+gardener_operator_keycloak_cert_manager_version: 'v1.19.2'
+gardener_operator_keycloak_cnpg_version: 0.27.0
+gardener_operator_keycloak_cnpg_cluster_version: 0.5.0
 # renovate: datasource=github-releases depName=keycloak/keycloak
 gardener_operator_keycloak_operator_version: '26.4.7'
 gardener_operator_keycloak_domain: keycloak.example.com
@@ -40,7 +43,7 @@ gardener_operator_garden_auth_public_name: keycloak
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-gardener_operator_kubernetes_version: 1.33.6
+gardener_operator_kubernetes_version: '1.33.7'
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
 gardener_operator_provider_openstack_version: '1.51.0'
@@ -129,7 +132,7 @@ gardener_operator_cloudprofiles:
               - name: region-a
                 id: 6ed7d8aa-e770-4061-a8d7-461a83e41c31
     kubernetes_versions:
-      - version: 1.33.6
+      - version: 1.33.7
         classification: supported
     machinetypes:
       - name: SCS-4V-8
@@ -155,7 +158,7 @@ gardener_operator_managed_seeds:
   - name: seed-a
     cloudprofile_name: openstack-a
     networking_type: cilium
-    kubernetes_version: 1.33.6
+    kubernetes_version: 1.33.7
     openstack:
       auth_url: "https://openstack.a.example.com:5000"
       project_name: "project-a"

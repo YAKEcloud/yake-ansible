@@ -58,7 +58,9 @@
 - name: Install ingress-nginx
   kubernetes.core.helm:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
+    update_repo_cache: true
     chart_ref: ingress-nginx/ingress-nginx
+    chart_version: "{{ gardener_operator_keycloak_ingress_nginx_version }}"
     create_namespace: true
     release_name: ingress-nginx
     release_namespace: ingress-nginx
@@ -81,6 +83,7 @@
   kubernetes.core.helm:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
     chart_ref: oci://quay.io/jetstack/charts/cert-manager
+    chart_version: "{{ gardener_operator_keycloak_cert_manager_version }}"
     create_namespace: true
     release_name: cert-manager
     release_namespace: cert-manager
@@ -105,6 +108,7 @@
 - name: Install cnpg-operator
   kubernetes.core.helm:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
+    update_repo_cache: true
     chart_ref: cnpg/cloudnative-pg
     chart_version: "{{ gardener_operator_keycloak_cnpg_version }}"
     create_namespace: true
@@ -125,6 +129,7 @@
 - name: Install cnpg-cluster
   kubernetes.core.helm:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.k3s
+    update_repo_cache: true
     chart_ref: cnpg/cluster
     chart_version: "{{ gardener_operator_keycloak_cnpg_cluster_version }}"
     create_namespace: true
@@ -136,6 +141,8 @@
       version:
         postgresql: "17"
       cluster:
+        instances: 1
+        primaryUpdateMethod: restart
         initdb:
           database: keycloak
           owner: keycloak

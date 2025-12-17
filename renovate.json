@@ -22,6 +22,27 @@
         "^.charts.yml"
       ],
       "versioning": "loose"
+    },
+    {
+      "matchStrings": ["gardener_operator_keycloak_cnpg_version"],
+      "datasource": "github-releases",
+      "depName": "cloudnative-pg/charts",
+      "versioning": "semver",
+      "extractVersion": "^cloudnative-pg-(?<version>\\d+\\.\\d+\\.\\d+)"
+    },
+    {
+      "matchStrings": ["gardener_operator_keycloak_cnpg_cluster_version"],
+      "datasource": "github-releases",
+      "depName": "cloudnative-pg/charts",
+      "versioning": "semver",
+      "extractVersion": "^cluster-v(?<version>\\d+\\.\\d+\\.\\d+)"
+    },
+    {
+      "matchStrings": ["gardener_operator_keycloak_ingress_nginx_version"],
+      "datasource": "github-releases",
+      "depName": "kubernetes/ingress-nginx",
+      "versioning": "semver",
+      "extractVersion": "^helm-chart-(?<version>\\d+\\.\\d+\\.\\d+)"
     }
   ],
   "customManagers": [

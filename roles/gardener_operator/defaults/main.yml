@@ -73,7 +73,7 @@ gardener_operator_os_ubuntu_version: '1.33.0'
 
 gardener_operator_provider_aws_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws
-gardener_operator_provider_aws_version: '1.66.1'
+gardener_operator_provider_aws_version: '1.66.2'
 
 gardener_operator_provider_azure_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure

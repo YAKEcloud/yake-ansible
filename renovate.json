@@ -7,7 +7,6 @@
   "labels": ["renovate"],
   "automerge": false,
   "separateMinorPatch": true,
-  "minimumReleaseAge": "3 days",
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
   "ignorePaths": ["charts/**"],
   "packageRules": [{"matchFileNames": ["^.charts.yml"], "versioning": "loose"}],

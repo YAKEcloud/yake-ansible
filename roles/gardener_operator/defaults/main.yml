@@ -43,7 +43,7 @@ gardener_operator_garden_auth_public_name: keycloak
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-gardener_operator_kubernetes_version: '1.33.7'
+gardener_operator_kubernetes_version: '1.35.0'
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
 gardener_operator_provider_openstack_version: '1.51.0'

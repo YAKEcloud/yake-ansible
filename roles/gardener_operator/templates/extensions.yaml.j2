@@ -318,6 +318,25 @@ spec:
   - kind: Network
     type: calico
 {% endif %}
+{% if gardener_operator_shoot_oidc_service_enabled %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: shoot-oidc-service
+spec:
+  deployment:
+    extension:
+      helm:
+        ociRepository:
+          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/shoot-oidc-service:v{{ gardener_operator_shoot_oidc_service_version }
+  resources:
+  - kind: Extension
+    type: shoot-oidc-service
+    workerlessSupported: true
+{% endif %}
 {% if gardener_operator_backup_s3_enabled %}
 ---
 apiVersion: core.gardener.cloud/v1

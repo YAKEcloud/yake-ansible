@@ -83,6 +83,10 @@ gardener_operator_provider_gcp_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
 gardener_operator_provider_gcp_version: '1.48.2'
 
+gardener_operator_shoot_oidc_service_enabled: true
+# renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-oidc-service
+gardener_operator_shoot_oidc_service_version: '0.34.0'
+
 gardener_operator_backup_s3_enabled: false
 # renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3
 gardener_operator_backup_s3_version: '0.8.1'

@@ -2,7 +2,7 @@ ARG ALPINE_VERSION=3.23@sha256:865b95f46d98cf867a156fe4a135ad3fe50d2056aa3f25ed3
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v0.50.16  # renovate: datasource=github-releases depName=derailed/k9s
+ARG VERSION=v0.50.18  # renovate: datasource=github-releases depName=derailed/k9s
 ADD https://github.com/derailed/k9s/releases/download/${VERSION}/k9s_linux_amd64.apk /k9s_linux_amd64.apk
 
 ENV USER_NAME=k9s

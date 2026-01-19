@@ -8,7 +8,7 @@ PyYAML = "==6.0.3"
 ansible-core = "==2.20.1"
 docker = "==7.1.0"
 kubernetes = "==35.0.0"
-openstacksdk = "==4.8.0"
+openstacksdk = "==4.9.0"
 python-gilt = "==2.2.4"
 requests = "==2.32.5"
 

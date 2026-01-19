@@ -77,7 +77,7 @@ gardener_operator_provider_aws_version: '1.66.2'
 
 gardener_operator_provider_azure_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure
-gardener_operator_provider_azure_version: '1.57.1'
+gardener_operator_provider_azure_version: '1.57.2'
 
 gardener_operator_provider_gcp_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp

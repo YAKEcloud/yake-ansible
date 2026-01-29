@@ -5,7 +5,7 @@ parallel: true
 repositories:
   - git: https://github.com/kubernetes/cloud-provider-openstack
     # renovate: datasource=github-releases depName=kubernetes/cloud-provider-openstack
-    version: 'v1.34.1'
+    version: 'v1.35.0'
     sources:
       - src: manifests/cinder-csi-plugin/cinder-csi-controllerplugin-rbac.yaml
         dstFile: roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin-rbac.yaml
@@ -19,7 +19,7 @@ repositories:
         dstFile: roles/clusterapi_cluster/files/cinder-csi/csi-cinder-driver.yaml
   - git: https://github.com/kubernetes/cloud-provider-openstack
     # renovate: datasource=github-releases depName=kubernetes/cloud-provider-openstack
-    version: 'v1.34.1'
+    version: 'v1.35.0'
     sources:
       - src: manifests/controller-manager/cloud-controller-manager-role-bindings.yaml
         dstFile: roles/clusterapi_cluster/files/cloud-controller-manager/cloud-controller-manager-role-bindings.yaml

@@ -121,7 +121,9 @@ spec:
 {% endif %}
         dns:
           provider:
-            secretRef:
+            credentialsRef:
+              apiVersion: v1
+              kind: Secret
               name: openstack-cloud
               namespace: garden
             type: openstack-designate

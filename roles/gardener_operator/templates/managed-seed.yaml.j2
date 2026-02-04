@@ -140,9 +140,19 @@ spec:
           dns:
             provider:
               type: openstack-designate
-              secretRef:
+              credentialsRef:
+                apiVersion: v1
+                kind: Secret
                 name: openstack-cloud
                 namespace: garden
+            internal:
+              credentialsRef:
+                apiVersion: v1
+                kind: Secret
+                name: openstack-cloud
+                namespace: garden
+              type: openstack-designate
+              domain: internal.{{ gardener_operator_garden_url }}
           ingress:
             domain: ingress.{{ item.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}
             controller:

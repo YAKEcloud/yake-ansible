@@ -163,6 +163,8 @@ gardener_operator_managed_seeds:
     cloudprofile_name: openstack-a
     networking_type: cilium
     kubernetes_version: 1.33.7
+    # if not set, default is internal.{{ gardener_operator_garden_url }}
+    # internal_domain: foo.example.com
     openstack:
       auth_url: "https://openstack.a.example.com:5000"
       project_name: "project-a"

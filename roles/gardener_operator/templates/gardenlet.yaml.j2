@@ -8,7 +8,7 @@ metadata:
     gardener.cloud/role: internal-domain
   annotations:
     dns.gardener.cloud/provider: openstack-designate
-    dns.gardener.cloud/domain: {{ gardener_operator_garden_url }}
+    dns.gardener.cloud/domain: internal.{{ gardener_operator_garden_url }}
 type: Opaque
 data:
   authURL: {{ gardener_operator_openstack_auth_url | b64encode }}

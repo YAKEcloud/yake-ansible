@@ -47,6 +47,15 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.garden
 ./.local/yake-kubectl get nodes
 ```
 
+### Accessing the vGarden
+
+For the vGarden, it makes sense to extract the kubeconfig again when using it and then export it directly. This ensures that access to the vGarden is successful.
+```bash
+export KUBECONFIG=/var/lib/yake/kubeconfig.garden
+kubectl get secret gardener -n garden -o jsonpath='{.data.kubeconfig}' | base64 -d > /var/lib/yake/gardener-operator/kubeconfig.vgarden && export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
+./.local/yake-kubectl get seeds
+```
+
 ### Patch/Upgrade
 If you want to patch/upgrade your gardener, just run the playbook once again and set the variable `gardener_operator_version` to the next version you like. Your gardener will be patched/upgraded to this version.
 

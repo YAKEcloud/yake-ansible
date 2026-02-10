@@ -20,7 +20,7 @@ clusterapi_cluster_container_registry_cache_k8s: https://registry.osism.tech/v2/
 clusterapi_cluster_charts_dir: "{{ playbook_dir }}/charts/"
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-clusterapi_cluster_kubernetes_version: 'v1.33.7'
+clusterapi_cluster_kubernetes_version: 'v1.33.8'
 
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""

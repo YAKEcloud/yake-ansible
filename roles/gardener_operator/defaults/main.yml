@@ -61,7 +61,7 @@ gardener_operator_shoot_dns_service_version: '1.77.1'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
 gardener_operator_networking_cilium_version: '1.46.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
-gardener_operator_os_gardenlinux_version: '0.35.0'
+gardener_operator_os_gardenlinux_version: '0.36.0'
 
 gardener_operator_networking_calico_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-calico

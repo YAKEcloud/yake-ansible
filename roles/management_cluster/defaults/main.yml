@@ -1,0 +1,25 @@
+---
+management_cluster_become: false
+management_cluster_uid: "{{ ansible_facts.user_uid | string }}"
+management_cluster_gid: "{{ ansible_facts.user_gid | string }}"
+
+# Engine: k3s or kind
+management_cluster_engine: k3s
+management_cluster_name: clusterapi
+management_cluster_kubeconfig: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
+
+# renovate: datasource=github-releases depName=k3s-io/k3s
+management_cluster_k3s_version: '1.35.1'
+
+management_cluster_kind_method: "{{ yake_install_method | default('binary') }}"
+management_cluster_kind_registry: ghcr.io
+management_cluster_kind_image: yakecloud/kind
+# renovate: datasource=docker depName=ghcr.io/yakecloud/kind
+management_cluster_kind_version: 'v0.31.0'
+
+management_cluster_kind_state: present
+management_cluster_kind_primary: clusterapi
+# renovate: datasource=docker depName=kindest/node
+management_cluster_kind_cluster_version: 'v1.35.1'
+management_cluster_kind_cluster_image: "kindest/node:{{ management_cluster_kind_cluster_version }}"
+management_cluster_kind_cluster_api_server_address: "127.0.0.1"

@@ -30,7 +30,7 @@
   community.docker.docker_container:
     name: helm
     command: sleep infinity
-    image: "{{ helm_install_container_registry }}/{{ helm_install_container_image }}:{{ helm_install_container_tag }}"
+    image: "{{ helm_install_container_registry }}/{{ helm_install_container_image }}:{{ helm_install_version }}"
     env:
       USER_ID: "{{ helm_install_uid }}"
       GROUP_ID: "{{ helm_install_gid }}"
@@ -38,6 +38,32 @@
       - /var/lib/yake:/var/lib/yake
       - /tmp:/tmp
     state: started
+  when: helm_install_method == "docker"
+
+- name: Download helm archive
+  ansible.builtin.unarchive:
+    src: "https://get.helm.sh/helm-{{ helm_install_version }}-linux-amd64.tar.gz"
+    dest: "{{ playbook_dir }}/.local/"
+    remote_src: true
+    extra_opts:
+      - "--strip-components=1"
+      - "--wildcards"
+      - "*/helm"
+  when: helm_install_method == "binary"
+
+- name: Rename helm binary
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/.local/helm"
+    dest: "{{ playbook_dir }}/.local/yake-helm"
+    mode: "0755"
+    remote_src: true
+  when: helm_install_method == "binary"
+
+- name: Remove extracted helm
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/.local/helm"
+    state: absent
+  when: helm_install_method == "binary"
 
 - name: Copy helm script
   become: true
@@ -47,3 +73,4 @@
     mode: 0755
     owner: root
     group: root
+  when: helm_install_method == "docker"

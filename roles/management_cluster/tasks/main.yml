@@ -1,0 +1,15 @@
+---
+- name: Create directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ management_cluster_uid }}"
+    group: "{{ management_cluster_gid }}"
+    mode: 0755
+    state: directory
+  loop:
+    - /var/lib/yake
+    - "{{ playbook_dir }}/.local"
+
+- name: Include engine-specific tasks
+  ansible.builtin.include_tasks: "{{ management_cluster_engine }}.yml"

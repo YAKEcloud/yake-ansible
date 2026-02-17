@@ -1,0 +1,99 @@
+---
+- name: Run kind container
+  become: "{{ management_cluster_become }}"
+  community.docker.docker_container:
+    name: kind
+    command: sleep infinity
+    image: "{{ management_cluster_kind_registry }}/{{ management_cluster_kind_image }}:{{ management_cluster_kind_version }}"
+    env:
+      USER_ID: "{{ management_cluster_uid }}"
+      GROUP_ID: "{{ management_cluster_gid }}"
+    volumes:
+      - /var/lib/yake:/var/lib/yake
+      - /var/run/docker.sock:/var/run/docker.sock
+    network_mode: host
+    state: started
+  when: management_cluster_kind_method == "docker"
+
+- name: Copy kind script
+  become: true
+  ansible.builtin.copy:
+    src: kind
+    dest: "{{ playbook_dir }}/.local/yake-kind"
+    mode: 0755
+    owner: root
+    group: root
+  when: management_cluster_kind_method == "docker"
+
+- name: Download kind binary
+  ansible.builtin.get_url:
+    url: "https://kind.sigs.k8s.io/dl/v{{ management_cluster_kind_version }}/kind-linux-amd64"
+    dest: "{{ playbook_dir }}/.local/yake-kind"
+    mode: "0755"
+  when: management_cluster_kind_method == "binary"
+
+- name: Copy kind cluster configuration file
+  become: true
+  ansible.builtin.template:
+    src: config.yml.j2
+    dest: "/var/lib/yake/config.{{ management_cluster_name }}.yml"
+    mode: 0644
+    owner: "{{ management_cluster_uid }}"
+    group: "{{ management_cluster_gid }}"
+
+- name: Pull kind container image
+  become: "{{ management_cluster_become }}"
+  community.docker.docker_image:
+    name: "{{ management_cluster_kind_cluster_image }}"
+    source: pull
+
+- name: Check if the kind cluster exists
+  become: "{{ management_cluster_become }}"
+  ansible.builtin.command: "{{ playbook_dir }}/.local/yake-kind get clusters"
+  register: kind_clusters  # noqa: var-naming[no-role-prefix]
+  changed_when: false
+
+- name: Create kind cluster
+  become: "{{ management_cluster_become }}"
+  ansible.builtin.command: >
+    {{ playbook_dir }}/.local/yake-kind create cluster
+    --name {{ management_cluster_name }}
+    --image {{ management_cluster_kind_cluster_image }}
+    --kubeconfig {{ management_cluster_kubeconfig }}
+    --config /var/lib/yake/config.{{ management_cluster_name }}.yml
+  when:
+    - management_cluster_kind_state == 'present'
+    - management_cluster_name not in kind_clusters.stdout_lines
+  async: 180
+  poll: 5
+
+- name: Wait for kind cluster to be ready
+  become: "{{ management_cluster_become }}"
+  ansible.builtin.command: >
+    {{ playbook_dir }}/.local/yake-kubectl --kubeconfig {{ management_cluster_kubeconfig }} wait --for=condition=Ready nodes --all --timeout=300s
+  register: wait_result  # noqa: var-naming[no-role-prefix]
+  until: wait_result.rc == 0
+  retries: 10
+  delay: 10
+  when:
+    - "management_cluster_kind_state == 'present'"
+    - "management_cluster_name not in kind_clusters.stdout_lines"
+  changed_when: false
+
+- name: Change permissions of kubeconfig
+  become: true
+  ansible.builtin.file:
+    path: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
+    mode: 0640
+    owner: "{{ management_cluster_uid }}"
+    group: "{{ management_cluster_gid }}"
+
+- name: Copy kubeconfig
+  become: true
+  ansible.builtin.copy:
+    src: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
+    dest: "/var/lib/yake/kubeconfig"
+    mode: 0640
+    owner: "{{ management_cluster_uid }}"
+    group: "{{ management_cluster_gid }}"
+  when: management_cluster_kind_primary == management_cluster_name

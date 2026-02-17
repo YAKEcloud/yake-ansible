@@ -1,0 +1,7 @@
+---
+kind: Cluster
+apiVersion: kind.x-k8s.io/v1alpha4
+networking:
+  apiServerAddress: "{{ management_cluster_kind_cluster_api_server_address }}"
+nodes:
+- role: control-plane

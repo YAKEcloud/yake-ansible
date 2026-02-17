@@ -2,6 +2,8 @@
 collections:
   - name: community.docker
     source: https://galaxy.ansible.com
+  - name: containers.podman
+    source: https://galaxy.ansible.com
   - name: ansible.posix
     source: https://galaxy.ansible.com
   - name: openstack.cloud

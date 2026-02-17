@@ -13,6 +13,13 @@
   community.docker.docker_image:
     name: "{{ kind_cluster_image }}"
     source: pull
+  when: kind_cluster_container_engine == "docker"
+
+- name: Pull kind container image
+  become: "{{ kind_cluster_become }}"
+  containers.podman.podman_image:
+    name: "{{ kind_cluster_image }}"
+  when: kind_cluster_container_engine == "podman"
 
 - name: Check if the kind cluster exists
   become: "{{ kind_cluster_become }}"

@@ -1,5 +1,6 @@
 ---
 kubectl_install_become: false
+kubectl_install_container_engine: "{{ container_engine | default('docker') }}"
 kubectl_install_container_registry: ghcr.io
 kubectl_install_container_image: yakecloud/kubectl
 # renovate: datasource=docker depName=ghcr.io/yakecloud/kubectl

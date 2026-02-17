@@ -21,9 +21,25 @@
       USER_ID: "{{ clusterctl_install_uid }}"
       GROUP_ID: "{{ clusterctl_install_gid }}"
     volumes:
-      - /var/lib/yake://var/lib/yake
+      - /var/lib/yake:/var/lib/yake
     network_mode: host
     state: started
+  when: clusterctl_install_container_engine == "docker"
+
+- name: Run clusterctl container
+  become: "{{ clusterctl_install_become }}"
+  containers.podman.podman_container:
+    name: clusterctl
+    command: sleep infinity
+    image: "{{ clusterctl_install_container_registry }}/{{ clusterctl_install_container_image }}:{{ clusterctl_install_container_tag }}"
+    env:
+      USER_ID: "{{ clusterctl_install_uid }}"
+      GROUP_ID: "{{ clusterctl_install_gid }}"
+    volumes:
+      - /var/lib/yake:/var/lib/yake
+    network_mode: host
+    state: started
+  when: clusterctl_install_container_engine == "podman"
 
 - name: Copy clusterctl script
   become: true

@@ -1,5 +1,6 @@
 ---
 kind_install_become: false
+kind_install_container_engine: "{{ container_engine | default('docker') }}"
 kind_install_container_registry: ghcr.io
 kind_install_container_image: yakecloud/kind
 # renovate: datasource=docker depName=ghcr.io/yakecloud/kind

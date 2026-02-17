@@ -1,5 +1,6 @@
 ---
 helm_install_become: false
+helm_install_container_engine: "{{ container_engine | default('docker') }}"
 helm_install_container_registry: ghcr.io
 helm_install_container_image: yakecloud/helm
 # renovate: datasource=docker depName=ghcr.io/yakecloud/helm

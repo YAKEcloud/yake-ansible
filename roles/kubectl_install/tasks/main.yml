@@ -24,6 +24,22 @@
       - /var/lib/yake:/var/lib/yake
     network_mode: host
     state: started
+  when: kubectl_install_container_engine == "docker"
+
+- name: Run kubectl container
+  become: "{{ kubectl_install_become }}"
+  containers.podman.podman_container:
+    name: kubectl
+    command: sleep infinity
+    image: "{{ kubectl_install_container_registry }}/{{ kubectl_install_container_image }}:{{ kubectl_install_container_tag }}"
+    env:
+      USER_ID: "{{ kubectl_install_uid }}"
+      GROUP_ID: "{{ kubectl_install_gid }}"
+    volumes:
+      - /var/lib/yake:/var/lib/yake
+    network_mode: host
+    state: started
+  when: kubectl_install_container_engine == "podman"
 
 - name: Copy kubectl script
   become: true

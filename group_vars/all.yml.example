@@ -1,5 +1,6 @@
 ---
 clusterapi_cluster_kubernetes_version: "1.33.6"
+container_engine: docker
 
 clusterapi_cluster_openstack_auth_url: "https://keystone.example.com/v3"
 clusterapi_cluster_openstack_application_credential_id: ""

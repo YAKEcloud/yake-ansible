@@ -1,5 +1,6 @@
 ---
 clusterctl_install_become: false
+clusterctl_install_container_engine: "{{ container_engine | default('docker') }}"
 clusterctl_install_container_registry: ghcr.io
 clusterctl_install_container_image: yakecloud/clusterctl
 # renovate: datasource=docker depName=ghcr.io/yakecloud/clusterctl

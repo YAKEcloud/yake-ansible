@@ -25,6 +25,23 @@
       - /var/run/docker.sock:/var/run/docker.sock
     network_mode: host
     state: started
+  when: kind_install_container_engine == "docker"
+
+- name: Run kind container
+  become: "{{ kind_install_become }}"
+  containers.podman.podman_container:
+    name: kind
+    command: sleep infinity
+    image: "{{ kind_install_container_registry }}/{{ kind_install_container_image }}:{{ kind_install_container_tag }}"
+    env:
+      USER_ID: "{{ kind_install_uid }}"
+      GROUP_ID: "{{ kind_install_gid }}"
+    volumes:
+      - /var/lib/yake:/var/lib/yake
+      - /run/podman/podman.sock:/var/run/docker.sock
+    network_mode: host
+    state: started
+  when: kind_install_container_engine == "podman"
 
 - name: Copy kind script
   become: true

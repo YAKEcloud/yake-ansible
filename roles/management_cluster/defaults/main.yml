@@ -10,6 +10,11 @@ management_cluster_kubeconfig: "/var/lib/yake/kubeconfig.{{ management_cluster_n
 
 # renovate: datasource=github-releases depName=k3s-io/k3s
 management_cluster_k3s_version: '1.35.1'
+management_cluster_k3s_env:
+  INSTALL_K3S_VERSION: "v{{ management_cluster_k3s_version }}+k3s1"
+  INSTALL_K3S_EXEC: "--disable=metrics-server"
+  K3S_KUBECONFIG_MODE: "644"
+management_cluster_proxy_env: "{{ proxy_env | default({}) }}"
 
 management_cluster_kind_method: "{{ yake_install_method | default('binary') }}"
 management_cluster_kind_registry: ghcr.io

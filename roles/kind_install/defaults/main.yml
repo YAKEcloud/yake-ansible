@@ -7,3 +7,4 @@ kind_install_container_image: yakecloud/kind
 kind_install_container_tag: 'v0.31.0'
 kind_install_uid: "{{ ansible_facts.user_uid | string }}"
 kind_install_gid: "{{ ansible_facts.user_gid | string }}"
+kind_install_proxy_env: "{{ proxy_env | default({}) }}"

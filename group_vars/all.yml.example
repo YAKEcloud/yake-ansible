@@ -1,4 +1,7 @@
 ---
+yake_install_method: binary
+management_cluster_engine: k3s
+
 clusterapi_cluster_kubernetes_version: "1.33.6"
 
 clusterapi_cluster_openstack_auth_url: "https://keystone.example.com/v3"

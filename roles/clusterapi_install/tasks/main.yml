@@ -23,7 +23,7 @@
   become: "{{ clusterapi_install_become }}"
   ansible.builtin.shell: |
     export CLUSTER_TOPOLOGY={{ clusterapi_install_cluster_topology | lower }}
-    {{ playbook_dir }}/.local/yake-clusterctl --kubeconfig {{ clusterapi_install_kubeconfig }} init --infrastructure {{ clusterapi_install_infrastructure }}
+    {{ playbook_dir }}/.local/yake-clusterctl init --infrastructure {{ clusterapi_install_infrastructure }} --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}
   args:
     executable: /bin/bash
   register: result  # noqa: var-naming[no-role-prefix]
@@ -31,16 +31,20 @@
 
 - name: Apply orc controller manifest
   kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/{{ clusterapi_install_kubeconfig }}"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}"
     state: present
     src: /var/lib/yake/install-orc.yaml
 
 - name: Wait for all pods to be ready
   become: "{{ clusterapi_install_become }}"
-  ansible.builtin.command: >
-    {{ playbook_dir }}/.local/yake-kubectl --kubeconfig {{ clusterapi_install_kubeconfig }} wait --for=condition=Ready pods --all --all-namespaces --timeout=300s
-  register: wait_result  # noqa: var-naming[no-role-prefix]
-  until: wait_result.rc == 0
-  retries: 10
+  ansible.builtin.shell: |
+    {{ playbook_dir }}/.local/yake-kubectl \
+      --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }} \
+      get pods --all-namespaces --no-headers | \
+      grep -v -E 'Completed|Succeeded' | \
+      grep -v '1/1\|2/2\|3/3\|4/4' || true
+  register: _not_ready_pods
+  until: _not_ready_pods.stdout == ""
+  retries: 30
   delay: 10
   changed_when: false

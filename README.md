@@ -61,6 +61,15 @@ If you want to patch/upgrade your gardener, just run the playbook once again and
 
 ### Cleanup
 
+#### k3s
+```bash
+export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
+./.local/yake-kubectl delete cluster garden
+sudo /usr/local/bin/k3s-uninstall.sh
+sudo rm -rf /var/lib/yake/
+```
+
+#### kind
 ```bash
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 ./.local/yake-kubectl delete cluster garden

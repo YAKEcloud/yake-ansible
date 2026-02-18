@@ -1,0 +1,36 @@
+---
+- name: Download k3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s-install.sh
+    mode: "0755"
+
+- name: Check installed k3s version
+  ansible.builtin.command: k3s --version
+  register: _k3s_version
+  changed_when: false
+  failed_when: false
+
+- name: Install or upgrade k3s
+  become: true
+  ansible.builtin.command: sh /tmp/k3s-install.sh
+  environment:
+    INSTALL_K3S_VERSION: "v{{ management_cluster_k3s_version }}+k3s1"
+    INSTALL_K3S_EXEC: "--disable=metrics-server"
+    K3S_KUBECONFIG_MODE: "644"
+  when: management_cluster_k3s_version not in (_k3s_version.stdout | default(''))
+
+- name: Remove install script
+  ansible.builtin.file:
+    path: /tmp/k3s-install.sh
+    state: absent
+
+- name: Copy kubeconfig
+  become: true
+  ansible.builtin.copy:
+    src: /etc/rancher/k3s/k3s.yaml
+    dest: "{{ management_cluster_kubeconfig }}"
+    remote_src: true
+    owner: "{{ management_cluster_uid }}"
+    group: "{{ management_cluster_gid }}"
+    mode: "0644"

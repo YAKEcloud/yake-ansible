@@ -16,7 +16,7 @@
   community.docker.docker_container:
     name: kubectl
     command: sleep infinity
-    image: "{{ kubectl_install_container_registry }}/{{ kubectl_install_container_image }}:{{ kubectl_install_container_tag }}"
+    image: "{{ kubectl_install_container_registry }}/{{ kubectl_install_container_image }}:{{ kubectl_install_version }}"
     env:
       USER_ID: "{{ kubectl_install_uid }}"
       GROUP_ID: "{{ kubectl_install_gid }}"
@@ -24,12 +24,21 @@
       - /var/lib/yake:/var/lib/yake
     network_mode: host
     state: started
+  when: kubectl_install_method == "docker"
 
-- name: Copy kubectl script
+- name: Download kubectl binary
+  ansible.builtin.get_url:
+    url: "https://dl.k8s.io/release/{{ kubectl_install_version }}/bin/linux/amd64/kubectl"
+    dest: "{{ playbook_dir }}/.local/yake-kubectl"
+    mode: "0755"
+  when: kubectl_install_method == "binary"
+
+- name: Template kubectl script
   become: true
-  ansible.builtin.copy:
-    src: kubectl
+  ansible.builtin.template:
+    src: kubectl.j2
     dest: "{{ playbook_dir }}/.local/yake-kubectl"
     mode: 0755
     owner: root
     group: root
+  when: kubectl_install_method == "docker"

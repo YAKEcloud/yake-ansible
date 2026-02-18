@@ -25,6 +25,14 @@
       - /var/run/docker.sock:/var/run/docker.sock
     network_mode: host
     state: started
+  when: kind_install_method == "docker"
+
+- name: Download kind binary
+  ansible.builtin.get_url:
+    url: "https://kind.sigs.k8s.io/dl/v{{ kind_install_version }}/kind-linux-amd64"
+    dest: "{{ playbook_dir }}/.local/yake-kind"
+    mode: "0755"
+  when: kind_install_method == "binary"
 
 - name: Copy kind script
   become: true
@@ -34,3 +42,4 @@
     mode: 0755
     owner: root
     group: root
+  when: kind_install_method == "docker"

@@ -8,11 +8,14 @@
 - name: Install clusterctl
   ansible.builtin.import_playbook: clusterctl-install.yml
 
-- name: Install kind
-  ansible.builtin.import_playbook: kind-install.yml
+# - name: Install kind
+#   ansible.builtin.import_playbook: kind-install.yml
 
-- name: Create kind cluster
-  ansible.builtin.import_playbook: kind-cluster.yml
+# - name: Create kind cluster
+#   ansible.builtin.import_playbook: kind-cluster.yml
+
+- name: Setup management cluster
+  ansible.builtin.import_playbook: management-cluster.yml
 
 - name: Install clusterapi
   ansible.builtin.import_playbook: clusterapi-install.yml

@@ -16,7 +16,7 @@
   community.docker.docker_container:
     name: clusterctl
     command: sleep infinity
-    image: "{{ clusterctl_install_container_registry }}/{{ clusterctl_install_container_image }}:{{ clusterctl_install_container_tag }}"
+    image: "{{ clusterctl_install_container_registry }}/{{ clusterctl_install_container_image }}:{{ clusterctl_install_version }}"
     env:
       USER_ID: "{{ clusterctl_install_uid }}"
       GROUP_ID: "{{ clusterctl_install_gid }}"
@@ -24,6 +24,14 @@
       - /var/lib/yake://var/lib/yake
     network_mode: host
     state: started
+  when: clusterctl_install_method == "docker"
+
+- name: Download clusterctl binary
+  ansible.builtin.get_url:
+    url: "https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterctl_install_version }}/clusterctl-linux-amd64"
+    dest: "{{ playbook_dir }}/.local/yake-clusterctl"
+    mode: "0755"
+  when: clusterctl_install_method == "binary"
 
 - name: Copy clusterctl script
   become: true
@@ -33,3 +41,4 @@
     mode: 0755
     owner: root
     group: root
+  when: clusterctl_install_method == "docker"

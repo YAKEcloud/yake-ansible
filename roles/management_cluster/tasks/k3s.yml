@@ -4,6 +4,7 @@
     url: https://get.k3s.io
     dest: /tmp/k3s-install.sh
     mode: "0755"
+  environment: "{{ management_cluster_proxy_env }}"
 
 - name: Check installed k3s version
   ansible.builtin.command: k3s --version

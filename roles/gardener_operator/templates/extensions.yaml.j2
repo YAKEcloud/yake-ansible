@@ -68,19 +68,35 @@ spec:
       runtimeClusterValues:
         certificateConfig:
           defaultIssuer:
+{% if gardener_operator_shoot_cert_service_issuer_type == 'acme' %}
             acme:
               email: {{ gardener_operator_shoot_cert_service_acme_email }}
               server: {{ gardener_operator_shoot_cert_service_acme_server }}
+{% else %}
+            ca:
+              certificate: |
+{{ gardener_operator_shoot_cert_service_ca_certificate | indent(16, true) }}
+              certificateKey: |
+{{ gardener_operator_shoot_cert_service_ca_key | indent(16, true) }}
+{% endif %}
             name: garden
-          precheckNameservers: 1.1.1.1,1.0.0.1
+          precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers }}
       values:
         certificateConfig:
           defaultIssuer:
+{% if gardener_operator_shoot_cert_service_issuer_type == 'acme' %}
             acme:
               email: {{ gardener_operator_shoot_cert_service_acme_email }}
               server: {{ gardener_operator_shoot_cert_service_acme_server }}
+{% else %}
+            ca:
+              certificate: |
+{{ gardener_operator_shoot_cert_service_ca_certificate | indent(16, true) }}
+              certificateKey: |
+{{ gardener_operator_shoot_cert_service_ca_key | indent(16, true) }}
+{% endif %}
             name: garden
-          precheckNameservers: 1.1.1.1,1.0.0.1
+          precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers }}
   resources:
   - autoEnable:
     - shoot

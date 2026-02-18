@@ -30,6 +30,7 @@
     url: "https://kind.sigs.k8s.io/dl/v{{ management_cluster_kind_version }}/kind-linux-amd64"
     dest: "{{ playbook_dir }}/.local/yake-kind"
     mode: "0755"
+  environment: "{{ management_cluster_proxy_env }}"
   when: management_cluster_kind_method == "binary"
 
 - name: Copy kind cluster configuration file

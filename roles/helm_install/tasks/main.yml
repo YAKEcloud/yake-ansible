@@ -40,6 +40,16 @@
     state: started
   when: helm_install_method == "docker"
 
+- name: Copy helm script
+  become: true
+  ansible.builtin.copy:
+    src: helm
+    dest: "{{ playbook_dir }}/.local/yake-helm"
+    mode: 0755
+    owner: root
+    group: root
+  when: helm_install_method == "docker"
+
 - name: Download helm archive
   ansible.builtin.unarchive:
     src: "https://get.helm.sh/helm-{{ helm_install_version }}-linux-amd64.tar.gz"
@@ -49,6 +59,7 @@
       - "--strip-components=1"
       - "--wildcards"
       - "*/helm"
+  environment: "{{ helm_install_proxy_env }}"
   when: helm_install_method == "binary"
 
 - name: Rename helm binary
@@ -64,13 +75,3 @@
     path: "{{ playbook_dir }}/.local/helm"
     state: absent
   when: helm_install_method == "binary"
-
-- name: Copy helm script
-  become: true
-  ansible.builtin.copy:
-    src: helm
-    dest: "{{ playbook_dir }}/.local/yake-helm"
-    mode: 0755
-    owner: root
-    group: root
-  when: helm_install_method == "docker"

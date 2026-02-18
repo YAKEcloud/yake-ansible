@@ -14,10 +14,7 @@
 - name: Install or upgrade k3s
   become: true
   ansible.builtin.command: sh /tmp/k3s-install.sh
-  environment:
-    INSTALL_K3S_VERSION: "v{{ management_cluster_k3s_version }}+k3s1"
-    INSTALL_K3S_EXEC: "--disable=metrics-server"
-    K3S_KUBECONFIG_MODE: "644"
+  environment: "{{ management_cluster_k3s_env | combine(management_cluster_proxy_env) }}"
   when: management_cluster_k3s_version not in (_k3s_version.stdout | default(''))
 
 - name: Remove install script

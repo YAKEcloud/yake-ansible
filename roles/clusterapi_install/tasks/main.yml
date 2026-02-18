@@ -24,6 +24,7 @@
   ansible.builtin.shell: |
     export CLUSTER_TOPOLOGY={{ clusterapi_install_cluster_topology | lower }}
     {{ playbook_dir }}/.local/yake-clusterctl init --infrastructure {{ clusterapi_install_infrastructure }} --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}
+  environment: "{{ clusterapi_install_proxy_env }}"
   args:
     executable: /bin/bash
   register: result  # noqa: var-naming[no-role-prefix]

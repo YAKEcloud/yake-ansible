@@ -31,6 +31,7 @@
     url: "https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterctl_install_version }}/clusterctl-linux-amd64"
     dest: "{{ playbook_dir }}/.local/yake-clusterctl"
     mode: "0755"
+  environment: "{{ clusterctl_install_proxy_env }}"
   when: clusterctl_install_method == "binary"
 
 - name: Copy clusterctl script

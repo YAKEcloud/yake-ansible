@@ -8,3 +8,4 @@ helm_install_version: 'v3.20.0'
 helm_install_uid: "{{ ansible_facts.user_uid | string }}"
 helm_install_gid: "{{ ansible_facts.user_gid | string }}"
 helm_install_charts_dir: "{{ playbook_dir }}/charts/"
+helm_install_proxy_env: "{{ proxy_env | default({}) }}"

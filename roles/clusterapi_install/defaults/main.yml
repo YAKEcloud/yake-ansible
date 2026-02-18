@@ -5,3 +5,4 @@ clusterapi_install_clusterapi_name: clusterapi
 clusterapi_install_cluster_topology: true
 clusterapi_install_uid: "{{ ansible_facts.user_uid | string }}"
 clusterapi_install_gid: "{{ ansible_facts.user_gid | string }}"
+clusterapi_install_proxy_env: "{{ proxy_env | default({}) }}"

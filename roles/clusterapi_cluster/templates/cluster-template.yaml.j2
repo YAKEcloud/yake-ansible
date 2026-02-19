@@ -36,6 +36,26 @@ spec:
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
+        - path: /etc/containerd/certs.d/quay.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://quay.io"
+
+            [host."{{ clusterapi_cluster_container_registry_cache_quay }}"]
+              capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
+        - path: /etc/containerd/certs.d/gcr.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://gcr.io"
+
+            [host."{{ clusterapi_cluster_container_registry_cache_gcr }}"]
+              capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
@@ -127,6 +147,26 @@ spec:
           server = "https://registry.k8s.io"
 
           [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
+            capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
+      - path: /etc/containerd/certs.d/quay.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://quay.io"
+
+          [host."{{ clusterapi_cluster_container_registry_cache_quay }}"]
+            capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
+      - path: /etc/containerd/certs.d/gcr.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://gcr.io"
+
+          [host."{{ clusterapi_cluster_container_registry_cache_gcr }}"]
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true

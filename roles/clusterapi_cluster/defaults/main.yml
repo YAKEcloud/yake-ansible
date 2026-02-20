@@ -4,14 +4,11 @@ clusterapi_cluster_become: false
 clusterapi_cluster_uid: "{{ ansible_facts.user_uid | string }}"
 clusterapi_cluster_gid: "{{ ansible_facts.user_gid | string }}"
 
-clusterapi_cluster_kind_cluster_name: "{{ kind_cluster_name | default('clusterapi') }}"
+clusterapi_cluster_management_cluster_name: "{{ management_cluster_name | default('clusterapi') }}"
 
 clusterapi_cluster_kubeconfig: kubeconfig
 clusterapi_cluster_name: garden
 clusterapi_cluster_state: present
-
-clusterapi_cluster_external_network: public
-clusterapi_cluster_ssh_key_name: "{{ clusterapi_cluster_name }}"
 
 clusterapi_cluster_container_registry_cache_dockerhub: https://registry.osism.tech/v2/dockerhub
 clusterapi_cluster_container_registry_cache_ghcr: https://registry.osism.tech/v2/ghcr
@@ -29,9 +26,12 @@ clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
-clusterapi_cluster_openstack_swift_image_url: https://swift.example.com/swift/v1/AUTH_cda7bdba271d27a9499900be9319984f/openstack-k8s-capi-images/ubuntu-2404-kube-1.33/ubuntu-2404-kube-v1.33.4.qcow2
+clusterapi_cluster_openstack_tls_verify: false
+clusterapi_cluster_openstack_external_network: public
+clusterapi_cluster_openstack_ssh_key_name: "{{ clusterapi_cluster_name }}"
+clusterapi_cluster_openstack_swift_image_url: ""
 clusterapi_cluster_openstack_upload_image: false
-clusterapi_cluster_openstack_image_id: "fe820408-b646-46bb-8988-1d889723987"
+clusterapi_cluster_openstack_image_id: ""
 clusterapi_cluster_cloud_cacert_b64: ""
 clusterapi_cluster_openstack_cloud:
   auth:
@@ -42,27 +42,31 @@ clusterapi_cluster_openstack_cloud:
   interface: "public"
   identity_api_version: 3
   auth_type: "v3applicationcredential"
-clusterapi_cluster_openstack_loadbalancer_provider: ovn  # or amphora
-
-clusterapi_cluster_worker_machine_count: "3"
-clusterapi_cluster_openstack_failure_domain: "nova"
-clusterapi_cluster_control_plane_machine_count: "3"
+  verify: "{{ clusterapi_cluster_openstack_tls_verify }}"
+clusterapi_cluster_openstack_loadbalancer_provider: ovn
+clusterapi_cluster_openstack_managed_subnets:
+  - cidr: "192.168.0.23/24"
+    dns_nameservers:
+      - "1.1.1.1"
+clusterapi_cluster_openstack_availability_zones:
+  - nova
+clusterapi_cluster_openstack_failure_domain: "{{ clusterapi_cluster_openstack_availability_zones | first }}"
 clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_external_network_id }}"
 clusterapi_cluster_openstack_cloud_name: openstack
-clusterapi_cluster_openstack_dns_nameservers: "1.1.1.1"
+
+clusterapi_cluster_control_plane_machine_count: 3
 clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4"
-clusterapi_cluster_node_machine_flavor: "SCS-4V-16"
-clusterapi_cluster_image_id: "{{ clusterapi_cluster_openstack_image_id }}"
+clusterapi_cluster_worker_machine_count: 3
+clusterapi_cluster_worker_machine_flavor: "SCS-4V-16"
+
 clusterapi_cluster_enable_boot_volume: true
 clusterapi_cluster_root_volume_size: 50
 clusterapi_cluster_root_volume_type: default
-clusterapi_cluster_availability_zone: "{{ clusterapi_cluster_openstack_failure_domain }}"
+clusterapi_cluster_root_volume_availability_zone: "{{ clusterapi_cluster_openstack_failure_domain }}"
 
 clusterapi_cluster_csi_snapshotter_enable: false
 
 clusterapi_cluster_extra: {}
-
-# network
 
 clusterapi_cluster_network: cilium
 

@@ -125,12 +125,12 @@
   args:
     executable: /bin/bash
   environment:
-    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
   changed_when: false
 
 - name: Create cloud secret
   kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
     state: present
     wait: true
     src: "/var/lib/yake/cloud-secret.yaml"
@@ -144,14 +144,14 @@
 
 - name: Upload image to OpenStack
   kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
     state: present
     wait: true
     src: "/var/lib/yake/image.{{ clusterapi_cluster_name }}.yaml"
   register: image_upload  # noqa: var-naming[no-role-prefix]
   when: clusterapi_cluster_openstack_upload_image | bool
 
-- name: Wait untill the image is uploaded (can take a long time)
+- name: Wait until the image is uploaded (can take a long time)
   openstack.cloud.image_info:
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     name: "{{ clusterapi_cluster_openstack_image_name }}"
@@ -163,7 +163,7 @@
 
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
     state: present
     wait: true
     src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
@@ -174,7 +174,7 @@
   changed_when: false
   until: result_kubeconfig.rc == 0
   environment:
-    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_kind_cluster_name }}"
+    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
   retries: 30
   delay: 10
 

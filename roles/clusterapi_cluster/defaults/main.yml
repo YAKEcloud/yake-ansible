@@ -51,7 +51,7 @@ clusterapi_cluster_openstack_managed_subnets:
 clusterapi_cluster_openstack_availability_zones:
   - nova
 clusterapi_cluster_openstack_failure_domain: "{{ clusterapi_cluster_openstack_availability_zones | first }}"
-clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_external_network_id }}"
+clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_openstack_external_network_id }}"
 clusterapi_cluster_openstack_cloud_name: openstack
 
 clusterapi_cluster_control_plane_machine_count: 3

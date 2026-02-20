@@ -62,16 +62,16 @@
 - name: Get external network ID
   openstack.cloud.networks_info:
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
-    name: "{{ clusterapi_cluster_external_network }}"
+    name: "{{ clusterapi_cluster_openstack_external_network }}"
   register: result_external_network  # noqa: var-naming[no-role-prefix]
 
-- name: Set _clusterapi_cluster_external_network fact
+- name: Set _clusterapi_cluster_openstack_external_network fact
   ansible.builtin.set_fact:
-    _clusterapi_cluster_external_network: "{{ result_external_network.networks | first | default({}) }}"
+    _clusterapi_cluster_openstack_external_network: "{{ result_external_network.networks | first | default({}) }}"
 
-- name: Set _clusterapi_cluster_external_network_id fact
+- name: Set _clusterapi_cluster_openstack_external_network_id fact
   ansible.builtin.set_fact:
-    _clusterapi_cluster_external_network_id: "{{ _clusterapi_cluster_external_network.id | default('') }}"
+    _clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_openstack_external_network.id | default('') }}"
 
 - name: Combine clusterapi_cluster_defaults and clusterapi_cluster_extra
   ansible.builtin.set_fact:

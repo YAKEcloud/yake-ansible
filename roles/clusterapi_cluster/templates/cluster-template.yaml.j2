@@ -250,7 +250,7 @@ spec:
       flavor: {{ clusterapi_cluster_control_plane_machine_flavor }}
       image:
         id: {{ clusterapi_cluster_openstack_image_id }}
-      sshKeyName: {{ clusterapi_cluster_ssh_key_name }}
+      sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
 {% if clusterapi_cluster_enable_boot_volume | default(false) %}
       rootVolume:
         sizeGiB: {{ clusterapi_cluster_root_volume_size | default(50) }}
@@ -269,7 +269,7 @@ spec:
       flavor: {{ clusterapi_cluster_worker_machine_flavor }}
       image:
         id: {{ clusterapi_cluster_openstack_image_id }}
-      sshKeyName: {{ clusterapi_cluster_ssh_key_name }}
+      sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
 {% if clusterapi_cluster_enable_boot_volume | default(false) %}
       rootVolume:
         sizeGiB: {{ clusterapi_cluster_root_volume_size | default(50) }}

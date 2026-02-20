@@ -66,6 +66,12 @@ spec:
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
+{% if clusterapi_cluster_hosts_entries | default([]) | length > 0 %}
+      preKubeadmCommands:
+{% for entry in clusterapi_cluster_hosts_entries %}
+        - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
+{% endfor %}
+{% endif %}
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
@@ -190,6 +196,12 @@ spec:
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
+{% if clusterapi_cluster_hosts_entries | default([]) | length > 0 %}
+    preKubeadmCommands:
+{% for entry in clusterapi_cluster_hosts_entries %}
+      - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
+{% endfor %}
+{% endif %}
     clusterConfiguration:
       controllerManager:
         extraArgs:

@@ -17,6 +17,11 @@ clusterapi_cluster_container_registry_cache_ghcr: https://registry.osism.tech/v2
 clusterapi_cluster_container_registry_cache_quay: https://registry.osism.tech/v2/quay
 clusterapi_cluster_container_registry_cache_k8s: https://registry.osism.tech/v2/k8s
 
+clusterapi_cluster_hosts_entries: []
+# clusterapi_cluster_hosts_entries:
+#   - ip: "12.34.56.54"
+#     hostname: "harbor.example.com"
+
 clusterapi_cluster_charts_dir: "{{ playbook_dir }}/charts/"
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes

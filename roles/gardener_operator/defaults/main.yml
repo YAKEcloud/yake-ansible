@@ -46,7 +46,7 @@ gardener_operator_cluster_name: prod-garden
 gardener_operator_kubernetes_version: '1.33.8'
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
-gardener_operator_provider_openstack_version: '1.51.0'
+gardener_operator_provider_openstack_version: '1.52.0'
 gardener_operator_provider_openstack_storageclass_name: default
 gardener_operator_provider_openstack_storageclass_type: default
 

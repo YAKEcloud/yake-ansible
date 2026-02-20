@@ -89,7 +89,7 @@
   openstack.cloud.keypair:
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
     state: present
-    name: "{{ clusterapi_cluster_ssh_key_name }}"
+    name: "{{ clusterapi_cluster_openstack_ssh_key_name }}"
   register: result_keypair  # noqa: var-naming[no-role-prefix]
 
 - name: Write private ssh key

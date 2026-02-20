@@ -16,6 +16,26 @@ spec:
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
+        - path: /etc/containerd/certs.d/europe-docker.pkg.dev/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://europe-docker.pkg.dev"
+
+            [host."{{ clusterapi_cluster_container_registry_cache_pkg }}"]
+              capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
+        - path: /etc/containerd/certs.d/gcr.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://gcr.io"
+
+            [host."{{ clusterapi_cluster_container_registry_cache_gcr }}"]
+              capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
         - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
           owner: root:root
           permissions: "0644"
@@ -23,16 +43,6 @@ spec:
             server = "https://ghcr.io"
 
             [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
-              capabilities = ["pull", "resolve"]
-              skip_verify = true
-              override_path = true
-        - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
-          owner: root:root
-          permissions: "0644"
-          content: |
-            server = "https://registry.k8s.io"
-
-            [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
@@ -46,13 +56,13 @@ spec:
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
-        - path: /etc/containerd/certs.d/gcr.io/hosts.toml
+        - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
           owner: root:root
           permissions: "0644"
           content: |
-            server = "https://gcr.io"
+            server = "https://registry.k8s.io"
 
-            [host."{{ clusterapi_cluster_container_registry_cache_gcr }}"]
+            [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
@@ -130,6 +140,26 @@ spec:
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
+      - path: /etc/containerd/certs.d/europe-docker.pkg.dev/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://europe-docker.pkg.dev"
+
+          [host."{{ clusterapi_cluster_container_registry_cache_pkg }}"]
+            capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
+      - path: /etc/containerd/certs.d/gcr.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://gcr.io"
+
+          [host."{{ clusterapi_cluster_container_registry_cache_gcr }}"]
+            capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
       - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
         owner: root:root
         permissions: "0644"
@@ -137,16 +167,6 @@ spec:
           server = "https://ghcr.io"
 
           [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
-            capabilities = ["pull", "resolve"]
-            skip_verify = true
-            override_path = true
-      - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
-        owner: root:root
-        permissions: "0644"
-        content: |
-          server = "https://registry.k8s.io"
-
-          [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
@@ -160,13 +180,13 @@ spec:
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
-      - path: /etc/containerd/certs.d/gcr.io/hosts.toml
+      - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
         owner: root:root
         permissions: "0644"
         content: |
-          server = "https://gcr.io"
+          server = "https://registry.k8s.io"
 
-          [host."{{ clusterapi_cluster_container_registry_cache_gcr }}"]
+          [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true

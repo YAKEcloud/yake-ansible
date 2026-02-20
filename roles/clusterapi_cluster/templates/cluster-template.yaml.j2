@@ -16,33 +16,13 @@ spec:
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
-        - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
+        - path: /etc/containerd/certs.d/europe-docker.pkg.dev/hosts.toml
           owner: root:root
           permissions: "0644"
           content: |
-            server = "https://ghcr.io"
+            server = "https://europe-docker.pkg.dev"
 
-            [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
-              capabilities = ["pull", "resolve"]
-              skip_verify = true
-              override_path = true
-        - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
-          owner: root:root
-          permissions: "0644"
-          content: |
-            server = "https://registry.k8s.io"
-
-            [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
-              capabilities = ["pull", "resolve"]
-              skip_verify = true
-              override_path = true
-        - path: /etc/containerd/certs.d/quay.io/hosts.toml
-          owner: root:root
-          permissions: "0644"
-          content: |
-            server = "https://quay.io"
-
-            [host."{{ clusterapi_cluster_container_registry_cache_quay }}"]
+            [host."{{ clusterapi_cluster_container_registry_cache_pkg }}"]
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
@@ -56,6 +36,42 @@ spec:
               capabilities = ["pull", "resolve"]
               skip_verify = true
               override_path = true
+        - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://ghcr.io"
+
+            [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
+              capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
+        - path: /etc/containerd/certs.d/quay.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://quay.io"
+
+            [host."{{ clusterapi_cluster_container_registry_cache_quay }}"]
+              capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
+        - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
+          owner: root:root
+          permissions: "0644"
+          content: |
+            server = "https://registry.k8s.io"
+
+            [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
+              capabilities = ["pull", "resolve"]
+              skip_verify = true
+              override_path = true
+{% if clusterapi_cluster_hosts_entries | default([]) | length > 0 %}
+      preKubeadmCommands:
+{% for entry in clusterapi_cluster_hosts_entries %}
+        - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
+{% endfor %}
+{% endif %}
       joinConfiguration:
         nodeRegistration:
           kubeletExtraArgs:
@@ -130,33 +146,13 @@ spec:
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
-      - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
+      - path: /etc/containerd/certs.d/europe-docker.pkg.dev/hosts.toml
         owner: root:root
         permissions: "0644"
         content: |
-          server = "https://ghcr.io"
+          server = "https://europe-docker.pkg.dev"
 
-          [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
-            capabilities = ["pull", "resolve"]
-            skip_verify = true
-            override_path = true
-      - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
-        owner: root:root
-        permissions: "0644"
-        content: |
-          server = "https://registry.k8s.io"
-
-          [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
-            capabilities = ["pull", "resolve"]
-            skip_verify = true
-            override_path = true
-      - path: /etc/containerd/certs.d/quay.io/hosts.toml
-        owner: root:root
-        permissions: "0644"
-        content: |
-          server = "https://quay.io"
-
-          [host."{{ clusterapi_cluster_container_registry_cache_quay }}"]
+          [host."{{ clusterapi_cluster_container_registry_cache_pkg }}"]
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
@@ -170,6 +166,42 @@ spec:
             capabilities = ["pull", "resolve"]
             skip_verify = true
             override_path = true
+      - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://ghcr.io"
+
+          [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
+            capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
+      - path: /etc/containerd/certs.d/quay.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://quay.io"
+
+          [host."{{ clusterapi_cluster_container_registry_cache_quay }}"]
+            capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
+      - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
+        owner: root:root
+        permissions: "0644"
+        content: |
+          server = "https://registry.k8s.io"
+
+          [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
+            capabilities = ["pull", "resolve"]
+            skip_verify = true
+            override_path = true
+{% if clusterapi_cluster_hosts_entries | default([]) | length > 0 %}
+    preKubeadmCommands:
+{% for entry in clusterapi_cluster_hosts_entries %}
+      - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
+{% endfor %}
+{% endif %}
     clusterConfiguration:
       controllerManager:
         extraArgs:
@@ -226,9 +258,19 @@ spec:
   managedSecurityGroups:
     allowAllInClusterTraffic: True
   managedSubnets:
-    - cidr: 192.168.0.23/24
+{% for subnet in clusterapi_cluster_openstack_managed_subnets %}
+    - cidr: {{ subnet.cidr }}
+{% if subnet.dns_nameservers | default([]) | length > 0 %}
       dnsNameservers:
-        - {{ clusterapi_cluster_openstack_dns_nameservers }}
+{% for ns in subnet.dns_nameservers %}
+        - {{ ns }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+  controlPlaneAvailabilityZones:
+{% for az in clusterapi_cluster_openstack_availability_zones %}
+    - {{ az }}
+{% endfor %}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate
@@ -239,14 +281,14 @@ spec:
     spec:
       flavor: {{ clusterapi_cluster_control_plane_machine_flavor }}
       image:
-        id: {{ clusterapi_cluster_image_id }}
-      sshKeyName: {{ clusterapi_cluster_ssh_key_name }}
+        id: {{ clusterapi_cluster_openstack_image_id }}
+      sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
 {% if clusterapi_cluster_enable_boot_volume | default(false) %}
       rootVolume:
         sizeGiB: {{ clusterapi_cluster_root_volume_size | default(50) }}
         type: {{ clusterapi_cluster_root_volume_type }}
         availabilityZone:
-          name: {{ clusterapi_cluster_availability_zone }}
+          name: {{ clusterapi_cluster_root_volume_availability_zone }}
 {% endif %}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -256,14 +298,14 @@ metadata:
 spec:
   template:
     spec:
-      flavor: {{ clusterapi_cluster_node_machine_flavor }}
+      flavor: {{ clusterapi_cluster_worker_machine_flavor }}
       image:
-        id: {{ clusterapi_cluster_image_id }}
-      sshKeyName: {{ clusterapi_cluster_ssh_key_name }}
+        id: {{ clusterapi_cluster_openstack_image_id }}
+      sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
 {% if clusterapi_cluster_enable_boot_volume | default(false) %}
       rootVolume:
         sizeGiB: {{ clusterapi_cluster_root_volume_size | default(50) }}
         type: {{ clusterapi_cluster_root_volume_type }}
         availabilityZone:
-          name: {{ clusterapi_cluster_availability_zone }}
+          name: {{ clusterapi_cluster_root_volume_availability_zone }}
 {% endif %}

@@ -1,7 +1,11 @@
 ---
 gardener_operator_uid: "{{ ansible_facts.user_uid | string }}"
 gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
+
+gardener_operator_management_cluster_name: "{{ management_cluster_name | default('clusterapi') }}"
+
 gardener_operator_clusterapi_name: garden
+gardener_operator_proxy_env: "{{ proxy_env | default({}) }}"
 
 # renovate: datasource=github-releases depName=gardener/gardener
 gardener_operator_version: '1.136.2'

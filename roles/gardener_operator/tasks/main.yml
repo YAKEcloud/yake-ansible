@@ -33,6 +33,7 @@
     release_state: present
     wait: true
     values: "{{ _gardener_operator_helm_values | combine(gardener_operator_helm_values, recursive=True) }}"
+  environment: "{{ gardener_operator_proxy_env }}"
 
 - name: Extract node CIDR from first InternalIP
   ansible.builtin.shell: |

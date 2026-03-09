@@ -13,6 +13,9 @@ data:
   applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
   applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
   applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
+{% if gardener_operator_openstack_cacert | d('') %}
+  caCert: {{ gardener_operator_openstack_cacert | b64encode }}
+{% endif %}
 {% if gardener_operator_garden_backup_enabled %}
 ---
 apiVersion: v1
@@ -23,6 +26,17 @@ metadata:
 type: Opaque
 stringData:
   {{ gardener_operator_garden_backup_credentials }}
+{% endif %}
+{% if gardener_operator_garden_auth_cacert | d('') %}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gardener-dashboard-oidc-ca
+  namespace: garden
+type: Opaque
+data:
+  ca.crt: {{ gardener_operator_garden_auth_cacert | b64encode }}
 {% endif %}
 ---
 apiVersion: v1
@@ -38,6 +52,10 @@ data:
     - issuer:
         url: {{ gardener_operator_garden_auth_issuer_url }}
         audiences: {{ gardener_operator_garden_auth_audiences }}
+{% if gardener_operator_garden_auth_cacert | d('') %}
+        certificateAuthority: |
+{{ gardener_operator_garden_auth_cacert | indent(10, true) }}
+{% endif %}
       claimMappings:
         groups:
           claim: groups
@@ -147,12 +165,16 @@ spec:
           additionalScopes: [ profile, offline_access ]
           secretRef:
             name: gardener-dashboard-oidc
+{% if gardener_operator_garden_auth_cacert | d('') %}
+          certificateAuthoritySecretRef:
+            name: gardener-dashboard-oidc-ca
+{% endif %}
         terminal:
           allowedHosts:
           - "*.internal.{{ gardener_operator_garden_url }}"
           - "*.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}"
           container:
-            image: europe-docker.pkg.dev/gardener-project/releases/gardener/ops-toolbelt:latest
+            image: {{ gardener_operator_image_registry }}/gardener-project/releases/gardener/ops-toolbelt:latest
         ingress:
           enabled: true
         domain: dashboard.{{ gardener_operator_garden_url }}

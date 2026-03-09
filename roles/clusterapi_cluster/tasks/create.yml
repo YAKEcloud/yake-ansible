@@ -67,11 +67,11 @@
 
 - name: Set _clusterapi_cluster_openstack_external_network fact
   ansible.builtin.set_fact:
-    _clusterapi_cluster_openstack_external_network: "{{ result_external_network.networks | first | default({}) }}"
+    _clusterapi_cluster_openstack_external_network: "{{ result_external_network.networks | first | d({}) }}"
 
 - name: Set _clusterapi_cluster_openstack_external_network_id fact
   ansible.builtin.set_fact:
-    _clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_openstack_external_network.id | default('') }}"
+    _clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_openstack_external_network.id | d('') }}"
 
 - name: Combine clusterapi_cluster_defaults and clusterapi_cluster_extra
   ansible.builtin.set_fact:

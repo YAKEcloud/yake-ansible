@@ -4,7 +4,7 @@ clusterapi_cluster_become: false
 clusterapi_cluster_uid: "{{ ansible_facts.user_uid | string }}"
 clusterapi_cluster_gid: "{{ ansible_facts.user_gid | string }}"
 
-clusterapi_cluster_management_cluster_name: "{{ management_cluster_name | default('clusterapi') }}"
+clusterapi_cluster_management_cluster_name: "{{ management_cluster_name | d('clusterapi') }}"
 
 clusterapi_cluster_kubeconfig: kubeconfig
 clusterapi_cluster_name: garden
@@ -38,6 +38,7 @@ clusterapi_cluster_openstack_ssh_key_name: "{{ clusterapi_cluster_name }}"
 clusterapi_cluster_openstack_swift_image_url: ""
 clusterapi_cluster_openstack_upload_image: false
 clusterapi_cluster_openstack_image_id: ""
+clusterapi_cluster_openstack_cacert: ""
 clusterapi_cluster_cloud_cacert_b64: ""
 clusterapi_cluster_openstack_cloud:
   auth:
@@ -62,7 +63,15 @@ clusterapi_cluster_openstack_cloud_name: openstack
 
 clusterapi_cluster_control_plane_machine_count: 3
 clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4"
-clusterapi_cluster_worker_machine_count: 3
+clusterapi_cluster_worker_machine_deployments:
+  - name: md-0
+    replicas: 1
+    failure_domain: nova1
+    image_id: "{{ clusterapi_cluster_openstack_image_id }}"
+  - name: md-1
+    replicas: 2
+    failure_domain: nova2
+    image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 clusterapi_cluster_worker_machine_flavor: "SCS-4V-16"
 
 clusterapi_cluster_enable_boot_volume: true

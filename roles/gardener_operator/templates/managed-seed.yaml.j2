@@ -13,6 +13,9 @@ data:
   applicationCredentialID: {{ item.openstack.application_credential_id | b64encode }}
   applicationCredentialName: {{ item.openstack.application_credential_name | b64encode }}
   applicationCredentialSecret: {{ item.openstack.application_credential_secret | b64encode }}
+{% if item.openstack.cacert | d('') %}
+  caCert: {{ item.openstack.cacert | b64encode }}
+{% endif %}
 ---
 apiVersion: security.gardener.cloud/v1alpha1
 kind: CredentialsBinding
@@ -51,6 +54,19 @@ spec:
   extensions:
     - type: shoot-cert-service
     - type: shoot-dns-service
+{% if gardener_operator_managed_seeds_registry_mirrors | d([]) %}
+    - type: registry-mirror
+      providerConfig:
+        apiVersion: mirror.extensions.gardener.cloud/v1alpha1
+        kind: MirrorConfig
+        mirrors:
+{% for mirror in gardener_operator_managed_seeds_registry_mirrors %}
+          - upstream: {{ mirror.upstream }}
+            hosts:
+            - host: "{{ mirror.host }}"
+              capabilities: ["pull", "resolve"]
+{% endfor %}
+{% endif %}
   seedName: internal-seed
   cloudProfile:
     name: {{ item.cloudprofile_name }}
@@ -66,7 +82,7 @@ spec:
     infrastructureConfig:
       apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
       kind: InfrastructureConfig
-      floatingPoolName: public
+      floatingPoolName: {{ item.floating_pool_name }}
       networks:
         workers: 10.120.0.0/16
     controlPlaneConfig:
@@ -152,7 +168,7 @@ spec:
                 name: openstack-cloud
                 namespace: garden
               type: openstack-designate
-              domain: {{ item.internal_domain | default('internal.' ~ gardener_operator_garden_url) }}
+              domain: {{ item.internal_domain | d('internal.' ~ gardener_operator_garden_url) }}
           ingress:
             domain: ingress.{{ item.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}
             controller:

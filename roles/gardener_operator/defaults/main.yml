@@ -36,7 +36,6 @@ gardener_operator_openstack_application_credential_name: example-creds
 gardener_operator_openstack_application_credential_secret: ""
 gardener_operator_openstack_zones:
   - zone1
-gardener_operator_openstack_insecure: false
 gardener_operator_openstack_cacert: ""
 
 gardener_operator_garden_auth_issuer_url: https://keycloak.example.com/realms/gardener

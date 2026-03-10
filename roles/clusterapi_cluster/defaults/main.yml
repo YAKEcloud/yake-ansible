@@ -39,7 +39,6 @@ clusterapi_cluster_openstack_swift_image_url: ""
 clusterapi_cluster_openstack_upload_image: false
 clusterapi_cluster_openstack_image_id: ""
 clusterapi_cluster_openstack_cacert: ""
-clusterapi_cluster_cloud_cacert_b64: ""
 clusterapi_cluster_openstack_cloud:
   auth:
     auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
@@ -49,7 +48,7 @@ clusterapi_cluster_openstack_cloud:
   interface: "public"
   identity_api_version: 3
   auth_type: "v3applicationcredential"
-  verify: "{{ clusterapi_cluster_openstack_tls_verify }}"
+  # cacert: /etc/certs/cacert.pem
 clusterapi_cluster_openstack_loadbalancer_provider: ovn
 clusterapi_cluster_openstack_managed_subnets:
   - cidr: "192.168.0.23/24"

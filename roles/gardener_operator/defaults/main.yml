@@ -1,7 +1,11 @@
 ---
 gardener_operator_uid: "{{ ansible_facts.user_uid | string }}"
 gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
+
+gardener_operator_management_cluster_name: "{{ management_cluster_name | d('clusterapi') }}"
+
 gardener_operator_clusterapi_name: garden
+gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
 
 # renovate: datasource=github-releases depName=gardener/gardener
 gardener_operator_version: '1.136.5'
@@ -32,6 +36,7 @@ gardener_operator_openstack_application_credential_name: example-creds
 gardener_operator_openstack_application_credential_secret: ""
 gardener_operator_openstack_zones:
   - zone1
+gardener_operator_openstack_cacert: ""
 
 gardener_operator_garden_auth_issuer_url: https://keycloak.example.com/realms/gardener
 gardener_operator_garden_auth_audiences:
@@ -39,11 +44,13 @@ gardener_operator_garden_auth_audiences:
 gardener_operator_garden_auth_client_id: ""
 gardener_operator_garden_auth_client_secret: ""
 gardener_operator_garden_auth_public_name: keycloak
+gardener_operator_garden_auth_cacert: ""
 
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 gardener_operator_kubernetes_version: '1.33.9'
+gardener_operator_image_registry: "europe-docker.pkg.dev"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
 gardener_operator_provider_openstack_version: '1.51.0'
@@ -58,6 +65,7 @@ gardener_operator_shoot_cert_service_ca_key: ""
 gardener_operator_shoot_cert_service_acme_email: ""
 # Staging: https://acme-staging-v02.api.letsencrypt.org/directory
 gardener_operator_shoot_cert_service_acme_server: "https://acme-v02.api.letsencrypt.org/directory"
+gardener_operator_shoot_cert_service_ca_certificates: ""
 gardener_operator_shoot_cert_service_precheck_nameservers: "1.1.1.1,1.0.0.1"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-dns-service
@@ -66,6 +74,10 @@ gardener_operator_shoot_dns_service_version: '1.77.2'
 gardener_operator_networking_cilium_version: '1.46.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
 gardener_operator_os_gardenlinux_version: '0.36.0'
+
+gardener_operator_extension_registry_cache_enabled: false
+# renovate: datasource=github-releases depName=gardener/gardener-extension-registry-cache
+gardener_operator_extension_registry_cache_version: '0.20.0'
 
 gardener_operator_networking_calico_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-calico
@@ -162,11 +174,26 @@ gardener_operator_cloudprofiles:
 
 gardener_operator_managed_seeds_project_name: seeds
 
+gardener_operator_managed_seeds_registry_mirrors: []
+  # - upstream: docker.io
+  #   host: "https://harbor.example.com/docker.io"
+  # - upstream: europe-docker.pkg.dev
+  #   host: "https://harbor.example.com/europe-docker.pkg.dev"
+  # - upstream: ghcr.io
+  #   host: "https://harbor.example.com/ghcr.io"
+  # - upstream: registry.k8s.io
+  #   host: "https://harbor.example.com/registry.k8s.io"
+  # - upstream: quay.io
+  #   host: "https://harbor.example.com/quay.io"
+  # - upstream: gcr.io
+  #   host: "https://harbor.example.com/gcr.io"
+
 gardener_operator_managed_seeds:
   - name: seed-a
     cloudprofile_name: openstack-a
     networking_type: cilium
     kubernetes_version: 1.33.7
+    floating_pool_name: "public"
     # if not set, default is internal.{{ gardener_operator_garden_url }}
     # internal_domain: foo.example.com
     openstack:

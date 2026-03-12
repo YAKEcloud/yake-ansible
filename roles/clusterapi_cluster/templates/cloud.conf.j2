@@ -4,6 +4,9 @@ application-credential-id={{ clusterapi_cluster_openstack_application_credential
 application-credential-secret={{ clusterapi_cluster_openstack_application_credential_secret }}
 region={{ clusterapi_cluster_openstack_region_name }}
 domain-name={{ clusterapi_cluster_openstack_domain_name }}
+{% if clusterapi_cluster_openstack_cacert | d('') %}
+ca-file=/etc/certs/cacert.pem
+{% endif %}
 
 [LoadBalancerClass "floatingPool"]
 floating-network-id="{{ clusterapi_cluster_openstack_external_network_id }}"

@@ -9,3 +9,6 @@ clouds:
     interface: "public"
     identity_api_version: 3
     auth_type: "v3applicationcredential"
+{% if clusterapi_cluster_openstack_cacert | d('') %}
+    cacert: /etc/certs/cacert.pem
+{% endif %}

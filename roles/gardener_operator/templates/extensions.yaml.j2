@@ -11,15 +11,15 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-openstack-runtime:v{{ gardener_operator_provider_openstack_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-openstack-runtime:v{{ gardener_operator_provider_openstack_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-openstack-application:v{{ gardener_operator_provider_openstack_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-openstack-application:v{{ gardener_operator_provider_openstack_version }}
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/provider-openstack:v{{ gardener_operator_provider_openstack_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/provider-openstack:v{{ gardener_operator_provider_openstack_version }}
       injectGardenKubeconfig: true
   resources:
     - kind: BackupBucket
@@ -62,7 +62,7 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/shoot-cert-service:v{{ gardener_operator_shoot_cert_service_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/shoot-cert-service:v{{ gardener_operator_shoot_cert_service_version }}
       injectGardenKubeconfig: true
       policy: Always
       runtimeClusterValues:
@@ -80,6 +80,10 @@ spec:
 {{ gardener_operator_shoot_cert_service_ca_key | indent(16, true) }}
 {% endif %}
             name: garden
+{% if gardener_operator_shoot_cert_service_ca_certificates | d('') %}
+          caCertificates: |
+{{ gardener_operator_shoot_cert_service_ca_certificates | indent(12, true) }}
+{% endif %}
           precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers }}
       values:
         certificateConfig:
@@ -96,6 +100,10 @@ spec:
 {{ gardener_operator_shoot_cert_service_ca_key | indent(16, true) }}
 {% endif %}
             name: garden
+{% if gardener_operator_shoot_cert_service_ca_certificates | d('') %}
+          caCertificates: |
+{{ gardener_operator_shoot_cert_service_ca_certificates | indent(12, true) }}
+{% endif %}
           precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers }}
   resources:
   - autoEnable:
@@ -123,15 +131,15 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/shoot-dns-service-admission-runtime:v{{ gardener_operator_shoot_dns_service_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/releases/charts/gardener/extensions/shoot-dns-service-admission-runtime:v{{ gardener_operator_shoot_dns_service_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/shoot-dns-service-admission-application:v{{ gardener_operator_shoot_dns_service_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/releases/charts/gardener/extensions/shoot-dns-service-admission-application:v{{ gardener_operator_shoot_dns_service_version }}
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/extensions/shoot-dns-service:v{{ gardener_operator_shoot_dns_service_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/releases/charts/gardener/extensions/shoot-dns-service:v{{ gardener_operator_shoot_dns_service_version }}
   resources:
   - autoEnable:
     - shoot
@@ -151,15 +159,15 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-cilium-runtime:v{{ gardener_operator_networking_cilium_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-cilium-runtime:v{{ gardener_operator_networking_cilium_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-cilium-application:v{{ gardener_operator_networking_cilium_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-cilium-application:v{{ gardener_operator_networking_cilium_version }}
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/networking-cilium:v{{ gardener_operator_networking_cilium_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/networking-cilium:v{{ gardener_operator_networking_cilium_version }}
   resources:
   - kind: Network
     type: cilium
@@ -173,10 +181,39 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/os-gardenlinux:v{{ gardener_operator_os_gardenlinux_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/os-gardenlinux:v{{ gardener_operator_os_gardenlinux_version }}
   resources:
   - kind: OperatingSystemConfig
     type: gardenlinux
+{% if gardener_operator_extension_registry_cache_enabled %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: extension-registry-cache
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-registry-cache-runtime:v{{ gardener_operator_extension_registry_cache_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-registry-cache-application:v{{ gardener_operator_extension_registry_cache_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/registry-cache:v{{ gardener_operator_extension_registry_cache_version }}
+  resources:
+  - kind: Extension
+    type: registry-cache
+  - kind: Extension
+    type: registry-mirror
+{% endif %}
 {% if gardener_operator_os_ubuntu_enabled %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
@@ -188,7 +225,7 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/os-ubuntu:v{{ gardener_operator_os_ubuntu_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/os-ubuntu:v{{ gardener_operator_os_ubuntu_version }}
   resources:
   - kind: OperatingSystemConfig
     type: ubuntu
@@ -205,15 +242,15 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-aws-runtime:v{{ gardener_operator_provider_aws_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-aws-runtime:v{{ gardener_operator_provider_aws_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-aws-application:v{{ gardener_operator_provider_aws_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-aws-application:v{{ gardener_operator_provider_aws_version }}
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/provider-aws:v{{ gardener_operator_provider_aws_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/provider-aws:v{{ gardener_operator_provider_aws_version }}
       injectGardenKubeconfig: true
   resources:
   - kind: BackupBucket
@@ -243,15 +280,15 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-azure-runtime:v{{ gardener_operator_provider_azure_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-azure-runtime:v{{ gardener_operator_provider_azure_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-azure-application:v{{ gardener_operator_provider_azure_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-azure-application:v{{ gardener_operator_provider_azure_version }}
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/provider-azure:v{{ gardener_operator_provider_azure_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/provider-azure:v{{ gardener_operator_provider_azure_version }}
       injectGardenKubeconfig: true
   resources:
   - kind: BackupBucket
@@ -283,15 +320,15 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-gcp-runtime:v{{ gardener_operator_provider_gcp_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-gcp-runtime:v{{ gardener_operator_provider_gcp_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-gcp-application:v{{ gardener_operator_provider_gcp_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-gcp-application:v{{ gardener_operator_provider_gcp_version }}
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/provider-gcp:v{{ gardener_operator_provider_gcp_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/provider-gcp:v{{ gardener_operator_provider_gcp_version }}
       injectGardenKubeconfig: true
   resources:
   - kind: BackupBucket
@@ -321,15 +358,15 @@ spec:
       runtimeCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-calico-runtime:v{{ gardener_operator_networking_calico_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-calico-runtime:v{{ gardener_operator_networking_calico_version }}
       virtualCluster:
         helm:
           ociRepository:
-            ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/admission-calico-application:v{{ gardener_operator_networking_calico_version }}
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-calico-application:v{{ gardener_operator_networking_calico_version }}
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/networking-calico:v{{ gardener_operator_networking_calico_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/networking-calico:v{{ gardener_operator_networking_calico_version }}
   resources:
   - kind: Network
     type: calico
@@ -347,7 +384,7 @@ spec:
     extension:
       helm:
         ociRepository:
-          ref: europe-docker.pkg.dev/gardener-project/public/charts/gardener/extensions/shoot-oidc-service:v{{ gardener_operator_shoot_oidc_service_version }}
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/shoot-oidc-service:v{{ gardener_operator_shoot_oidc_service_version }}
   resources:
   - kind: Extension
     type: shoot-oidc-service

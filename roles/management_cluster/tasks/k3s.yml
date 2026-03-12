@@ -16,7 +16,7 @@
   become: true
   ansible.builtin.command: sh /tmp/k3s-install.sh
   environment: "{{ management_cluster_k3s_env | combine(management_cluster_proxy_env) }}"
-  when: management_cluster_k3s_version not in (_k3s_version.stdout | default(''))
+  when: management_cluster_k3s_version not in (_k3s_version.stdout | d(''))
 
 - name: Remove install script
   ansible.builtin.file:

@@ -17,6 +17,9 @@ data:
   applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
   applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
   applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
+{% if gardener_operator_openstack_cacert | d('') %}
+  caCert: {{ gardener_operator_openstack_cacert | b64encode }}
+{% endif %}
 ---
 apiVersion: v1
 kind: Secret
@@ -36,6 +39,9 @@ data:
   applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
   applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
   applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
+{% if gardener_operator_openstack_cacert | d('') %}
+  caCert: {{ gardener_operator_openstack_cacert | b64encode }}
+{% endif %}
 {% if gardener_operator_internal_seed_backup_enabled %}
 ---
 apiVersion: v1
@@ -80,7 +86,7 @@ spec:
     revisionHistoryLimit: 2
     helm:
       ociRepository:
-        ref: europe-docker.pkg.dev/gardener-project/releases/charts/gardener/gardenlet:v{{ gardener_operator_version }}
+        ref: {{ gardener_operator_image_registry }}/gardener-project/releases/charts/gardener/gardenlet:v{{ gardener_operator_version }}
   config:
     apiVersion: gardenlet.config.gardener.cloud/v1alpha1
     kind: GardenletConfiguration

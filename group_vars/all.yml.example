@@ -18,8 +18,14 @@ clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: "domain"
 clusterapi_cluster_openstack_region_name: "region"
 clusterapi_cluster_openstack_image_id: ""
+clusterapi_cluster_openstack_cacert: ""
 clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4-20s"
-clusterapi_cluster_node_machine_flavor: "SCS-4V-8-50s"
+clusterapi_cluster_worker_machine_flavor: "SCS-4V-8-50s"
+clusterapi_cluster_worker_machine_deployments:
+  - name: md-0
+    replicas: 3
+    failure_domain: nova
+    image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 clusterapi_cluster_enable_boot_volume: false
 
 gardener_operator_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
@@ -31,6 +37,7 @@ gardener_operator_openstack_application_credential_name: "creds"
 gardener_operator_openstack_application_credential_secret: "{{ clusterapi_cluster_openstack_application_credential_secret }}"
 gardener_operator_openstack_zones:
   - "nova"
+gardener_operator_openstack_cacert: ""
 
 gardener_operator_provider_openstack_storageclass_name: ssd
 gardener_operator_provider_openstack_storageclass_type: ssd
@@ -41,6 +48,9 @@ gardener_operator_garden_auth_audiences:
 gardener_operator_garden_auth_client_id: "gardener-client"
 gardener_operator_garden_auth_client_secret: ""
 gardener_operator_garden_auth_public_name: "keycloak"
+gardener_operator_garden_auth_cacert: ""
+
+gardener_operator_extension_registry_cache_enabled: true
 
 gardener_operator_garden_url: "botany.example.com"
 gardener_operator_cluster_name: "garden"

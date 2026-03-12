@@ -8,7 +8,7 @@ gardener_operator_clusterapi_name: garden
 gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
 
 # renovate: datasource=github-releases depName=gardener/gardener
-gardener_operator_version: '1.136.1'
+gardener_operator_version: '1.136.5'
 gardener_operator_helm_values:
   replicaCount: 1
 
@@ -17,11 +17,11 @@ gardener_operator_keycloak_enabled: false
 gardener_operator_keycloak_k3s_traefik_disabled: true
 gardener_operator_keycloak_ingress_nginx_version: '4.14.3'
 # renovate: datasource=github-releases depName=cert-manager/cert-manager
-gardener_operator_keycloak_cert_manager_version: 'v1.19.3'
+gardener_operator_keycloak_cert_manager_version: 'v1.19.4'
 gardener_operator_keycloak_cnpg_version: '0.27.0'
 gardener_operator_keycloak_cnpg_cluster_version: '0.5.0'
 # renovate: datasource=github-releases depName=keycloak/keycloak
-gardener_operator_keycloak_operator_version: '26.5.3'
+gardener_operator_keycloak_operator_version: '26.5.4'
 gardener_operator_keycloak_domain: keycloak.example.com
 gardener_operator_keycloak_client_secret: ""
 gardener_operator_keycloak_realm_name: "gardener"
@@ -49,7 +49,7 @@ gardener_operator_garden_auth_cacert: ""
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-gardener_operator_kubernetes_version: '1.33.8'
+gardener_operator_kubernetes_version: '1.33.9'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
@@ -58,7 +58,7 @@ gardener_operator_provider_openstack_storageclass_name: default
 gardener_operator_provider_openstack_storageclass_type: default
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-cert-service
-gardener_operator_shoot_cert_service_version: '1.56.0'
+gardener_operator_shoot_cert_service_version: '1.57.0'
 gardener_operator_shoot_cert_service_issuer_type: acme  # acme or ca
 gardener_operator_shoot_cert_service_ca_certificate: ""
 gardener_operator_shoot_cert_service_ca_key: ""
@@ -69,7 +69,7 @@ gardener_operator_shoot_cert_service_ca_certificates: ""
 gardener_operator_shoot_cert_service_precheck_nameservers: "1.1.1.1,1.0.0.1"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-dns-service
-gardener_operator_shoot_dns_service_version: '1.77.1'
+gardener_operator_shoot_dns_service_version: '1.77.2'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
 gardener_operator_networking_cilium_version: '1.46.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
@@ -89,11 +89,11 @@ gardener_operator_os_ubuntu_version: '1.36.0'
 
 gardener_operator_provider_aws_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws
-gardener_operator_provider_aws_version: '1.67.3'
+gardener_operator_provider_aws_version: '1.67.4'
 
 gardener_operator_provider_azure_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure
-gardener_operator_provider_azure_version: '1.58.1'
+gardener_operator_provider_azure_version: '1.58.2'
 
 gardener_operator_provider_gcp_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp

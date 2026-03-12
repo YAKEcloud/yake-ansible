@@ -19,7 +19,7 @@ gardener_operator_keycloak_ingress_nginx_version: '4.14.3'
 # renovate: datasource=github-releases depName=cert-manager/cert-manager
 gardener_operator_keycloak_cert_manager_version: 'v1.19.4'
 gardener_operator_keycloak_cnpg_version: '0.27.0'
-gardener_operator_keycloak_cnpg_cluster_version: '0.5.0'
+gardener_operator_keycloak_cnpg_cluster_version: '0.6.0'
 # renovate: datasource=github-releases depName=keycloak/keycloak
 gardener_operator_keycloak_operator_version: '26.5.4'
 gardener_operator_keycloak_domain: keycloak.example.com

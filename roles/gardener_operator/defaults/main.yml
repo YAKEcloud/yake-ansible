@@ -53,7 +53,7 @@ gardener_operator_kubernetes_version: '1.33.9'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
-gardener_operator_provider_openstack_version: '1.51.0'
+gardener_operator_provider_openstack_version: '1.53.1'
 gardener_operator_provider_openstack_storageclass_name: default
 gardener_operator_provider_openstack_storageclass_type: default
 

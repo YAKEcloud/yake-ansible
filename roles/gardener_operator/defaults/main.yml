@@ -97,7 +97,7 @@ gardener_operator_provider_azure_version: '1.58.3'
 
 gardener_operator_provider_gcp_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
-gardener_operator_provider_gcp_version: '1.49.5'
+gardener_operator_provider_gcp_version: '1.49.6'
 
 gardener_operator_shoot_oidc_service_enabled: true
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-oidc-service

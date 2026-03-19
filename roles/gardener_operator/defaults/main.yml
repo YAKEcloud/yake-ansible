@@ -49,7 +49,7 @@ gardener_operator_garden_auth_cacert: ""
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-gardener_operator_kubernetes_version: '1.33.9'
+gardener_operator_kubernetes_version: '1.35.3'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
@@ -146,13 +146,13 @@ gardener_operator_cloudprofiles:
     machine_images:
       - name: gardenlinux
         versions:
-          - version: 1877.7.0
-            image: "Garden Linux 1877.7"
+          - version: 2150.0.0
+            image: "Garden Linux 2150.0"
             regions:
               - name: region-a
                 id: 6ed7d8aa-e770-4061-a8d7-461a83e41c31
     kubernetes_versions:
-      - version: 1.33.7
+      - version: 1.35.3
         classification: supported
     machinetypes:
       - name: SCS-4V-8
@@ -174,9 +174,11 @@ gardener_operator_cloudprofiles:
 
 gardener_operator_managed_seeds_project_name: seeds
 
+gardener_operator_managed_seeds_registry_mirrors_ca: ""
 gardener_operator_managed_seeds_registry_mirrors: []
   # - upstream: docker.io
   #   host: "https://harbor.example.com/docker.io"
+  #   ca: true
   # - upstream: europe-docker.pkg.dev
   #   host: "https://harbor.example.com/europe-docker.pkg.dev"
   # - upstream: ghcr.io
@@ -192,7 +194,7 @@ gardener_operator_managed_seeds:
   - name: seed-a
     cloudprofile_name: openstack-a
     networking_type: cilium
-    kubernetes_version: 1.33.7
+    kubernetes_version: 1.35.3
     floating_pool_name: "public"
     # if not set, default is internal.{{ gardener_operator_garden_url }}
     # internal_domain: foo.example.com
@@ -208,7 +210,7 @@ gardener_operator_managed_seeds:
       - name: worker-4v16
         machinetype: SCS-4V-16
         image_name: gardenlinux
-        image_version: 1877.7.0
+        image_version: 2150.0.0
         minimum: 3
         maximum: 15
         volume_type: ssd

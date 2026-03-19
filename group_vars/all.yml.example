@@ -1,6 +1,6 @@
 ---
-yake_install_method: binary
-management_cluster_engine: k3s
+yake_install_method: docker
+management_cluster_engine: kind
 
 # proxy_env:
 #   HTTP_PROXY: "http://proxy:8080"
@@ -10,7 +10,7 @@ management_cluster_engine: k3s
 #   NO_PROXY: "127.0.0.1,localhost"
 #   no_proxy: "127.0.0.1,localhost"
 
-clusterapi_cluster_kubernetes_version: "1.33.6"
+clusterapi_cluster_kubernetes_version: "1.35.3"
 
 clusterapi_cluster_openstack_auth_url: "https://keystone.example.com/v3"
 clusterapi_cluster_openstack_application_credential_id: ""
@@ -81,13 +81,13 @@ gardener_operator_cloudprofiles:
     machine_images:
       - name: gardenlinux
         versions:
-          - version: "1877.7.0"
-            image: "Garden Linux 1877.7"
+          - version: "2150.0.0"
+            image: "Garden Linux 2150.0"
             regions:
               - name: "{{ clusterapi_cluster_openstack_region_name }}"
                 id: ""
     kubernetes_versions:
-      - version: 1.33.6
+      - version: 1.35.3
         classification: supported
     machinetypes:
       - name: SCS-4V-8
@@ -109,7 +109,7 @@ gardener_operator_managed_seeds:
   - name: managed-seed-a
     cloudprofile_name: cloudprofile
     networking_type: cilium
-    kubernetes_version: 1.33.6
+    kubernetes_version: 1.35.3
     openstack:
       auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
       project_name: "{{ gardener_operator_openstack_project_name }}"
@@ -122,7 +122,7 @@ gardener_operator_managed_seeds:
       - name: worker-4v8
         machinetype: SCS-4V-8
         image_name: gardenlinux
-        image_version: 1877.7.0
+        image_version: 2150.0.0
         minimum: 3
         maximum: 15
         volume_type: ssd

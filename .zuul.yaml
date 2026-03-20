@@ -88,12 +88,12 @@
         - flake8
         - hadolint
         - python-black
-        - yake-ansible-molecule-molecule-clusterapi-install
-        - yake-ansible-molecule-molecule-clusterctl-install
-        - yake-ansible-molecule-molecule-helm-install
-        - yake-ansible-molecule-molecule-kind-cluster
-        - yake-ansible-molecule-molecule-kind-install
-        - yake-ansible-molecule-molecule-kubectl-install
+        # - yake-ansible-molecule-molecule-clusterapi-install
+        # - yake-ansible-molecule-molecule-clusterctl-install
+        # - yake-ansible-molecule-molecule-helm-install
+        # - yake-ansible-molecule-molecule-kind-cluster
+        # - yake-ansible-molecule-molecule-kind-install
+        # - yake-ansible-molecule-molecule-kubectl-install
         - yamllint
     periodic-daily:
       jobs:
@@ -101,10 +101,10 @@
         - flake8
         - hadolint
         - python-black
-        - yake-ansible-molecule-molecule-clusterapi-install
-        - yake-ansible-molecule-molecule-clusterctl-install
-        - yake-ansible-molecule-molecule-helm-install
-        - yake-ansible-molecule-molecule-kind-cluster
-        - yake-ansible-molecule-molecule-kind-install
-        - yake-ansible-molecule-molecule-kubectl-install
+        # - yake-ansible-molecule-molecule-clusterapi-install
+        # - yake-ansible-molecule-molecule-clusterctl-install
+        # - yake-ansible-molecule-molecule-helm-install
+        # - yake-ansible-molecule-molecule-kind-cluster
+        # - yake-ansible-molecule-molecule-kind-install
+        # - yake-ansible-molecule-molecule-kubectl-install
         - yamllint

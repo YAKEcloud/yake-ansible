@@ -1,7 +1,7 @@
 ---
 name: Yake-Ansible install
 
-"on":
+on:
   pull_request:
     types: [opened, reopened, synchronize]
     paths:
@@ -21,6 +21,7 @@ concurrency:
 
 jobs:
   yake-ansible-install:
+    if: ${{ !startsWith(github.head_ref, 'release-please--') }}
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:

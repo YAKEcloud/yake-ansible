@@ -85,7 +85,7 @@ gardener_operator_networking_calico_version: '1.57.0'
 
 gardener_operator_os_ubuntu_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu
-gardener_operator_os_ubuntu_version: '1.37.0'
+gardener_operator_os_ubuntu_version: '1.38.0'
 
 gardener_operator_shoot_oidc_service_enabled: true
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-oidc-service

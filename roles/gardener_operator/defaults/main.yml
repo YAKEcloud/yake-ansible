@@ -15,13 +15,13 @@ gardener_operator_helm_values:
 gardener_operator_keycloak_enabled: false
 # Will install ingress-nginx. Set to false to install with the default traefik.
 gardener_operator_keycloak_k3s_traefik_disabled: true
-gardener_operator_keycloak_ingress_nginx_version: '4.15.0'
+gardener_operator_keycloak_ingress_nginx_version: '4.15.1'
 # renovate: datasource=github-releases depName=cert-manager/cert-manager
 gardener_operator_keycloak_cert_manager_version: 'v1.20.0'
 gardener_operator_keycloak_cnpg_version: '0.27.0'
 gardener_operator_keycloak_cnpg_cluster_version: '0.6.0'
 # renovate: datasource=github-releases depName=keycloak/keycloak
-gardener_operator_keycloak_operator_version: '26.5.5'
+gardener_operator_keycloak_operator_version: '26.5.6'
 gardener_operator_keycloak_domain: keycloak.example.com
 gardener_operator_keycloak_client_secret: ""
 gardener_operator_keycloak_realm_name: "gardener"
@@ -69,11 +69,11 @@ gardener_operator_shoot_cert_service_ca_certificates: ""
 gardener_operator_shoot_cert_service_precheck_nameservers: "1.1.1.1,1.0.0.1"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-dns-service
-gardener_operator_shoot_dns_service_version: '1.79.0'
+gardener_operator_shoot_dns_service_version: '1.80.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
 gardener_operator_networking_cilium_version: '1.46.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
-gardener_operator_os_gardenlinux_version: '0.36.0'
+gardener_operator_os_gardenlinux_version: '0.38.0'
 
 gardener_operator_extension_registry_cache_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-registry-cache
@@ -85,7 +85,7 @@ gardener_operator_networking_calico_version: '1.57.0'
 
 gardener_operator_os_ubuntu_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu
-gardener_operator_os_ubuntu_version: '1.36.0'
+gardener_operator_os_ubuntu_version: '1.37.0'
 
 gardener_operator_provider_aws_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws

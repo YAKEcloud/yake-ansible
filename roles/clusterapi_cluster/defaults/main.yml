@@ -25,7 +25,7 @@ clusterapi_cluster_hosts_entries: []
 clusterapi_cluster_charts_dir: "{{ playbook_dir }}/charts/"
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-clusterapi_cluster_kubernetes_version: 'v1.33.9'
+clusterapi_cluster_kubernetes_version: 'v1.33.10'
 
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""

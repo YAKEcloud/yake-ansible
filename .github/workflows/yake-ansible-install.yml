@@ -44,7 +44,7 @@ jobs:
         run: printf '%s' "$ALL_BASE64" | base64 -d > group_vars/all.yml && chmod 600 group_vars/all.yml
 
       - name: Run ansible-playbook site.yml
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 20
           max_attempts: 3
@@ -70,7 +70,7 @@ jobs:
 
       - name: Run cleanup
         if: always()
-        uses: nick-fields/retry@v3
+        uses: nick-fields/retry@v4
         with:
           timeout_minutes: 20
           max_attempts: 3

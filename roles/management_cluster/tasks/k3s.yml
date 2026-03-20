@@ -8,7 +8,7 @@
 
 - name: Check installed k3s version
   ansible.builtin.command: k3s --version
-  register: _k3s_version
+  register: _k3s_version  # noqa: var-naming[no-role-prefix]
   changed_when: false
   failed_when: false
 
@@ -16,7 +16,8 @@
   become: true
   ansible.builtin.command: sh /tmp/k3s-install.sh
   environment: "{{ management_cluster_k3s_env | combine(management_cluster_proxy_env) }}"
-  when: management_cluster_k3s_version not in (_k3s_version.stdout | d(''))
+  when: management_cluster_k3s_version not in (_k3s_version.stdout | d(''))  # noqa: var-naming[no-role-prefix]
+  changed_when: true
 
 - name: Remove install script
   ansible.builtin.file:

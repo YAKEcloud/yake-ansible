@@ -67,6 +67,7 @@
     - management_cluster_name not in kind_clusters.stdout_lines
   async: 180
   poll: 5
+  changed_when: true
 
 - name: Wait for kind cluster to be ready
   become: "{{ management_cluster_become }}"

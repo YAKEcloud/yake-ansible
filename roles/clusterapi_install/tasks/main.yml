@@ -38,13 +38,16 @@
 
 - name: Wait for all pods to be ready
   become: "{{ clusterapi_install_become }}"
-  ansible.builtin.shell: |
-    {{ playbook_dir }}/.local/yake-kubectl \
-      --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }} \
-      get pods --all-namespaces --no-headers | \
-      grep -v -E 'Completed|Succeeded' | \
-      grep -v '1/1\|2/2\|3/3\|4/4' || true
-  register: _not_ready_pods
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      {{ playbook_dir }}/.local/yake-kubectl \
+        --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }} \
+        get pods --all-namespaces --no-headers | \
+        grep -v -E 'Completed|Succeeded' | \
+        grep -v '1/1\|2/2\|3/3\|4/4' || true
+    executable: /bin/bash
+  register: _not_ready_pods  # noqa: var-naming[no-role-prefix]
   until: _not_ready_pods.stdout == ""
   retries: 30
   delay: 10

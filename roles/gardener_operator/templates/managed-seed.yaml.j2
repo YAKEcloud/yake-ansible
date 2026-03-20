@@ -9,7 +9,6 @@ data:
   authURL: {{ item.openstack.auth_url | b64encode }}
   tenantName: {{ item.openstack.project_name | b64encode }}
   domainName: {{ item.openstack.domain_name | b64encode }}
-  regionName: {{ item.openstack.region_name | b64encode }}
   applicationCredentialID: {{ item.openstack.application_credential_id | b64encode }}
   applicationCredentialName: {{ item.openstack.application_credential_name | b64encode }}
   applicationCredentialSecret: {{ item.openstack.application_credential_secret | b64encode }}
@@ -42,6 +41,18 @@ type: Opaque
 stringData:
   {{ item.settings.backup.credentials | to_nice_yaml(indent=2) | indent(2) }}
 {% endif %}
+{% if gardener_operator_managed_seeds_registry_mirrors | selectattr('ca', 'defined') | selectattr('ca', 'equalto', true) | list %}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: private-mirrors-ca-bundle-v1
+  namespace: garden
+type: Opaque
+immutable: true
+data:
+  bundle.crt: {{ gardener_operator_managed_seeds_registry_mirrors_ca | b64encode }}
+{% endif %}
 ---
 apiVersion: core.gardener.cloud/v1beta1
 kind: Shoot
@@ -65,6 +76,9 @@ spec:
             hosts:
             - host: "{{ mirror.host }}"
               capabilities: ["pull", "resolve"]
+{% if mirror.ca | d(false) %}
+              caBundleSecretReferenceName: private-mirrors-ca-bundle
+{% endif %}
 {% endfor %}
 {% endif %}
   seedName: internal-seed
@@ -115,12 +129,15 @@ spec:
     autoUpdate:
       kubernetesVersion: true
       machineImageVersion: true
-  addons:
-    kubernetesDashboard:
-      enabled: false
-    nginxIngress:
-      enabled: false
   purpose: infrastructure
+{% if gardener_operator_managed_seeds_registry_mirrors | selectattr('ca', 'defined') | selectattr('ca', 'equalto', true) | list %}
+  resources:
+    - name: private-mirrors-ca-bundle
+      resourceRef:
+        apiVersion: v1
+        kind: Secret
+        name: private-mirrors-ca-bundle-v1
+{% endif %}
 ---
 apiVersion: seedmanagement.gardener.cloud/v1alpha1
 kind: ManagedSeed

@@ -34,10 +34,10 @@
   environment: "{{ kubectl_install_proxy_env }}"
   when: kubectl_install_method == "binary"
 
-- name: Template kubectl script
+- name: Copy kubectl script
   become: true
-  ansible.builtin.template:
-    src: kubectl.j2
+  ansible.builtin.copy:
+    src: kubectl
     dest: "{{ playbook_dir }}/.local/yake-kubectl"
     mode: 0755
     owner: root

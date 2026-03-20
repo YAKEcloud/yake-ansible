@@ -9,7 +9,6 @@ data:
   authURL: {{ gardener_operator_openstack_auth_url | b64encode }}
   tenantName: {{ gardener_operator_openstack_project_name | b64encode }}
   domainName: {{ gardener_operator_openstack_domain_name | b64encode }}
-  regionName: {{ gardener_operator_openstack_region_name | b64encode }}
   applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
   applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
   applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}

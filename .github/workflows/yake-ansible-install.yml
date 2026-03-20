@@ -31,6 +31,7 @@ jobs:
         uses: actions/setup-python@v6
         with:
           python-version: '3.x'
+          cache: 'pip'
 
       - name: Install dependencies
         run: sudo apt-get update && sudo apt-get install -y ssh git curl ca-certificates
@@ -52,20 +53,24 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
 
-      - name: Check shoot status
-        env:
-          SHOOT_NAME: managed-seed-1
-          KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-          TIMEOUT: 900s
-        run: |
-          ./.local/yake-kubectl --kubeconfig "$KUBECONFIG" -n garden \
-            wait shoot "$SHOOT_NAME" \
-            --for=condition=EveryNodeReady=True \
-            --for=condition=ControlPlaneHealthy=True \
-            --for=condition=SystemComponentsHealthy=True \
-            --timeout="$TIMEOUT"
+      - name: Wait for shoot readiness
+        uses: nick-fields/retry@v4
+        with:
+          timeout_minutes: 10
+          max_attempts: 3
+          retry_wait_seconds: 30
+          command: |
+            ./.local/yake-kubectl \
+              --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden \
+              -n garden wait shoot managed-seed-1 \
+              --for=condition=APIServerAvailable=True \
+              --for=condition=ControlPlaneHealthy=True \
+              --for=condition=EveryNodeReady=True \
+              --for=condition=SystemComponentsHealthy=True \
+              --for=condition=ExtensionsReady=True \
+              --timeout=-1s
 
-      - name: Wait 5 minutes after shoot ready
+      - name: Wait for storage provisioning
         run: sleep 300
 
       - name: Run cleanup

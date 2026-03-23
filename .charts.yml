@@ -2,6 +2,6 @@
 charts:
   - name: cilium
     # renovate: datasource=github-releases depName=cilium/cilium
-    version: '1.19.1'
+    version: '1.19.2'
     repository:
       url: https://helm.cilium.io/

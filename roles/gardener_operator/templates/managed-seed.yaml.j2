@@ -90,7 +90,11 @@ spec:
     domain: {{ item.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}
     providers:
       - type: openstack-designate
-        secretName: openstack-cloud
+        credentialsRef:
+          apiVersion: v1
+          kind: Secret
+          name: openstack-cloud
+          namespace: garden
   provider:
     type: openstack
     infrastructureConfig:

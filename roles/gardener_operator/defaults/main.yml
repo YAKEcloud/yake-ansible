@@ -8,7 +8,7 @@ gardener_operator_clusterapi_name: garden
 gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
 
 # renovate: datasource=github-releases depName=gardener/gardener
-gardener_operator_version: '1.139.0'
+gardener_operator_version: '1.139.1'
 gardener_operator_helm_values:
   replicaCount: 1
 

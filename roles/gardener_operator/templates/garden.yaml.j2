@@ -26,17 +26,6 @@ type: Opaque
 stringData:
   {{ gardener_operator_garden_backup_credentials }}
 {% endif %}
-{% if gardener_operator_garden_auth_cacert | d('') %}
----
-apiVersion: v1
-kind: Secret
-metadata:
-  name: gardener-dashboard-oidc-ca
-  namespace: garden
-type: Opaque
-data:
-  ca.crt: {{ gardener_operator_garden_auth_cacert | b64encode }}
-{% endif %}
 ---
 apiVersion: v1
 kind: ConfigMap
@@ -49,12 +38,9 @@ data:
     kind: AuthenticationConfiguration
     jwt:
     - issuer:
-        url: {{ gardener_operator_garden_auth_issuer_url }}
-        audiences: {{ gardener_operator_garden_auth_audiences }}
-{% if gardener_operator_garden_auth_cacert | d('') %}
-        certificateAuthority: |
-{{ gardener_operator_garden_auth_cacert | indent(10, true) }}
-{% endif %}
+        url: https://identity.{{ gardener_operator_garden_url }}
+        audiences:
+          - dashboard
       claimMappings:
         groups:
           claim: groups
@@ -70,8 +56,8 @@ metadata:
   namespace: garden
 type: Opaque
 stringData:
-  client_id: {{ gardener_operator_garden_auth_client_id }}
-  client_secret: {{ gardener_operator_garden_auth_client_secret }}
+  client_id: dashboard
+  client_secret: {{ gardener_operator_dex.dashboard_secret }}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Garden
@@ -158,16 +144,12 @@ spec:
                 candidateDeterminationStrategy: MinimalDistance
       gardenerDashboard:
         oidcConfig:
-          clientIDPublic: {{ gardener_operator_garden_auth_public_name }}
-          issuerURL: {{ gardener_operator_garden_auth_issuer_url }}
+          clientIDPublic: "Gardener Dashboard"
+          issuerURL: https://identity.{{ gardener_operator_garden_url }}
           sessionLifetime: 12h
           additionalScopes: [ profile, offline_access ]
           secretRef:
             name: gardener-dashboard-oidc
-{% if gardener_operator_garden_auth_cacert | d('') %}
-          certificateAuthoritySecretRef:
-            name: gardener-dashboard-oidc-ca
-{% endif %}
         terminal:
           allowedHosts:
           - "*.internal.{{ gardener_operator_garden_url }}"

@@ -4,7 +4,7 @@ management_cluster_uid: "{{ ansible_facts.user_uid | string }}"
 management_cluster_gid: "{{ ansible_facts.user_gid | string }}"
 
 # Engine: k3s or kind
-management_cluster_engine: k3s
+management_cluster_engine: kind
 management_cluster_name: clusterapi
 management_cluster_kubeconfig: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
 
@@ -16,7 +16,7 @@ management_cluster_k3s_env:
   K3S_KUBECONFIG_MODE: "644"
 management_cluster_proxy_env: "{{ proxy_env | d({}) }}"
 
-management_cluster_kind_method: "{{ yake_install_method | d('binary') }}"
+management_cluster_kind_method: "{{ yake_install_method | d('docker') }}"
 management_cluster_kind_registry: ghcr.io
 management_cluster_kind_image: yakecloud/kind
 # renovate: datasource=docker depName=ghcr.io/yakecloud/kind

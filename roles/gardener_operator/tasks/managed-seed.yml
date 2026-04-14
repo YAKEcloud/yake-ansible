@@ -1,0 +1,55 @@
+---
+- name: Render project.yaml (optional)
+  ansible.builtin.template:
+    src: project.yaml.j2
+    dest: /var/lib/yake/gardener-operator/project.yaml
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  when: gardener_operator_managed_seeds_enabled | bool
+
+- name: Apply project.yaml
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: /var/lib/yake/gardener-operator/project.yaml
+  when: gardener_operator_managed_seeds_enabled | bool
+
+- name: Render CloudProfile
+  ansible.builtin.template:
+    src: cloudprofile.yaml.j2
+    dest: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop: "{{ gardener_operator_cloudprofiles }}"
+  when: gardener_operator_cloudprofiles_enabled | bool or gardener_operator_managed_seeds_enabled | bool
+
+- name: Apply CloudProfile
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
+  loop: "{{ gardener_operator_cloudprofiles }}"
+  when: gardener_operator_cloudprofiles_enabled | bool or gardener_operator_managed_seeds_enabled | bool
+
+- name: Render ManagedSeed
+  ansible.builtin.template:
+    src: managed-seed.yaml.j2
+    dest: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  loop: "{{ gardener_operator_managed_seeds }}"
+  when: gardener_operator_cloudprofiles_enabled | bool and gardener_operator_managed_seeds_enabled | bool
+
+- name: Apply ManagedSeed
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
+  loop: "{{ gardener_operator_managed_seeds }}"
+  when: gardener_operator_cloudprofiles_enabled | bool and gardener_operator_managed_seeds_enabled | bool

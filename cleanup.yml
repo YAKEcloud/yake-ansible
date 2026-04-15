@@ -6,7 +6,7 @@
     - name: Delete kind cluster
       ansible.builtin.command: "{{ playbook_dir }}/.local/yake-kind delete cluster --name clusterapi"
       register: kind_delete
-      changed_when: kind_delete.rc != 0
+      changed_when: kind_delete.rc == 0
       timeout: 300
 
     - name: Gather servers
@@ -50,7 +50,7 @@
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
         OS_CLOUD: "{{ cleanup_openstack_cloud }}"
       register: ip_list_raw
-      changed_when: ip_list_raw.rc != 0
+      changed_when: false
 
     - name: Parse floating ip list
       ansible.builtin.set_fact:
@@ -62,7 +62,8 @@
       environment:
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
         OS_CLOUD: "{{ cleanup_openstack_cloud }}"
-      changed_when: ip_list.rc != 0
+      register: delete_result
+      changed_when: delete_result.rc == 0
 
     - name: Gather loadbalancers via CLI
       ansible.builtin.command: openstack loadbalancer list -f json
@@ -70,7 +71,7 @@
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
         OS_CLOUD: "{{ cleanup_openstack_cloud }}"
       register: lb_list_raw
-      changed_when: lb_list_raw.rc != 0
+      changed_when: false
 
     - name: Parse loadbalancer list
       ansible.builtin.set_fact:
@@ -92,14 +93,24 @@
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
       register: router_list
 
-    - name: Detach router interfaces
-      openstack.cloud.port:
+    - name: Gather router interface ports
+      openstack.cloud.port_info:
         cloud: "{{ cleanup_openstack_cloud }}"
-        state: absent
-        name: "{{ item.name }}"
-      loop: "{{ router_list.routers | map(attribute='interfaces') | select('defined') | sum(start=[]) }}"
+        filters:
+          device_owner: "network:router_interface"
       environment:
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+      register: router_interface_ports
+
+    - name: Detach router interfaces
+      ansible.builtin.command: >-
+        openstack router remove subnet {{ item.device_id }} {{ item.fixed_ips[0].subnet_id }}
+      loop: "{{ router_interface_ports.ports }}"
+      environment:
+        OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+        OS_CLOUD: "{{ cleanup_openstack_cloud }}"
+      changed_when: true
+      failed_when: false
 
     - name: Delete routers
       openstack.cloud.router:
@@ -187,7 +198,7 @@
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
         OS_CLOUD: "{{ cleanup_openstack_cloud }}"
       register: recordset_list_raw
-      changed_when: recordset_list_raw.rc != 0
+      changed_when: false
 
     - name: Parse recordset list
       ansible.builtin.set_fact:

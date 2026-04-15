@@ -61,23 +61,7 @@
         policyTypes:
           - Egress
   register: dashboard_netpol  # noqa: var-naming[no-role-prefix]
-
-- name: Restart gardener dashboard if netpol changed
-  kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-    state: present
-    definition:
-      apiVersion: apps/v1
-      kind: Deployment
-      metadata:
-        name: gardener-dashboard
-        namespace: garden
-      spec:
-        template:
-          metadata:
-            annotations:
-              kubectl.kubernetes.io/restartedAt: "{{ ansible_date_time.iso8601 }}"
-  when: dashboard_netpol.changed  # noqa: var-naming[no-role-prefix]
+  notify: Restart gardener dashboard
 
 - name: Allow kube-apiserver egress to Dex
   kubernetes.core.k8s:

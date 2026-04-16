@@ -1,6 +1,6 @@
 ---
 kubectl_install_become: false
-kubectl_install_method: "{{ yake_install_method | d('binary') }}"
+kubectl_install_method: "{{ yake_install_method | d('docker') }}"
 kubectl_install_container_registry: ghcr.io
 kubectl_install_container_image: yakecloud/kubectl
 # renovate: datasource=docker depName=ghcr.io/yakecloud/kubectl

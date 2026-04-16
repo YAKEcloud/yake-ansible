@@ -42,19 +42,6 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^roles\\/gardener_operator\\/defaults\\/main\\.yml$/"
-      ],
-      "matchStrings": [
-        "gardener_operator_keycloak_ingress_nginx_version: '(?<currentValue>.*?)'"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "kubernetes/ingress-nginx",
-      "extractVersionTemplate": "helm-chart-(?<version>\\d+\\.\\d+\\.\\d+)",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
         "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
         "/^roles\\/helm_install\\/defaults\\/main.yml$/",
         "/^roles\\/kind_install\\/defaults\\/main.yml$/",

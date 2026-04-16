@@ -12,20 +12,25 @@ gardener_operator_version: '1.139.1'
 gardener_operator_helm_values:
   replicaCount: 1
 
-gardener_operator_keycloak_enabled: false
-# Will install ingress-nginx. Set to false to install with the default traefik.
-gardener_operator_keycloak_k3s_traefik_disabled: true
-gardener_operator_keycloak_ingress_nginx_version: '4.15.1'
-# renovate: datasource=github-releases depName=cert-manager/cert-manager
-gardener_operator_keycloak_cert_manager_version: 'v1.20.1'
-gardener_operator_keycloak_cnpg_version: '0.27.0'
-gardener_operator_keycloak_cnpg_cluster_version: '0.6.0'
-# renovate: datasource=github-releases depName=keycloak/keycloak
-gardener_operator_keycloak_operator_version: '26.5.7'
-gardener_operator_keycloak_domain: keycloak.example.com
-gardener_operator_keycloak_client_secret: ""
-gardener_operator_keycloak_realm_name: "gardener"
-gardener_operator_keycloak_display_name: "Gardener Realm"
+# renovate: datasource=github-releases depName=dexidp/helm-charts extractVersion=^dex-(?<version>.+)$
+gardener_operator_dex_version: '0.24.0'
+gardener_operator_dex:
+  dashboard_secret: ""
+  static_passwords: []
+  # - email: "admin@example.com"
+  #   # bcrypt hash of the string "password": $(printf 'password' | htpasswd -BinC 10 admin | cut -d: -f2)
+  #   hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+  #   username: "admin"
+  connectors: []
+  # https://dexidp.io/docs/connectors/
+  # - type: oidc
+  #   id: keycloak
+  #   name: Keycloak
+  #   config:
+  #     issuer: https://keycloak.example.com/realms/myrealm
+  #     clientID: dex
+  #     clientSecret: dex-secret
+  #     redirectURI: https://identity.example.com/callback
 
 gardener_operator_openstack_auth_url: "https://keystone.example.com"
 gardener_operator_openstack_project_name: example
@@ -42,7 +47,7 @@ gardener_operator_garden_auth_issuer_url: https://keycloak.example.com/realms/ga
 gardener_operator_garden_auth_audiences:
   - gardener-client
 gardener_operator_garden_auth_client_id: ""
-gardener_operator_garden_auth_client_secret: ""
+gardener_operator_garden_auth_client_secret: "{{ gardener_operator_dex.dashboard_secret }}"
 gardener_operator_garden_auth_public_name: keycloak
 gardener_operator_garden_auth_cacert: ""
 

@@ -8,10 +8,6 @@
     mode: 0755
     state: directory
 
-- name: Include keycloak tasks
-  ansible.builtin.include_tasks: keycloak.yml
-  when: gardener_operator_keycloak_enabled | bool
-
 - name: Create garden namespace
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
@@ -130,115 +126,15 @@
     mode: 0644
   when: gardener_secret.resources | length > 0
 
-- name: Wait for 4 more minutes to get all ready
+- name: Pause for 4 minutes
   ansible.builtin.pause:
     minutes: 4
 
-- name: Template vgarden files
-  ansible.builtin.template:
-    src: "{{ item }}.j2"
-    dest: "/var/lib/yake/gardener-operator/{{ item }}"
-    owner: "{{ gardener_operator_uid }}"
-    group: "{{ gardener_operator_gid }}"
-    mode: 0644
-  loop:
-    - rbac.yaml
-    - gardenlet.yaml
+- name: Include dex tasks
+  ansible.builtin.include_tasks: dex.yml
 
-- name: Create garden project and internal seed
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-    state: present
-    wait: true
-    src: "/var/lib/yake/gardener-operator/{{ item }}"
-  loop:
-    - rbac.yaml
-    - gardenlet.yaml
+- name: Include vgarden tasks
+  ansible.builtin.include_tasks: vgarden.yml
 
-- name: Patch gardener annotation for reconcile
-  kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-    state: present
-    kind: Garden
-    api_version: "operator.gardener.cloud/v1alpha1"
-    name: gardener
-    definition:
-      metadata:
-        annotations:
-          gardener.cloud/operation: "reconcile"
-    merge_type:
-      - merge
-
-- name: Wait 100 seconds for internal seed
-  ansible.builtin.pause:
-    seconds: 100
-
-- name: Template ingress-cert file
-  ansible.builtin.template:
-    src: seed-ingress-certificate.yaml.j2
-    dest: "/var/lib/yake/gardener-operator/seed-ingress-certificate.yaml"
-    owner: "{{ gardener_operator_uid }}"
-    group: "{{ gardener_operator_gid }}"
-    mode: 0644
-
-- name: Create the certificate and secret
-  kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-    state: present
-    wait: true
-    src: /var/lib/yake/gardener-operator/seed-ingress-certificate.yaml
-
-- name: Render project.yaml (optional)
-  ansible.builtin.template:
-    src: project.yaml.j2
-    dest: /var/lib/yake/gardener-operator/project.yaml
-    owner: "{{ gardener_operator_uid }}"
-    group: "{{ gardener_operator_gid }}"
-    mode: 0644
-  when: gardener_operator_managed_seeds_enabled | bool
-
-- name: Apply project.yaml
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-    state: present
-    wait: true
-    src: /var/lib/yake/gardener-operator/project.yaml
-  when: gardener_operator_managed_seeds_enabled | bool
-
-- name: Render CloudProfile
-  ansible.builtin.template:
-    src: cloudprofile.yaml.j2
-    dest: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
-    owner: "{{ gardener_operator_uid }}"
-    group: "{{ gardener_operator_gid }}"
-    mode: 0644
-  loop: "{{ gardener_operator_cloudprofiles }}"
-  when: gardener_operator_cloudprofiles_enabled | bool or gardener_operator_managed_seeds_enabled | bool
-
-- name: Apply CloudProfile
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-    state: present
-    wait: true
-    src: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
-  loop: "{{ gardener_operator_cloudprofiles }}"
-  when: gardener_operator_cloudprofiles_enabled | bool or gardener_operator_managed_seeds_enabled | bool
-
-- name: Render ManagedSeed
-  ansible.builtin.template:
-    src: managed-seed.yaml.j2
-    dest: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
-    owner: "{{ gardener_operator_uid }}"
-    group: "{{ gardener_operator_gid }}"
-    mode: 0644
-  loop: "{{ gardener_operator_managed_seeds }}"
-  when: gardener_operator_cloudprofiles_enabled | bool and gardener_operator_managed_seeds_enabled | bool
-
-- name: Apply ManagedSeed
-  kubernetes.core.k8s:
-    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-    state: present
-    wait: true
-    src: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
-  loop: "{{ gardener_operator_managed_seeds }}"
-  when: gardener_operator_cloudprofiles_enabled | bool and gardener_operator_managed_seeds_enabled | bool
+- name: Include managed-seed tasks
+  ansible.builtin.include_tasks: managed-seed.yml

@@ -1,0 +1,70 @@
+config:
+  issuer: https://identity.{{ gardener_operator_garden_url }}
+  storage:
+    type: kubernetes
+    config:
+      inCluster: true
+  web:
+    http: 0.0.0.0:5556
+    allowedOrigins:
+      - https://dashboard.{{ gardener_operator_garden_url }}
+  oauth2:
+    skipApprovalScreen: true
+    responseTypes:
+    - token
+    - code
+    - id_token
+  staticClients:
+    - id: dashboard
+      redirectURIs:
+        - https://dashboard.{{ gardener_operator_garden_url }}/auth/callback
+      name: Gardener Dashboard
+      secret: {{ gardener_operator_dex.dashboard_secret }}
+    - id: kube-kubectl
+      name: Kubectl
+      public: true
+      trustedPeers:
+        - dashboard
+{% if gardener_operator_dex.static_passwords | d([]) %}
+  enablePasswordDB: true
+  staticPasswords:
+{% for pw in gardener_operator_dex.static_passwords %}
+    - email: {{ pw.email }}
+      hash: "{{ pw.hash }}"
+      username: {{ pw.username }}
+      emailVerified: true
+{% endfor %}
+{% endif %}
+{% if gardener_operator_dex.connectors | d([]) %}
+  connectors:
+{{ gardener_operator_dex.connectors | to_nice_yaml(indent=2) | indent(4, true) }}
+{% endif %}
+
+podLabels:
+  networking.gardener.cloud/to-dns: allowed
+  networking.gardener.cloud/to-runtime-apiserver: allowed
+  networking.gardener.cloud/to-public-networks: allowed
+
+ingress:
+  enabled: true
+  className: nginx-ingress-gardener
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-port-in-redirects: "true"
+  hosts:
+    - host: identity.{{ gardener_operator_garden_url }}
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: tls
+      hosts:
+        - identity.{{ gardener_operator_garden_url }}
+
+resources:
+  limits:
+    cpu: 200m
+    memory: 128Mi
+  requests:
+    cpu: 100m
+    memory: 64Mi

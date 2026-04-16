@@ -42,13 +42,23 @@ gardener_operator_openstack_cacert: ""
 gardener_operator_provider_openstack_storageclass_name: ssd
 gardener_operator_provider_openstack_storageclass_type: ssd
 
-gardener_operator_garden_auth_issuer_url: "https://keycloak.example.com/realms/gardener"
-gardener_operator_garden_auth_audiences:
-  - "gardener-client"
-gardener_operator_garden_auth_client_id: "gardener-client"
-gardener_operator_garden_auth_client_secret: ""
-gardener_operator_garden_auth_public_name: "keycloak"
-gardener_operator_garden_auth_cacert: ""
+gardener_operator_dex:
+  dashboard_secret: ""
+  static_passwords: []
+  # - email: "admin@example.com"
+  #   # bcrypt hash of the string "password": $(printf 'password' | htpasswd -BinC 10 admin | cut -d: -f2)
+  #   hash: "$2a$10$2b2cU8CPhOTaGrs1HRQuAueS7JTT5ZHsHSzYiFPm1leZck7Mc8T4W"
+  #   username: "admin"
+  connectors: []
+  # https://dexidp.io/docs/connectors/
+  # - type: oidc
+  #   id: keycloak
+  #   name: Keycloak
+  #   config:
+  #     issuer: https://keycloak.example.com/realms/myrealm
+  #     clientID: dex
+  #     clientSecret: dex-secret
+  #     redirectURI: https://identity.example.com/callback
 
 gardener_operator_extension_registry_cache_enabled: true
 

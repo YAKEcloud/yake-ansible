@@ -1,0 +1,99 @@
+---
+- name: Add dex chart repo
+  kubernetes.core.helm_repository:  # noqa osism-fqcn
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    repo_name: dex
+    repo_url: https://charts.dexidp.io
+  environment: "{{ gardener_operator_proxy_env }}"
+
+- name: Template dex values
+  ansible.builtin.template:
+    src: dex-values.yaml.j2
+    dest: /var/lib/yake/gardener-operator/dex-values.yaml
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+
+- name: Allow nginx egress to Dex
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: allow-nginx-egress-to-dex
+        namespace: garden
+      spec:
+        podSelector:
+          matchLabels:
+            app: nginx-ingress
+            component: controller
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: dex
+                    app.kubernetes.io/instance: identity
+            ports:
+              - port: 5556
+                protocol: TCP
+
+- name: Allow all egress for gardener dashboard
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: allow-all-egress-for-dashboard
+        namespace: garden
+      spec:
+        podSelector:
+          matchLabels:
+            app: gardener
+            role: dashboard
+        egress:
+          - {}
+        policyTypes:
+          - Egress
+  register: dashboard_netpol  # noqa: var-naming[no-role-prefix]
+  notify: Restart gardener dashboard
+
+- name: Allow kube-apiserver egress to Dex
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: allow-all-egress-for-kube-apiserver
+        namespace: garden
+      spec:
+        podSelector:
+          matchLabels:
+            role: apiserver
+        egress:
+          - {}
+        policyTypes:
+          - Egress
+
+- name: Install dex
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    update_repo_cache: true
+    chart_ref: dex/dex
+    chart_version: "{{ gardener_operator_dex_version }}"
+    create_namespace: true
+    release_name: identity
+    release_namespace: garden
+    release_state: present
+    wait: true
+    values_files:
+      - /var/lib/yake/gardener-operator/dex-values.yaml
+  environment: "{{ gardener_operator_proxy_env }}"

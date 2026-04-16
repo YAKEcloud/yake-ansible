@@ -64,14 +64,14 @@ clusterapi_cluster_control_plane_machine_count: 3
 clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4"
 clusterapi_cluster_worker_machine_deployments:
   - name: md-0
-    replicas: 1
-    failure_domain: nova1
+    replicas: 3
+    failure_domain: nova
     image_id: "{{ clusterapi_cluster_openstack_image_id }}"
-  - name: md-1
-    replicas: 2
-    failure_domain: nova2
-    image_id: "{{ clusterapi_cluster_openstack_image_id }}"
-clusterapi_cluster_worker_machine_flavor: "SCS-4V-16"
+  # - name: md-1
+  #   replicas: 2
+  #   failure_domain: nova2
+  #   image_id: "{{ clusterapi_cluster_openstack_image_id }}"
+clusterapi_cluster_worker_machine_flavor: "SCS-4V-8"
 
 clusterapi_cluster_enable_boot_volume: true
 clusterapi_cluster_root_volume_size: 50

@@ -53,7 +53,7 @@
         "/^roles\\/gardener_operator\\/defaults\\/main.yml$/"
       ],
       "matchStrings": [
-        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\\n.*?(_tag|_version): '(?<currentValue>.*?)'"
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( extractVersion=(?<extractVersion>.*?))?\\n.*?(_tag|_version): '(?<currentValue>.*?)'"
       ]
     },
     {

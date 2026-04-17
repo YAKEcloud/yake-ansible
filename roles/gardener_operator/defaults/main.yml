@@ -78,7 +78,7 @@ gardener_operator_shoot_dns_service_version: '1.80.1'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
 gardener_operator_networking_cilium_version: '1.47.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
-gardener_operator_os_gardenlinux_version: '0.38.1'
+gardener_operator_os_gardenlinux_version: '0.39.0'
 
 gardener_operator_extension_registry_cache_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-registry-cache

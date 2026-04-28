@@ -2,7 +2,7 @@ ARG ALPINE_VERSION=3.23@sha256:5b10f432ef3da1b8d4c7eb6c487f2f5a8f096bc91145e6887
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v1.13.0  # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
+ARG VERSION=v1.13.1  # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 ADD --chmod=0755 https://github.com/kubernetes-sigs/cluster-api/releases/download/${VERSION}/clusterctl-linux-amd64 /usr/bin/clusterctl
 
 ENV USER_NAME=clusterctl

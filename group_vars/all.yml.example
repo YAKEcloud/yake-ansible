@@ -26,7 +26,10 @@ clusterapi_cluster_worker_machine_deployments:
     replicas: 3
     failure_domain: nova
     image_id: "{{ clusterapi_cluster_openstack_image_id }}"
-clusterapi_cluster_enable_boot_volume: false
+
+clusterapi_cluster_root_volume_type: "default"
+clusterapi_cluster_root_volume_size: "50"
+clusterapi_cluster_root_volume_availability_zone: nova
 
 gardener_operator_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
 gardener_operator_openstack_project_name: "project"
@@ -39,8 +42,8 @@ gardener_operator_openstack_zones:
   - "nova"
 gardener_operator_openstack_cacert: ""
 
-gardener_operator_provider_openstack_storageclass_name: ssd
-gardener_operator_provider_openstack_storageclass_type: ssd
+gardener_operator_provider_openstack_storageclass_name: default
+gardener_operator_provider_openstack_storageclass_type: default
 
 gardener_operator_dex:
   dashboard_secret: ""
@@ -77,9 +80,10 @@ gardener_operator_managed_seeds_enabled: true
 gardener_operator_cloudprofiles:
   - name: cloudprofile
     storageclasses:
-      - name: ssd
+      - name: default
         default: "true"
-        type: ssd
+        # Set this to 'default' to use '__DEFAULT__'
+        type: default
         availability: nova
     floating_pools:
       - name: public
@@ -135,7 +139,8 @@ gardener_operator_managed_seeds:
         image_version: 2150.0.0
         minimum: 3
         maximum: 15
-        volume_type: ssd
+        # Omit that variable to let Openstack choose the default volume-type
+        #volume_type: default
         volume_size: 50Gi
         zones:
           - nova

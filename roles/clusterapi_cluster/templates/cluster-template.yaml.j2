@@ -299,13 +299,13 @@ spec:
       image:
         id: {{ clusterapi_cluster_openstack_image_id }}
       sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
-{% if clusterapi_cluster_enable_boot_volume | d(false) %}
       rootVolume:
         sizeGiB: {{ clusterapi_cluster_root_volume_size | d(50) }}
+{% if clusterapi_cluster_root_volume_type is defined and clusterapi_cluster_root_volume_type %}
         type: {{ clusterapi_cluster_root_volume_type }}
+{% endif %}
         availabilityZone:
           name: {{ clusterapi_cluster_root_volume_availability_zone }}
-{% endif %}
 {% for md in clusterapi_cluster_worker_machine_deployments %}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -319,10 +319,11 @@ spec:
       image:
         id: {{ md.image_id }}
       sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
-{% if clusterapi_cluster_enable_boot_volume | d(false) %}
       rootVolume:
         sizeGiB: {{ clusterapi_cluster_root_volume_size | d(50) }}
+{% if clusterapi_cluster_root_volume_type is defined and clusterapi_cluster_root_volume_type %}
         type: {{ clusterapi_cluster_root_volume_type }}
+{% endif %}
         availabilityZone:
           name: {{ md.failure_domain }}
 {% endif %}

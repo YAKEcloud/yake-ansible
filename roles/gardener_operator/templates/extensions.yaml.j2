@@ -47,7 +47,9 @@ provisioner: cinder.csi.openstack.org
 volumeBindingMode: WaitForFirstConsumer
 allowVolumeExpansion: true
 parameters:
+{% if gardener_operator_provider_openstack_storageclass_type is defined and gardener_operator_provider_openstack_storageclass_type %}
   type: {{ gardener_operator_provider_openstack_storageclass_type }}
+{% endif %}
   availability: {{ gardener_operator_openstack_zones[0] }}
 reclaimPolicy: Delete
 ---

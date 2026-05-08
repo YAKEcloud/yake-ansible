@@ -118,7 +118,9 @@ spec:
         minimum: {{ w.minimum }}
         maximum: {{ w.maximum }}
         volume:
+{% if w.volume_type is defined and w.volume_type %}
           type: {{ w.volume_type }}
+{% endif %}
           size: {{ w.volume_size }}
         zones: {{ w.zones }}
 {% endfor %}

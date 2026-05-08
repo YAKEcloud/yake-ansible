@@ -28,7 +28,7 @@ clusterapi_cluster_worker_machine_deployments:
     image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 
 clusterapi_cluster_root_volume_type: "default"
-clusterapi_cluster_root_volume_size: "50"
+clusterapi_cluster_root_volume_size: "20"
 clusterapi_cluster_root_volume_availability_zone: nova
 
 gardener_operator_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"

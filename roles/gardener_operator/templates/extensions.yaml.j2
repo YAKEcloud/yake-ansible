@@ -50,7 +50,7 @@ parameters:
 {% if gardener_operator_provider_openstack_storageclass_type is defined and gardener_operator_provider_openstack_storageclass_type %}
   type: {{ gardener_operator_provider_openstack_storageclass_type }}
 {% endif %}
-  availability: {{ gardener_operator_openstack_zones[0] }}
+  availability: {{ gardener_operator_provider_openstack_storageclass_zone }}
 reclaimPolicy: Delete
 ---
 apiVersion: operator.gardener.cloud/v1alpha1

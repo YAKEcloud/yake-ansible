@@ -39,6 +39,7 @@ clusterapi_cluster_openstack_swift_image_url: ""
 clusterapi_cluster_openstack_upload_image: false
 clusterapi_cluster_openstack_image_id: ""
 clusterapi_cluster_openstack_cacert: ""
+clusterapi_cluster_openstack_ignore_volume_az: false
 clusterapi_cluster_openstack_cloud:
   auth:
     auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
@@ -73,9 +74,9 @@ clusterapi_cluster_worker_machine_deployments:
   #   image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 clusterapi_cluster_worker_machine_flavor: "SCS-4V-8"
 
-clusterapi_cluster_enable_boot_volume: true
-clusterapi_cluster_root_volume_size: 50
-clusterapi_cluster_root_volume_type: default
+clusterapi_cluster_root_volume_size: 20
+# Set the Openstack dafault
+clusterapi_cluster_root_volume_type: "__DEFAULT__"
 clusterapi_cluster_root_volume_availability_zone: "{{ clusterapi_cluster_openstack_failure_domain }}"
 
 clusterapi_cluster_csi_snapshotter_enable: false

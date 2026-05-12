@@ -63,8 +63,6 @@ gardener_operator_dex:
   #     clientSecret: dex-secret
   #     redirectURI: https://identity.example.com/callback
 
-gardener_operator_extension_registry_cache_enabled: true
-
 gardener_operator_garden_url: "botany.example.com"
 gardener_operator_cluster_name: "garden"
 gardener_operator_kubernetes_version: "{{ clusterapi_cluster_kubernetes_version }}"
@@ -73,9 +71,6 @@ gardener_operator_garden_cluster_admin_email: "demo@example.com"
 
 gardener_operator_shoot_cert_service_acme_email: "operations@example.com"
 gardener_operator_shoot_cert_service_acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
-
-gardener_operator_cloudprofiles_enabled: true
-gardener_operator_managed_seeds_enabled: true
 
 gardener_operator_cloudprofiles:
   - name: cloudprofile
@@ -124,6 +119,7 @@ gardener_operator_managed_seeds:
     cloudprofile_name: cloudprofile
     networking_type: cilium
     kubernetes_version: 1.35.3
+    floating_pool_name: "public"
     openstack:
       auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
       project_name: "{{ gardener_operator_openstack_project_name }}"
@@ -145,7 +141,11 @@ gardener_operator_managed_seeds:
         zones:
           - nova
     settings:
-      backup_enabled: false
+      # backup:
+      #   provider: openstack
+      #   region: "{{ clusterapi_cluster_openstack_region_name }}"
+      #   bucket_name: bucket-seed-a
+      #   credentials: {}
       excess_capacity_reservation: true
 
 # cleanup

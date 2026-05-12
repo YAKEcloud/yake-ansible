@@ -78,3 +78,7 @@ sudo rm -rf /var/lib/yake/
 ```
 
 For advanced cleanup have a look at `cleanup.yml`
+
+## Scripts
+
+See [scripts/README.md](scripts/README.md) for auxiliary tools, e.g. syncing CAPI and GardenLinux images to OpenStack Glance.

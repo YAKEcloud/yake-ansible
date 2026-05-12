@@ -34,8 +34,10 @@ spec:
       type: openstack
     - kind: Worker
       type: openstack
+{% if gardener_operator_dns_provider_type == 'openstack-designate' %}
     - kind: DNSRecord
       type: openstack-designate
+{% endif %}
 ---
 apiVersion: storage.k8s.io/v1
 kind: StorageClass
@@ -150,6 +152,7 @@ spec:
     kind: Extension
     type: shoot-dns-service
     workerlessSupported: true
+{% if gardener_operator_networking_type == 'cilium' %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -173,6 +176,8 @@ spec:
   resources:
   - kind: Network
     type: cilium
+{% endif %}
+{% if 'gardenlinux' in gardener_operator_os_types | d(['gardenlinux']) %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -187,7 +192,8 @@ spec:
   resources:
   - kind: OperatingSystemConfig
     type: gardenlinux
-{% if gardener_operator_extension_registry_cache_enabled %}
+{% endif %}
+{% if gardener_operator_managed_seeds_registry_mirrors | d([]) | length > 0 %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -216,7 +222,7 @@ spec:
   - kind: Extension
     type: registry-mirror
 {% endif %}
-{% if gardener_operator_os_ubuntu_enabled %}
+{% if 'ubuntu' in gardener_operator_os_types | d(['gardenlinux']) %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -232,7 +238,7 @@ spec:
   - kind: OperatingSystemConfig
     type: ubuntu
 {% endif %}
-{% if gardener_operator_networking_calico_enabled %}
+{% if gardener_operator_networking_type == 'calico' %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
@@ -276,7 +282,95 @@ spec:
     type: shoot-oidc-service
     workerlessSupported: true
 {% endif %}
-{% if gardener_operator_backup_s3_enabled %}
+{% if gardener_operator_dns_provider_type == 'aws-route53' %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: provider-aws
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-aws-runtime:v{{ gardener_operator_provider_aws_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-aws-application:v{{ gardener_operator_provider_aws_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/provider-aws:v{{ gardener_operator_provider_aws_version }}
+      injectGardenKubeconfig: true
+  resources:
+    - kind: DNSRecord
+      type: aws-route53
+{% endif %}
+{% if gardener_operator_dns_provider_type == 'azure-dns' %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: provider-azure
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-azure-runtime:v{{ gardener_operator_provider_azure_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-azure-application:v{{ gardener_operator_provider_azure_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/provider-azure:v{{ gardener_operator_provider_azure_version }}
+      injectGardenKubeconfig: true
+  resources:
+    - kind: DNSRecord
+      type: azure-dns
+{% endif %}
+{% if gardener_operator_dns_provider_type == 'google-clouddns' %}
+---
+apiVersion: operator.gardener.cloud/v1alpha1
+kind: Extension
+metadata:
+  annotations:
+    security.gardener.cloud/pod-security-enforce: baseline
+  name: provider-gcp
+spec:
+  deployment:
+    admission:
+      runtimeCluster:
+        helm:
+          ociRepository:
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-gcp-runtime:v{{ gardener_operator_provider_gcp_version }}
+      virtualCluster:
+        helm:
+          ociRepository:
+            ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/admission-gcp-application:v{{ gardener_operator_provider_gcp_version }}
+    extension:
+      helm:
+        ociRepository:
+          ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/provider-gcp:v{{ gardener_operator_provider_gcp_version }}
+      injectGardenKubeconfig: true
+  resources:
+    - kind: DNSRecord
+      type: google-clouddns
+{% endif %}
+{% set _ns = namespace(s3_needed=false) %}
+{% if gardener_operator_garden_backup_credentials | d('') and gardener_operator_garden_backup_provider | d('') | upper == 'S3' %}{% set _ns.s3_needed = true %}{% endif %}
+{% if gardener_operator_internal_seed_backup_credentials | d('') and gardener_operator_internal_seed_backup_provider | d('') | upper == 'S3' %}{% set _ns.s3_needed = true %}{% endif %}
+{% for _seed in gardener_operator_managed_seeds | d([]) %}{% if _seed.settings.backup | d({}) | length > 0 and _seed.settings.backup.provider | d('') | upper == 'S3' %}{% set _ns.s3_needed = true %}{% endif %}{% endfor %}
+{% if _ns.s3_needed %}
 ---
 apiVersion: core.gardener.cloud/v1
 kind: ControllerDeployment

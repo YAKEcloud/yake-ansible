@@ -35,8 +35,6 @@ clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_tls_verify: false
 clusterapi_cluster_openstack_external_network: public
 clusterapi_cluster_openstack_ssh_key_name: "{{ clusterapi_cluster_name }}"
-clusterapi_cluster_openstack_swift_image_url: ""
-clusterapi_cluster_openstack_upload_image: false
 clusterapi_cluster_openstack_image_id: ""
 clusterapi_cluster_openstack_cacert: ""
 clusterapi_cluster_openstack_ignore_volume_az: false

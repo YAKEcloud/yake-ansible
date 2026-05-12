@@ -37,6 +37,7 @@
 - name: Wait 100 seconds for internal seed
   ansible.builtin.pause:
     seconds: 100
+  changed_when: false
 
 - name: Template ingress-cert file
   ansible.builtin.template:

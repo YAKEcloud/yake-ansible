@@ -7,10 +7,15 @@ metadata:
   labels:
     gardener.cloud/role: internal-domain
   annotations:
-    dns.gardener.cloud/provider: openstack-designate
+    dns.gardener.cloud/provider: {{ gardener_operator_dns_provider_type }}
     dns.gardener.cloud/domain: internal.{{ gardener_operator_garden_url }}
 type: Opaque
 data:
+{% if gardener_operator_dns_credentials %}
+{% for key, value in gardener_operator_dns_credentials.items() %}
+  {{ key }}: {{ value | b64encode }}
+{% endfor %}
+{% else %}
   authURL: {{ gardener_operator_openstack_auth_url | b64encode }}
   tenantName: {{ gardener_operator_openstack_project_name | b64encode }}
   domainName: {{ gardener_operator_openstack_domain_name | b64encode }}
@@ -19,6 +24,7 @@ data:
   applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
 {% if gardener_operator_openstack_cacert | d('') %}
   caCert: {{ gardener_operator_openstack_cacert | b64encode }}
+{% endif %}
 {% endif %}
 ---
 apiVersion: v1
@@ -29,10 +35,15 @@ metadata:
   labels:
     gardener.cloud/role: default-domain
   annotations:
-    dns.gardener.cloud/provider: openstack-designate
+    dns.gardener.cloud/provider: {{ gardener_operator_dns_provider_type }}
     dns.gardener.cloud/domain: {{ gardener_operator_garden_url }}
 type: Opaque
 data:
+{% if gardener_operator_dns_credentials %}
+{% for key, value in gardener_operator_dns_credentials.items() %}
+  {{ key }}: {{ value | b64encode }}
+{% endfor %}
+{% else %}
   authURL: {{ gardener_operator_openstack_auth_url | b64encode }}
   tenantName: {{ gardener_operator_openstack_project_name | b64encode }}
   domainName: {{ gardener_operator_openstack_domain_name | b64encode }}
@@ -42,7 +53,8 @@ data:
 {% if gardener_operator_openstack_cacert | d('') %}
   caCert: {{ gardener_operator_openstack_cacert | b64encode }}
 {% endif %}
-{% if gardener_operator_internal_seed_backup_enabled %}
+{% endif %}
+{% if gardener_operator_internal_seed_backup_credentials | d('') %}
 ---
 apiVersion: v1
 kind: Secret
@@ -114,7 +126,7 @@ spec:
       spec:
         taints:
           - key: seed.gardener.cloud/protected
-{% if gardener_operator_internal_seed_backup_enabled %}
+{% if gardener_operator_internal_seed_backup_credentials | d('') %}
         backup:
           provider: {{ gardener_operator_internal_seed_backup_provider }}
           region: {{ gardener_operator_internal_seed_backup_region }}
@@ -132,14 +144,14 @@ spec:
               kind: Secret
               name: openstack-cloud
               namespace: garden
-            type: openstack-designate
+            type: {{ gardener_operator_dns_provider_type }}
           internal:
             credentialsRef:
               apiVersion: v1
               kind: Secret
               name: openstack-cloud
               namespace: garden
-            type: openstack-designate
+            type: {{ gardener_operator_dns_provider_type }}
             domain: internal.{{ gardener_operator_garden_url }}
         ingress:
           controller:

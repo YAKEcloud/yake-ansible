@@ -1,27 +1,21 @@
 ---
-- name: Copy calico manifet
-  ansible.builtin.copy:
-    src: calico/calico.yaml
-    dest: /var/lib/yake/calico.yaml
-    owner: "{{ clusterapi_cluster_uid }}"
-    group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
-
-- name: Apply calico manifest
-  kubernetes.core.k8s:
+- name: Deploy calico
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    release_name: calico
+    chart_ref: tigera-operator
+    chart_repo_url: https://docs.tigera.io/calico/charts
+    chart_version: "{{ clusterapi_cluster_calico_version }}"
+    release_namespace: tigera-operator
+    create_namespace: true
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    state: present
-    src: /var/lib/yake/calico.yaml
-
-- name: Pause for 30 seconds
-  ansible.builtin.pause:
-    seconds: 30
+    wait: true
 
 - name: Wait for calico-node pods
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     kind: Pod
-    namespace: kube-system
+    namespace: calico-system
   register: calico_pods  # noqa: var-naming[no-role-prefix]
   until: >
     calico_pods.resources is defined and

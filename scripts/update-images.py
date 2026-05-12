@@ -9,7 +9,8 @@ CAPI images (Gardener variant):
 
 GardenLinux images:
   Pulled from GitHub releases (gardenlinux/gardenlinux).
-  Assets are tar.xz archives containing a .raw or .qcow2 — always downloaded locally first.
+  Assets are tar.xz archives containing a .raw or .qcow2 — always downloaded
+  locally first.
   Glance name follows the cloudprofile convention: "Garden Linux 2150.3"
 
 Requirements:
@@ -50,8 +51,8 @@ except ImportError:
 
 CAPI_BASE_URL = "https://nbg1.your-objectstorage.com/osism/openstack-k8s-capi-images"
 GARDENLINUX_REPO = "gardenlinux/gardenlinux"
-GARDENLINUX_FLAVOR = "openstack-gardener_prod"  # adjust if you need metal_prod or _usi variant
-
+# adjust if you need metal_prod or _usi variant
+GARDENLINUX_FLAVOR = "openstack-gardener_prod"
 
 
 def _short_gl_version(version):
@@ -89,7 +90,7 @@ def find_capi_image(conn, patch_version):
     for img in conn.image.images():
         name_lower = (img.name or "").lower()
         if "capi" in name_lower and f"v{patch}" in name_lower:
-            return img, f"fuzzy name match ('capi' + 'v{patch}' in '{img.name}')"
+            return img, (f"fuzzy name match ('capi' + 'v{patch}' in '{img.name}')")
 
     return None, None
 
@@ -116,7 +117,10 @@ def find_gardenlinux_image(conn, version):
     #    Glance may ignore unknown property filters and return all images
     for v in (version, short):
         for img in conn.image.images(os_distro="gardenlinux", os_version=v):
-            if img.get("os_distro") == "gardenlinux" and img.get("os_version") in (version, short):
+            if img.get("os_distro") == "gardenlinux" and img.get("os_version") in (
+                version,
+                short,
+            ):
                 return img, f"os_version property '{v}'"
 
     # 3. Fuzzy name scan
@@ -125,10 +129,11 @@ def find_gardenlinux_image(conn, version):
         name_lower = (img.name or "").lower()
         if any(kw in name_lower for kw in gl_keywords):
             if short in name_lower or version in name_lower:
-                return img, f"fuzzy name match (gardenlinux + version in '{img.name}')"
+                return img, (
+                    f"fuzzy name match " f"(gardenlinux + version in '{img.name}')"
+                )
 
     return None, None
-
 
 
 def _wait_for_active(conn, image_id, timeout=3600):
@@ -145,6 +150,7 @@ def _wait_for_active(conn, image_id, timeout=3600):
 
 class _ProgressReader:
     """Wraps a file object and updates a tqdm bar as data is read."""
+
     def __init__(self, fh, pbar):
         self._fh = fh
         self._pbar = pbar
@@ -156,28 +162,27 @@ class _ProgressReader:
 
 
 def upload_from_file(conn, name, path, disk_format="qcow2", extra_props=None):
-    kwargs = dict(
-        name=name,
-        disk_format=disk_format,
-        container_format="bare",
-        visibility="shared",
-        min_disk=20,
-        min_ram=512,
-    )
-    if extra_props:
-        kwargs.update(extra_props)
-    image = conn.image.create_image(**kwargs)
-    try:
-        file_size = path.stat().st_size
-        with tqdm(total=file_size, unit="B", unit_scale=True, unit_divisor=1024,
-                  desc=f"    ↑ {name}", leave=False) as pbar:
-            with open(path, "rb") as fh:
-                conn.image.upload_image(image, data=_ProgressReader(fh, pbar))
-        return _wait_for_active(conn, image.id)
-    except Exception:
-        conn.image.delete_image(image.id, ignore_missing=True)
-        raise
-
+    file_size = path.stat().st_size
+    with tqdm(
+        total=file_size,
+        unit="B",
+        unit_scale=True,
+        unit_divisor=1024,
+        desc=f"    ↑ {name}",
+        leave=False,
+    ) as pbar:
+        with open(path, "rb") as fh:
+            image = conn.image.create_image(
+                name=name,
+                disk_format=disk_format,
+                container_format="bare",
+                visibility="shared",
+                min_disk=20,
+                min_ram=512,
+                **(extra_props or {}),
+                data=_ProgressReader(fh, pbar),
+            )
+    return _wait_for_active(conn, image.id)
 
 
 def download_file(url, dest, label=""):
@@ -185,22 +190,27 @@ def download_file(url, dest, label=""):
     with requests.get(url, stream=True, timeout=60) as resp:
         resp.raise_for_status()
         total = int(resp.headers.get("content-length", 0)) or None
-        with tqdm(total=total, unit="B", unit_scale=True, unit_divisor=1024,
-                  desc=f"    ↓ {label}", leave=False) as pbar:
+        with tqdm(
+            total=total,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+            desc=f"    ↓ {label}",
+            leave=False,
+        ) as pbar:
             with open(dest, "wb") as fh:
                 for chunk in resp.iter_content(chunk_size=65536):
                     fh.write(chunk)
                     pbar.update(len(chunk))
 
 
-
 def sync_capi_image(conn, k8s_version, ubuntu_version="2404", dry_run=False):
     print("\n=== CAPI Image (Gardener variant) ===")
 
-    patch = k8s_version.lstrip("v")               # e.g. "1.35.4"
-    minor = ".".join(patch.split(".")[:2])         # e.g. "1.35"
+    patch = k8s_version.lstrip("v")  # e.g. "1.35.4"
+    minor = ".".join(patch.split(".")[:2])  # e.g. "1.35"
     canonical_name = f"ubuntu-capi-image-v{patch}"
-    # Directory is keyed by minor version; filename contains the full patch version.
+    # Directory is keyed by minor version; filename contains the full patch.
     url = (
         f"{CAPI_BASE_URL}/ubuntu-{ubuntu_version}-kube-v{minor}-gardener"
         f"/ubuntu-{ubuntu_version}-kube-v{patch}.qcow2"
@@ -208,11 +218,13 @@ def sync_capi_image(conn, k8s_version, ubuntu_version="2404", dry_run=False):
 
     existing, strategy = find_capi_image(conn, patch)
     if existing:
-        print(f"  [SKIP]   {canonical_name}  — found via {strategy}  ({existing.id})")
+        print(
+            f"  [SKIP]   {canonical_name}" f"  — found via {strategy}  ({existing.id})"
+        )
         return canonical_name, existing.id
 
     if dry_run:
-        print(f"  [DRY-RUN] would download and upload {canonical_name}  from {url}")
+        print(f"  [DRY-RUN] would download and upload {canonical_name}" f"  from {url}")
         return canonical_name, None
 
     print(f"  [UPLOAD] {canonical_name}")
@@ -220,13 +232,18 @@ def sync_capi_image(conn, k8s_version, ubuntu_version="2404", dry_run=False):
         with tempfile.TemporaryDirectory() as tmp:
             local = Path(tmp) / f"{canonical_name}.qcow2"
             download_file(url, local, canonical_name)
-            image = upload_from_file(conn, canonical_name, local, extra_props={
-                "os_purpose": "k8snode",
-                "os_distro": "ubuntu",
-                "kube_version": f"v{patch}",
-                "image_description": "https://github.com/osism/k8s-capi-images",
-                "image_source": url,
-            })
+            image = upload_from_file(
+                conn,
+                canonical_name,
+                local,
+                extra_props={
+                    "os_purpose": "k8snode",
+                    "os_distro": "ubuntu",
+                    "kube_version": f"v{patch}",
+                    "image_description": ("https://github.com/osism/k8s-capi-images"),
+                    "image_source": url,
+                },
+            )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
     except Exception as exc:
@@ -234,12 +251,14 @@ def sync_capi_image(conn, k8s_version, ubuntu_version="2404", dry_run=False):
         return canonical_name, None
 
 
-
 def fetch_gardenlinux_release(version=None):
     if version:
-        url = f"https://api.github.com/repos/{GARDENLINUX_REPO}/releases/tags/{version}"
+        url = (
+            f"https://api.github.com/repos/{GARDENLINUX_REPO}"
+            f"/releases/tags/{version}"
+        )
     else:
-        url = f"https://api.github.com/repos/{GARDENLINUX_REPO}/releases/latest"
+        url = f"https://api.github.com/repos/{GARDENLINUX_REPO}" f"/releases/latest"
 
     resp = requests.get(
         url,
@@ -262,8 +281,10 @@ def fetch_gardenlinux_release(version=None):
             return tag, asset["browser_download_url"], asset["name"]
 
     raise RuntimeError(
-        f"No matching GardenLinux asset for flavor '{GARDENLINUX_FLAVOR}' (amd64) in release {tag}.\n"
-        f"Set GARDENLINUX_FLAVOR at the top of the script to one of the available variants."
+        f"No matching GardenLinux asset for flavor '{GARDENLINUX_FLAVOR}'"
+        f" (amd64) in release {tag}.\n"
+        f"Set GARDENLINUX_FLAVOR at the top of the script to one of the"
+        f" available variants."
     )
 
 
@@ -288,11 +309,17 @@ def sync_gardenlinux_image(conn, version=None, dry_run=False):
 
     existing, strategy = find_gardenlinux_image(conn, tag)
     if existing:
-        print(f"  [SKIP]   '{canonical_name}'  — found via {strategy}  ({existing.id})")
+        print(
+            f"  [SKIP]   '{canonical_name}'"
+            f"  — found via {strategy}  ({existing.id})"
+        )
         return canonical_name, existing.id
 
     if dry_run:
-        print(f"  [DRY-RUN] would download and upload '{canonical_name}'  from {asset_url}")
+        print(
+            f"  [DRY-RUN] would download and upload '{canonical_name}'"
+            f"  from {asset_url}"
+        )
         return canonical_name, None
 
     print(f"  [UPLOAD] {canonical_name}")
@@ -324,7 +351,6 @@ def sync_gardenlinux_image(conn, version=None, dry_run=False):
         return canonical_name, None
 
 
-
 def main():
     parser = argparse.ArgumentParser(
         description="Sync CAPI and GardenLinux images to OpenStack Glance.",
@@ -339,7 +365,10 @@ def main():
         "--k8s-version",
         metavar="X.Y.Z",
         default=None,
-        help="Kubernetes patch version for the CAPI image, e.g. 1.35.4 (required unless --skip-capi)",
+        help=(
+            "Kubernetes patch version for the CAPI image, e.g. 1.35.4"
+            " (required unless --skip-capi)"
+        ),
     )
     parser.add_argument(
         "--ubuntu-version",
@@ -351,14 +380,18 @@ def main():
         "--gardenlinux-version",
         default=None,
         metavar="VERSION",
-        help="Pin a specific GardenLinux version (default: latest release)",
+        help=("Pin a specific GardenLinux version" " (default: latest release)"),
     )
     parser.add_argument("--skip-capi", action="store_true", help="Skip CAPI images")
-    parser.add_argument("--skip-gardenlinux", action="store_true", help="Skip GardenLinux image")
+    parser.add_argument(
+        "--skip-gardenlinux",
+        action="store_true",
+        help="Skip GardenLinux image",
+    )
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help="Check what would be uploaded without actually uploading anything",
+        help=("Check what would be uploaded without actually uploading anything"),
     )
     args = parser.parse_args()
 
@@ -367,7 +400,9 @@ def main():
         conn = openstack.connect(cloud=args.cloud)
         _ = conn.auth["auth_url"]
     except Exception:
-        sys.exit("No OpenStack credentials found. Set OS_CLOUD or pass --cloud <name>.")
+        sys.exit(
+            "No OpenStack credentials found." " Set OS_CLOUD or pass --cloud <name>."
+        )
     print(f"Connected: {conn.auth['auth_url']}")
 
     if not args.skip_capi and not args.k8s_version:
@@ -379,10 +414,14 @@ def main():
     results = []
 
     if not args.skip_capi:
-        results.append(sync_capi_image(conn, args.k8s_version, args.ubuntu_version, args.dry_run))
+        results.append(
+            sync_capi_image(conn, args.k8s_version, args.ubuntu_version, args.dry_run)
+        )
 
     if not args.skip_gardenlinux:
-        results.append(sync_gardenlinux_image(conn, args.gardenlinux_version, args.dry_run))
+        results.append(
+            sync_gardenlinux_image(conn, args.gardenlinux_version, args.dry_run)
+        )
 
     print("\n=== Summary ===")
     for name, image_id in results:

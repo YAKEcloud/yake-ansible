@@ -23,7 +23,7 @@ clusterapi_cluster_hosts_entries: []
 #     hostname: "harbor.example.com"
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-clusterapi_cluster_kubernetes_version: 'v1.36.0'
+clusterapi_cluster_kubernetes_version: 'v1.36.1'
 
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""

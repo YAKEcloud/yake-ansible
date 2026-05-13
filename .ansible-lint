@@ -1,5 +1,3 @@
 ---
-exclude_paths:
-  - charts
 skip_list:
   - galaxy[no-changelog]

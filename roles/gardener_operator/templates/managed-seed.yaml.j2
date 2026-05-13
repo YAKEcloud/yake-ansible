@@ -30,7 +30,7 @@ credentialsRef:
   namespace: garden
 provider:
   type: openstack
-{% if item.settings.backup_enabled %}
+{% if item.settings.backup | d({}) | length > 0 %}
 ---
 apiVersion: v1
 kind: Secret
@@ -89,7 +89,7 @@ spec:
   dns:
     domain: {{ item.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}
     providers:
-      - type: openstack-designate
+      - type: {{ gardener_operator_dns_provider_type }}
         credentialsRef:
           apiVersion: v1
           kind: Secret
@@ -165,7 +165,7 @@ spec:
         taints:
           seed.gardener.cloud/protected: false
         spec:
-{% if item.settings.backup_enabled %}
+{% if item.settings.backup | d({}) | length > 0 %}
           backup:
             provider: {{ item.settings.backup.provider }}
             region: {{ item.settings.backup.region }}
@@ -178,7 +178,7 @@ spec:
 {% endif %}
           dns:
             provider:
-              type: openstack-designate
+              type: {{ gardener_operator_dns_provider_type }}
               credentialsRef:
                 apiVersion: v1
                 kind: Secret
@@ -190,7 +190,7 @@ spec:
                 kind: Secret
                 name: openstack-cloud
                 namespace: garden
-              type: openstack-designate
+              type: {{ gardener_operator_dns_provider_type }}
               domain: {{ item.internal_domain | d('internal.' ~ gardener_operator_garden_url) }}
           ingress:
             domain: ingress.{{ item.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}

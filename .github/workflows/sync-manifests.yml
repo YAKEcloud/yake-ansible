@@ -25,7 +25,7 @@ jobs:
 
       - name: Run gilt
         run: |
-          pip3 install python-gilt
+          pip install python-gilt==2.2.5
           gilt overlay
 
       - name: Create Pull Request

@@ -15,7 +15,30 @@ data:
 {% if gardener_operator_openstack_cacert | d('') %}
   caCert: {{ gardener_operator_openstack_cacert | b64encode }}
 {% endif %}
-{% if gardener_operator_garden_backup_enabled %}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: dns-credentials
+  namespace: garden
+type: Opaque
+data:
+{% if gardener_operator_dns_credentials %}
+{% for key, value in gardener_operator_dns_credentials.items() %}
+  {{ key }}: {{ value | b64encode }}
+{% endfor %}
+{% else %}
+  authURL: {{ gardener_operator_openstack_auth_url | b64encode }}
+  tenantName: {{ gardener_operator_openstack_project_name | b64encode }}
+  domainName: {{ gardener_operator_openstack_domain_name | b64encode }}
+  applicationCredentialID: {{ gardener_operator_openstack_application_credential_id | b64encode }}
+  applicationCredentialName: {{ gardener_operator_openstack_application_credential_name | b64encode }}
+  applicationCredentialSecret: {{ gardener_operator_openstack_application_credential_secret | b64encode }}
+{% if gardener_operator_openstack_cacert | d('') %}
+  caCert: {{ gardener_operator_openstack_cacert | b64encode }}
+{% endif %}
+{% endif %}
+{% if gardener_operator_garden_backup_credentials | d('') %}
 ---
 apiVersion: v1
 kind: Secret
@@ -72,16 +95,16 @@ spec:
         generateControlPlaneCertificate: true
   dns:
     providers:
-    - name: designate
-      type: openstack-designate
+    - name: dns-provider
+      type: {{ gardener_operator_dns_provider_type }}
       secretRef:
-        name: control-plane-cloud
+        name: dns-credentials
         namespace: garden
   runtimeCluster:
     ingress:
       domains:
       - name: {{ gardener_operator_garden_url }}
-        provider: designate
+        provider: dns-provider
       controller:
         kind: nginx
     networking:
@@ -106,10 +129,10 @@ spec:
     dns:
       domains:
       - name: garden.{{ gardener_operator_garden_url }}
-        provider: designate
+        provider: dns-provider
     etcd:
       main:
-{% if gardener_operator_garden_backup_enabled %}
+{% if gardener_operator_garden_backup_credentials | d('') %}
         backup:
           provider: {{ gardener_operator_garden_backup_provider }}
           region: {{ gardener_operator_garden_backup_region }}

@@ -1,18 +1,4 @@
 ---
-- name: Create charts directory
-  become: true
-  ansible.builtin.file:
-    path: /var/lib/yake/charts
-    owner: "{{ clusterapi_cluster_uid }}"
-    group: "{{ clusterapi_cluster_gid }}"
-    mode: 0755
-    state: directory
-
-- name: Sync helm charts
-  ansible.posix.synchronize:
-    src: "{{ clusterapi_cluster_charts_dir }}"
-    dest: /var/lib/yake/charts/
-
 - name: Copy clouds.yaml file
   ansible.builtin.template:
     src: clouds.yaml.j2
@@ -30,18 +16,6 @@
   ansible.builtin.set_fact:
     _clusterapi_cluster_cloud_yaml_b64: "{{ result_clouds_yaml.content }}"
 
-- name: Get SHA256 hash for the image
-  ansible.builtin.uri:
-    url: "{{ clusterapi_cluster_openstack_swift_image_url }}.CHECKSUM"
-    return_content: true
-  register: image_hash_raw  # noqa: var-naming[no-role-prefix]
-  when: clusterapi_cluster_openstack_upload_image | bool
-
-- name: Get only the hash
-  ansible.builtin.set_fact:
-    clusterapi_cluster_image_hash: "{{ image_hash_raw.content.split()[0] }}"
-  when: clusterapi_cluster_openstack_upload_image | bool
-
 - name: Copy secret template file
   ansible.builtin.template:
     src: cloud-secret.yaml.j2
@@ -49,15 +23,6 @@
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
     mode: 0644
-
-- name: Copy image.yaml file
-  ansible.builtin.template:
-    src: image.yaml.j2
-    dest: /var/lib/yake/image.{{ clusterapi_cluster_name }}.yaml
-    owner: "{{ clusterapi_cluster_uid }}"
-    group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
-  when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Get external network ID
   openstack.cloud.networks_info:
@@ -134,32 +99,6 @@
     state: present
     wait: true
     src: "/var/lib/yake/cloud-secret.yaml"
-
-- name: Check if image exists
-  openstack.cloud.image_info:
-    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
-    name: "{{ clusterapi_cluster_openstack_image_name }}"
-  register: image_check  # noqa: var-naming[no-role-prefix]
-  when: clusterapi_cluster_openstack_upload_image | bool
-
-- name: Upload image to OpenStack
-  kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
-    state: present
-    wait: true
-    src: "/var/lib/yake/image.{{ clusterapi_cluster_name }}.yaml"
-  register: image_upload  # noqa: var-naming[no-role-prefix]
-  when: clusterapi_cluster_openstack_upload_image | bool
-
-- name: Wait until the image is uploaded (can take a long time)
-  openstack.cloud.image_info:
-    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
-    name: "{{ clusterapi_cluster_openstack_image_name }}"
-  register: uploaded_image  # noqa: var-naming[no-role-prefix]
-  until: uploaded_image.images[0].status == "active"
-  retries: 60
-  delay: 60
-  when: clusterapi_cluster_openstack_upload_image | bool
 
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:

@@ -2,19 +2,20 @@
 - name: Deploy cilium
   kubernetes.core.helm:
     binary_path: "{{ playbook_dir }}/.local/yake-helm"
-    release_name: "{{ cilium_helm_release_name }}"
-    chart_ref: "{{ cilium_helm_chart_ref }}"
-    release_namespace: "{{ cilium_helm_release_namespace }}"
+    release_name: cilium
+    chart_ref: oci://quay.io/cilium/charts/cilium
+    chart_version: "{{ clusterapi_cluster_cilium_version }}"
+    release_namespace: kube-system
     create_namespace: true
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     wait: true
-    values: "{{ _cilium_helm_values | combine(cilium_helm_values, recursive=True) }}"
+    values: "{{ clusterapi_cluster_cilium_helm_values }}"
 
 - name: Wait for cilium pods
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     kind: Pod
-    namespace: default
+    namespace: kube-system
   register: cilium_pods  # noqa: var-naming[no-role-prefix]
   until: >
     cilium_pods.resources is defined and

@@ -129,6 +129,7 @@
 - name: Pause for 4 minutes
   ansible.builtin.pause:
     minutes: 4
+  changed_when: false
 
 - name: Include dex tasks
   ansible.builtin.include_tasks: dex.yml

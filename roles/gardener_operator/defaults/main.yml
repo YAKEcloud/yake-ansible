@@ -2,8 +2,6 @@
 gardener_operator_uid: "{{ ansible_facts.user_uid | string }}"
 gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
 
-gardener_operator_management_cluster_name: "{{ management_cluster_name | d('clusterapi') }}"
-
 gardener_operator_clusterapi_name: garden
 gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
 
@@ -43,14 +41,6 @@ gardener_operator_openstack_zones:
   - zone1
 gardener_operator_openstack_cacert: ""
 
-gardener_operator_garden_auth_issuer_url: https://keycloak.example.com/realms/gardener
-gardener_operator_garden_auth_audiences:
-  - gardener-client
-gardener_operator_garden_auth_client_id: ""
-gardener_operator_garden_auth_client_secret: "{{ gardener_operator_dex.dashboard_secret }}"
-gardener_operator_garden_auth_public_name: keycloak
-gardener_operator_garden_auth_cacert: ""
-
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
@@ -62,6 +52,33 @@ gardener_operator_provider_openstack_version: '1.54.0'
 gardener_operator_provider_openstack_storageclass_name: default
 # gardener_operator_provider_openstack_storageclass_type: default
 gardener_operator_provider_openstack_storageclass_zone: nova
+
+# DNS Provider (independent of infrastructure provider)
+# Supported types: openstack-designate, aws-route53, azure-dns, google-clouddns
+# The corresponding provider extension is deployed automatically based on this value.
+gardener_operator_dns_provider_type: "openstack-designate"
+# DNS provider credentials as plain-text key-value pairs (will be base64-encoded in Kubernetes Secrets).
+# Leave empty ({}) to reuse the OpenStack credentials above. Only valid for openstack-designate.
+# Example for aws-route53:
+#   AWS_ACCESS_KEY_ID: "AKIAIOSFODNN7EXAMPLE"
+#   AWS_SECRET_ACCESS_KEY: "wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY"
+#   region: "eu-central-1"
+# Example for azure-dns:
+#   subscriptionID: "..."
+#   tenantID: "..."
+#   clientID: "..."
+#   clientSecret: "..."
+# Example for google-clouddns:
+#   serviceaccount.json: |
+#     { "type": "service_account", ... }
+gardener_operator_dns_credentials: {}
+
+# renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws
+gardener_operator_provider_aws_version: '1.69.1'
+# renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure
+gardener_operator_provider_azure_version: '1.60.1'
+# renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
+gardener_operator_provider_gcp_version: '1.51.0'
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-cert-service
 gardener_operator_shoot_cert_service_version: '1.60.0'
@@ -76,52 +93,51 @@ gardener_operator_shoot_cert_service_precheck_nameservers: "1.1.1.1,1.0.0.1"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-dns-service
 gardener_operator_shoot_dns_service_version: '1.82.0'
+
+# Networking extension: exactly one of 'cilium' or 'calico'.
+gardener_operator_networking_type: cilium
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
 gardener_operator_networking_cilium_version: '1.47.0'
-# renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
-gardener_operator_os_gardenlinux_version: '0.40.0'
-
-gardener_operator_extension_registry_cache_enabled: false
-# renovate: datasource=github-releases depName=gardener/gardener-extension-registry-cache
-gardener_operator_extension_registry_cache_version: '0.22.0'
-
-gardener_operator_networking_calico_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-calico
 gardener_operator_networking_calico_version: '1.58.0'
 
-gardener_operator_os_ubuntu_enabled: false
+# OS extensions to install. Add 'ubuntu' to also support ubuntu-based shoot workers.
+gardener_operator_os_types:
+  - gardenlinux
+# renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
+gardener_operator_os_gardenlinux_version: '0.41.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu
 gardener_operator_os_ubuntu_version: '1.39.0'
 
-gardener_operator_shoot_oidc_service_enabled: true
+# Registry cache extension is deployed automatically when gardener_operator_managed_seeds_registry_mirrors is non-empty.
+# renovate: datasource=github-releases depName=gardener/gardener-extension-registry-cache
+gardener_operator_extension_registry_cache_version: '0.22.0'
+
+gardener_operator_shoot_oidc_service_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-oidc-service
 gardener_operator_shoot_oidc_service_version: '0.39.0'
 
-gardener_operator_backup_s3_enabled: false
+# S3 backup extension is deployed automatically when any backup provider is set to 'S3'.
 # renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3
 gardener_operator_backup_s3_version: '0.8.2'
 
-gardener_operator_garden_backup_enabled: false
+# Garden etcd backup — enabled when credentials are non-empty.
 gardener_operator_garden_backup_provider: openstack
 gardener_operator_garden_backup_region: "{{ gardener_operator_openstack_region_name }}"
 gardener_operator_garden_backup_bucket_name: gardener-operator
 # Look up your credentials scheme for your provider
 gardener_operator_garden_backup_credentials: ""
 
-gardener_operator_internal_seed_backup_enabled: false
+# Internal seed backup — enabled when credentials are non-empty.
 gardener_operator_internal_seed_backup_provider: openstack
 gardener_operator_internal_seed_backup_region: "{{ gardener_operator_openstack_region_name }}"
 gardener_operator_internal_seed_backup_bucket_name: gardener-internal-seed
 # Look up your credentials scheme for your provider
 gardener_operator_internal_seed_backup_credentials: ""
-# Activate this only on hosts with more than 16Gi of RAM. It defaults to a config reserving 2 CPUs and 6Gi of memory for each pod with no nodeSelector and no tolerations.
+# Activate this only on hosts with more than 16Gi of RAM.
 gardener_operator_internal_seed_excess_capacity_reservation: "false"
 
 gardener_operator_garden_cluster_admin_email: admin@example.com
-gardener_operator_garden_cluster_admin_password: ""
-
-gardener_operator_cloudprofiles_enabled: true
-gardener_operator_managed_seeds_enabled: true
 
 gardener_operator_cloudprofiles:
   - name: openstack-a
@@ -200,7 +216,7 @@ gardener_operator_managed_seeds:
       application_credential_id: "cred-id-a"
       application_credential_name: "cred-name-a"
       application_credential_secret: "secret-a"
-    worker:
+    workers:
       - name: worker-4v16
         machinetype: SCS-4V-16
         image_name: gardenlinux
@@ -212,18 +228,18 @@ gardener_operator_managed_seeds:
         zones:
           - nova
     settings:
-      backup_enabled: false
-      backup:
-        provider: openstack
-        region: region-a
-        bucket_name: bucket-a
-        credentials:  # for openstack
-        # authURL: "https://openstack.a.example.com:5000"
-        # tenantName: "project-a"
-        # domainName: "domain-a"
-        # regionName: "region-a"
-        # applicationCredentialID: "cred-id-a"
-        # applicationCredentialName: "cred-name-a"
-        # applicationCredentialSecret: "secret-a"
-        # s3ForcePathStyle: true
+      # Seed backup — enabled when backup.bucket_name is set.
+      # backup:
+      #   provider: openstack
+      #   region: region-a
+      #   bucket_name: bucket-a
+      #   credentials:  # provider-specific key/value pairs
+      #   # authURL: "https://openstack.a.example.com:5000"
+      #   # tenantName: "project-a"
+      #   # domainName: "domain-a"
+      #   # regionName: "region-a"
+      #   # applicationCredentialID: "cred-id-a"
+      #   # applicationCredentialName: "cred-name-a"
+      #   # applicationCredentialSecret: "secret-a"
+      #   # s3ForcePathStyle: true
       excess_capacity_reservation: true

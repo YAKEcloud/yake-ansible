@@ -5,8 +5,8 @@ metadata:
   annotations:
     cert.gardener.cloud/class: garden
     cert.gardener.cloud/dnsrecord-class: garden
-    cert.gardener.cloud/dnsrecord-provider-type: openstack-designate
-    cert.gardener.cloud/dnsrecord-secret-ref: control-plane-cloud
+    cert.gardener.cloud/dnsrecord-provider-type: {{ gardener_operator_dns_provider_type }}
+    cert.gardener.cloud/dnsrecord-secret-ref: dns-credentials
   name: seed-ingress
   namespace: garden
 spec:

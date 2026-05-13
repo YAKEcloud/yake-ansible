@@ -22,8 +22,6 @@ clusterapi_cluster_hosts_entries: []
 #   - ip: "12.34.56.54"
 #     hostname: "harbor.example.com"
 
-clusterapi_cluster_charts_dir: "{{ playbook_dir }}/charts/"
-
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 clusterapi_cluster_kubernetes_version: 'v1.36.0'
 
@@ -35,8 +33,6 @@ clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_tls_verify: false
 clusterapi_cluster_openstack_external_network: public
 clusterapi_cluster_openstack_ssh_key_name: "{{ clusterapi_cluster_name }}"
-clusterapi_cluster_openstack_swift_image_url: ""
-clusterapi_cluster_openstack_upload_image: false
 clusterapi_cluster_openstack_image_id: ""
 clusterapi_cluster_openstack_cacert: ""
 clusterapi_cluster_openstack_ignore_volume_az: false
@@ -85,8 +81,10 @@ clusterapi_cluster_extra: {}
 
 clusterapi_cluster_network: cilium
 
-cilium_helm_chart_ref: /var/lib/yake/charts/cilium  # noqa: var-naming[no-role-prefix]
-cilium_helm_release_name: cilium  # noqa: var-naming[no-role-prefix]
-cilium_helm_release_namespace: kube-system  # noqa: var-naming[no-role-prefix]
-cilium_helm_values:  # noqa: var-naming[no-role-prefix]
+# renovate: datasource=docker depName=quay.io/cilium/charts/cilium
+clusterapi_cluster_cilium_version: "1.19.3"
+clusterapi_cluster_cilium_helm_values:
   policyCIDRMatchMode: nodes
+
+# renovate: datasource=helm registryUrl=https://projectcalico.docs.tigera.io/charts depName=tigera-operator
+clusterapi_cluster_calico_version: "v3.32.0"

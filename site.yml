@@ -1,21 +1,42 @@
 ---
 - name: Install kubectl
-  ansible.builtin.import_playbook: kubectl-install.yml
+  hosts: "{{ hosts_kubectl_install | d('all') }}"
+  tags: [kubectl]
+  roles:
+    - role: kubectl_install
 
 - name: Install helm
-  ansible.builtin.import_playbook: helm-install.yml
+  hosts: "{{ hosts_helm_install | d('all') }}"
+  tags: [helm]
+  roles:
+    - role: helm_install
 
 - name: Install clusterctl
-  ansible.builtin.import_playbook: clusterctl-install.yml
+  hosts: "{{ hosts_clusterctl_install | d('all') }}"
+  tags: [clusterctl]
+  roles:
+    - role: clusterctl_install
 
 - name: Setup management cluster
-  ansible.builtin.import_playbook: management-cluster.yml
+  hosts: "{{ hosts_management_cluster | d('all') }}"
+  tags: [management-cluster]
+  roles:
+    - role: management_cluster
 
-- name: Install clusterapi
-  ansible.builtin.import_playbook: clusterapi-install.yml
+- name: Install Cluster API
+  hosts: "{{ hosts_clusterapi_install | d('all') }}"
+  tags: [clusterapi]
+  roles:
+    - role: clusterapi_install
 
-- name: Install clusterapi-cluster
-  ansible.builtin.import_playbook: clusterapi-cluster.yml
+- name: Create garden cluster
+  hosts: "{{ hosts_clusterapi_cluster | d('all') }}"
+  tags: [garden-cluster]
+  roles:
+    - role: clusterapi_cluster
 
-- name: Install gardener-operator
-  ansible.builtin.import_playbook: gardener-operator.yml
+- name: Setup Gardener Operator
+  hosts: "{{ hosts_gardener_operator | d('all') }}"
+  tags: [gardener]
+  roles:
+    - role: gardener_operator

@@ -3,6 +3,23 @@
   hosts: all
 
   tasks:
+    - name: Wait for storage provisioning to begin
+      ansible.builtin.pause:
+        seconds: 60
+
+    - name: Wait until all Cinder volumes are in a stable state
+      openstack.cloud.volume_info:
+        cloud: "{{ cleanup_openstack_cloud }}"
+      environment:
+        OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
+      register: volume_state
+      until: >
+        volume_state.volumes
+        | selectattr('status', 'in', ['creating', 'reserved', 'attaching', 'detaching', 'downloading'])
+        | list | length == 0
+      retries: 40
+      delay: 15
+
     - name: Delete kind cluster
       ansible.builtin.command: "{{ playbook_dir }}/.local/yake-kind delete cluster --name clusterapi"
       register: kind_delete

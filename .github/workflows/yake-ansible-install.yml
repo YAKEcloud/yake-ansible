@@ -10,6 +10,7 @@ on:
       - '.github/workflows/yake-ansible-install.yml'
       - 'group_vars/**'
       - 'roles/**'
+      - 'site.yml'
       - 'Giltfile.yaml'
       - 'requirements.txt'
       - 'requirements.yml'
@@ -25,7 +26,7 @@ jobs:
     timeout-minutes: 60
     steps:
       - name: Checkout repository
-        uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd  # v6
+        uses: actions/checkout@v6
 
       - name: Set up Python
         uses: actions/setup-python@v6
@@ -69,9 +70,6 @@ jobs:
               --for=condition=SystemComponentsHealthy=True \
               --for=condition=ExtensionsReady=True \
               --timeout=-1s
-
-      - name: Wait for storage provisioning
-        run: sleep 300
 
       - name: Run cleanup
         if: always()

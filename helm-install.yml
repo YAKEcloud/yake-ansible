@@ -1,6 +1,0 @@
----
-- name: Install helm
-  hosts: "{{ hosts_helm_install | d('all') }}"
-
-  roles:
-    - role: helm_install

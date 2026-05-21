@@ -47,6 +47,16 @@ gardener_operator_cluster_name: prod-garden
 gardener_operator_kubernetes_version: '1.36.1'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
 
+# Optional: Override the gardenlet image vector, e.g. to pull images from a private registry.
+# The value is injected verbatim into Gardenlet.spec.deployment.helm.imageVectorOverwrite.
+# Jinja2 expressions are resolved, so you can reference other variables here.
+gardener_operator_gardenlet_image_vector_overwrite: ""
+# gardener_operator_gardenlet_image_vector_overwrite: |
+#   images:
+#   - name: gardener-node-agent
+#     repository: "{{ gardener_operator_image_registry }}/gardener-project/releases/gardener/node-agent"
+#     tag: "v{{ gardener_operator_version }}"
+
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
 gardener_operator_provider_openstack_version: '1.55.0'
 gardener_operator_provider_openstack_storageclass_name: default

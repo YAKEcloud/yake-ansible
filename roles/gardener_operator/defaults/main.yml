@@ -81,7 +81,7 @@ gardener_operator_provider_azure_version: '1.60.1'
 gardener_operator_provider_gcp_version: '1.51.0'
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-cert-service
-gardener_operator_shoot_cert_service_version: '1.60.0'
+gardener_operator_shoot_cert_service_version: '1.61.0'
 gardener_operator_shoot_cert_service_issuer_type: acme  # acme or ca
 gardener_operator_shoot_cert_service_ca_certificate: ""
 gardener_operator_shoot_cert_service_ca_key: ""

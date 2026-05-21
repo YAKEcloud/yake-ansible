@@ -102,11 +102,19 @@ spec:
       kind: InfrastructureConfig
       floatingPoolName: {{ item.floating_pool_name }}
       networks:
-        workers: 10.120.0.0/16
+{% if item.subnet_pool is defined %}
+        subnetPool:
+          id: {{ item.subnet_pool.id }}
+{% if item.subnet_pool.prefix_length is defined %}
+          prefixLength: {{ item.subnet_pool.prefix_length }}
+{% endif %}
+{% else %}
+        workers: {{ item.workers_cidr | d('10.120.0.0/16') }}
+{% endif %}
     controlPlaneConfig:
       apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
       kind: ControlPlaneConfig
-      loadBalancerProvider: amphora
+      loadBalancerProvider: {{ item.loadbalancer_provider | d('amphora') }}
     workers:
 {% for w in item.workers %}
       - name: {{ w.name }}
@@ -125,7 +133,7 @@ spec:
         zones: {{ w.zones }}
 {% endfor %}
   networking:
-    nodes: 10.120.0.0/16
+    nodes: {{ item.workers_cidr | d('10.120.0.0/16') }}
     pods: 100.72.0.0/16
     services: 100.80.0.0/13
     type: {{ item.networking_type }}
@@ -197,7 +205,7 @@ spec:
             controller:
               kind: nginx
           networks:
-            nodes: 10.120.0.0/16
+            nodes: {{ item.workers_cidr | d('10.120.0.0/16') }}
             pods: 100.72.0.0/16
             services: 100.80.0.0/13
             shootDefaults:

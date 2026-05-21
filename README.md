@@ -1,84 +1,104 @@
 # yake-ansible
 
-At the moment we only support Openstack as infrastructure and for DNS. Get in contact with us, if you need another Cloud.
-But it is possible to write your own cloudprofiles for AWS, Azure, or GCP (we have already implemented the extensions for this as an option).
+yake-ansible automates the deployment of a Gardener-based Kubernetes platform on OpenStack. It provisions a local management cluster, initializes Cluster API with the OpenStack provider, creates a dedicated garden cluster, and installs the Gardener Operator with cloud profiles, managed seeds, and all required extensions.
+
+The result is a fully operational Gardener installation that can manage Kubernetes shoot clusters across one or more OpenStack tenants.
+
+## Architecture
+
+Deployments follow a layered model where each layer is managed by the one above it:
+
+```
+Control Host
+  Management Cluster (kind or k3s)
+    Cluster API (OpenStack provider)
+      Garden Cluster (on OpenStack)
+        Gardener Operator
+          Virtual Garden (Gardener API)
+            Managed Seeds
+              Shoot Clusters
+```
+
+See [docs/architecture.md](docs/architecture.md) for a detailed description of each layer.
+
+## Requirements
+
+- OpenStack tenant with sufficient quota (see [docs/getting-started.md](docs/getting-started.md#openstack-requirements))
+- Python 3.10 or later on the control host
+- Docker for the default install method
 
 ## Installation
 
 ```bash
-sudo apt install python3-virtualenv -y
-virtualenv .venv
+python3 -m venv .venv
 source .venv/bin/activate
 pip install --upgrade pip
 pip install -r requirements.txt
 ansible-galaxy install -f -r requirements.yml
 ```
 
+## Configuration
+
+Copy `group_vars/all.yml.example` to `group_vars/all.yml` and fill in your values. At minimum, configure the OpenStack credentials, the garden URL, a cloud profile, and at least one managed seed.
+
+See [docs/configuration.md](docs/configuration.md) for a complete variable reference.
+
 ## Usage
+
+Run the full setup in one step:
 
 ```bash
 ansible-playbook -i localhost, -c local site.yml
 ```
 
-### Single steps
+Or run individual steps using tags:
 
 ```bash
-ansible-playbook -i localhost, -c local kubectl-install.yml
-ansible-playbook -i localhost, -c local helm-install.yml
-ansible-playbook -i localhost, -c local clusterctl-install.yml
-ansible-playbook -i localhost, -c local management-cluster.yml
-ansible-playbook -i localhost, -c local clusterapi-install.yml
-ansible-playbook -i localhost, -c local clusterapi-cluster.yml
-ansible-playbook -i localhost, -c local gardener-operator.yml
+ansible-playbook -i localhost, -c local site.yml --tags kubectl
+ansible-playbook -i localhost, -c local site.yml --tags helm
+ansible-playbook -i localhost, -c local site.yml --tags clusterctl
+ansible-playbook -i localhost, -c local site.yml --tags management-cluster
+ansible-playbook -i localhost, -c local site.yml --tags clusterapi
+ansible-playbook -i localhost, -c local site.yml --tags garden-cluster
+ansible-playbook -i localhost, -c local site.yml --tags gardener
 ```
 
-### Accessing the Cluster API cluster
+All plays are idempotent and can be re-run to apply configuration changes or upgrade components.
 
+## Accessing Clusters
+
+Kubeconfigs for all clusters are written to `/var/lib/yake/`. Tools installed by this project are available as wrapper scripts under `.local/`.
+
+**Management cluster (CAPI host):**
 ```bash
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 ./.local/yake-kubectl get nodes
 ```
 
-### Accessing the Garden cluster
-
+**Garden cluster:**
 ```bash
 export KUBECONFIG=/var/lib/yake/kubeconfig.garden
 ./.local/yake-kubectl get nodes
 ```
 
-### Accessing the vGarden
-
-For the vGarden, it makes sense to extract the kubeconfig again when using it and then export it directly. This ensures that access to the vGarden is successful.
+**Virtual Garden (Gardener API):**
 ```bash
 export KUBECONFIG=/var/lib/yake/kubeconfig.garden
-kubectl get secret gardener -n garden -o jsonpath='{.data.kubeconfig}' | base64 -d > /var/lib/yake/gardener-operator/kubeconfig.vgarden && export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
+kubectl get secret gardener -n garden -o jsonpath='{.data.kubeconfig}' \
+  | base64 -d > /var/lib/yake/gardener-operator/kubeconfig.vgarden
+export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ./.local/yake-kubectl get seeds
 ```
 
-### Patch/Upgrade
-If you want to patch/upgrade your gardener, just run the playbook once again and set the variable `gardener_operator_version` to the next version you like. Your gardener will be patched/upgraded to this version.
+## Documentation
 
-### Cleanup
-
-#### k3s
-```bash
-export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
-./.local/yake-kubectl delete cluster garden
-sudo /usr/local/bin/k3s-uninstall.sh
-sudo rm -rf /var/lib/yake/
-```
-
-#### kind
-```bash
-export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
-./.local/yake-kubectl delete cluster garden
-./.local/yake-kind delete cluster --name clusterapi
-docker rm -f $(docker ps -qa)
-sudo rm -rf /var/lib/yake/
-```
-
-For advanced cleanup have a look at `cleanup.yml`
+| Document | Description |
+|----------|-------------|
+| [Architecture](docs/architecture.md) | Layer model, component roles, and data flow |
+| [Getting Started](docs/getting-started.md) | OpenStack requirements, installation, first run |
+| [Configuration](docs/configuration.md) | Complete variable reference for all roles |
+| [Operations](docs/operations.md) | Upgrades, cleanup, troubleshooting |
 
 ## Scripts
 
-See [scripts/README.md](scripts/README.md) for auxiliary tools, e.g. syncing CAPI and GardenLinux images to OpenStack Glance.
+See [scripts/README.md](scripts/README.md) for auxiliary tools such as syncing CAPI and GardenLinux images to OpenStack Glance.

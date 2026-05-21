@@ -51,6 +51,12 @@ clusterapi_cluster_openstack_managed_subnets:
   - cidr: "192.168.0.23/24"
     dns_nameservers:
       - "1.1.1.1"
+# Use existing subnets by ID instead of creating new ones (mutually exclusive with managedSubnets).
+# Subnets from a subnet pool must be pre-created before cluster deployment.
+# DNS nameservers are configured on the subnet itself in OpenStack, not here.
+clusterapi_cluster_openstack_subnets: []
+# clusterapi_cluster_openstack_subnets:
+#   - id: "existing-subnet-uuid"
 clusterapi_cluster_openstack_availability_zones:
   - nova
 clusterapi_cluster_openstack_failure_domain: "{{ clusterapi_cluster_openstack_availability_zones | first }}"

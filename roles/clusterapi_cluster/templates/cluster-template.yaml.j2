@@ -273,6 +273,12 @@ spec:
     name: {{ clusterapi_cluster_name }}-cloud-config
   managedSecurityGroups:
     allowAllInClusterTraffic: True
+{% if clusterapi_cluster_openstack_subnets | d([]) | length > 0 %}
+  subnets:
+{% for subnet in clusterapi_cluster_openstack_subnets %}
+    - id: {{ subnet.id }}
+{% endfor %}
+{% else %}
   managedSubnets:
 {% for subnet in clusterapi_cluster_openstack_managed_subnets %}
     - cidr: {{ subnet.cidr }}
@@ -283,6 +289,7 @@ spec:
 {% endfor %}
 {% endif %}
 {% endfor %}
+{% endif %}
   controlPlaneAvailabilityZones:
 {% for az in clusterapi_cluster_openstack_availability_zones %}
     - {{ az }}

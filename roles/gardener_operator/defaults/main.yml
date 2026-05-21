@@ -208,6 +208,14 @@ gardener_operator_managed_seeds:
     floating_pool_name: "public"
     # if not set, default is internal.{{ gardener_operator_garden_url }}
     # internal_domain: foo.example.com
+    # Optional: load balancer provider (default: amphora); alternatives: haproxy, ovn
+    # loadbalancer_provider: amphora
+    # Optional: use an explicit worker CIDR (default: 10.120.0.0/16)
+    # workers_cidr: "10.120.0.0/16"
+    # Optional: use a subnet pool instead of an explicit CIDR (mutually exclusive with workers_cidr)
+    # subnet_pool:
+    #   id: "subnet-pool-uuid"
+    #   prefix_length: 24
     openstack:
       auth_url: "https://openstack.a.example.com:5000"
       project_name: "project-a"

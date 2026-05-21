@@ -1,6 +1,0 @@
----
-- name: Setup management cluster
-  hosts: "{{ hosts_management_cluster | d('all') }}"
-
-  roles:
-    - role: management_cluster

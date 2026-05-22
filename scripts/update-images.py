@@ -40,6 +40,7 @@ except ImportError:
 
 try:
     import requests
+    from requests.packages.urllib3.exceptions import InsecureRequestWarning
 except ImportError:
     sys.exit("Missing dependency: pip install requests")
 
@@ -393,11 +394,19 @@ def main():
         action="store_true",
         help=("Check what would be uploaded without actually uploading anything"),
     )
+    parser.add_argument(
+        "--insecure",
+        action="store_true",
+        help="Disable TLS certificate verification (for self-signed certs)",
+    )
     args = parser.parse_args()
+
+    if args.insecure:
+        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
 
     print("Connecting to OpenStack ...")
     try:
-        conn = openstack.connect(cloud=args.cloud)
+        conn = openstack.connect(cloud=args.cloud, insecure=args.insecure)
         _ = conn.auth["auth_url"]
     except Exception:
         sys.exit(

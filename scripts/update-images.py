@@ -40,9 +40,14 @@ except ImportError:
 
 try:
     import requests
-    from requests.packages.urllib3.exceptions import InsecureRequestWarning
 except ImportError:
     sys.exit("Missing dependency: pip install requests")
+
+try:
+    import urllib3
+    from urllib3.exceptions import InsecureRequestWarning
+except ImportError:
+    sys.exit("Missing dependency: pip install urllib3")
 
 try:
     from tqdm import tqdm
@@ -402,7 +407,7 @@ def main():
     args = parser.parse_args()
 
     if args.insecure:
-        requests.packages.urllib3.disable_warnings(InsecureRequestWarning)
+        urllib3.disable_warnings(InsecureRequestWarning)
 
     print("Connecting to OpenStack ...")
     try:

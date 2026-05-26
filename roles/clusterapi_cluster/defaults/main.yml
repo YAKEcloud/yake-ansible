@@ -4,6 +4,8 @@ clusterapi_cluster_become: false
 clusterapi_cluster_uid: "{{ ansible_facts.user_uid | string }}"
 clusterapi_cluster_gid: "{{ ansible_facts.user_gid | string }}"
 
+clusterapi_cluster_proxy_env: "{{ proxy_env | d({}) }}"
+
 clusterapi_cluster_management_cluster_name: "{{ management_cluster_name | d('clusterapi') }}"
 
 clusterapi_cluster_kubeconfig: kubeconfig
@@ -30,7 +32,6 @@ clusterapi_cluster_openstack_application_credential_id: ""
 clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: ""
 clusterapi_cluster_openstack_region_name: ""
-clusterapi_cluster_openstack_tls_verify: false
 clusterapi_cluster_openstack_external_network: public
 clusterapi_cluster_openstack_ssh_key_name: "{{ clusterapi_cluster_name }}"
 clusterapi_cluster_openstack_image_id: ""
@@ -45,7 +46,6 @@ clusterapi_cluster_openstack_cloud:
   interface: "public"
   identity_api_version: 3
   auth_type: "v3applicationcredential"
-  # cacert: /etc/certs/cacert.pem
 clusterapi_cluster_openstack_loadbalancer_provider: ovn
 clusterapi_cluster_openstack_managed_subnets:
   - cidr: "192.168.0.23/24"
@@ -76,8 +76,11 @@ clusterapi_cluster_worker_machine_deployments:
   #   image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 clusterapi_cluster_worker_machine_flavor: "SCS-4V-8"
 
+# Set to false for flavors that include local storage (e.g. local NVMe).
+# When false, no Cinder volume is created and the flavor's ephemeral disk is used.
+clusterapi_cluster_root_volume_enabled: true
 clusterapi_cluster_root_volume_size: 20
-# Set the Openstack dafault
+# Set the OpenStack default
 clusterapi_cluster_root_volume_type: "__DEFAULT__"
 clusterapi_cluster_root_volume_availability_zone: "{{ clusterapi_cluster_openstack_failure_domain }}"
 

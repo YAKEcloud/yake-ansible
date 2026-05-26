@@ -8,6 +8,21 @@
     mode: 0755
     state: directory
 
+- name: Write OpenStack CA certificate
+  ansible.builtin.copy:
+    content: "{{ clusterapi_cluster_openstack_cacert }}"
+    dest: "/var/lib/yake/cacert-{{ clusterapi_cluster_name }}.pem"
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: 0600
+  when: clusterapi_cluster_openstack_cacert | d('') | length > 0
+
+- name: Add cacert to OpenStack cloud configuration
+  ansible.builtin.set_fact:
+    clusterapi_cluster_openstack_cloud: >-
+      {{ clusterapi_cluster_openstack_cloud | combine({'cacert': '/var/lib/yake/cacert-' ~ clusterapi_cluster_name ~ '.pem'}) }}
+  when: clusterapi_cluster_openstack_cacert | d('') | length > 0
+
 - name: Include create tasks
   ansible.builtin.include_tasks: create.yml
   when: clusterapi_cluster_state == "present"

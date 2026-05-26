@@ -5,7 +5,7 @@ application-credential-secret={{ clusterapi_cluster_openstack_application_creden
 region={{ clusterapi_cluster_openstack_region_name }}
 domain-name={{ clusterapi_cluster_openstack_domain_name }}
 {% if clusterapi_cluster_openstack_cacert | d('') %}
-ca-file=/etc/certs/cacert.pem
+ca-file=/etc/config/cacert.pem
 {% endif %}
 
 [BlockStorage]

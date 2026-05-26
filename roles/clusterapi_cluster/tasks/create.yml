@@ -162,8 +162,11 @@
         name: cloud-config
         namespace: kube-system
       type: Opaque
-      stringData:
-        cloud.conf: "{{ register_cloud_conf.content | b64decode }}"
+      stringData: >-
+        {{ {'cloud.conf': register_cloud_conf.content | b64decode} |
+           combine({'cacert.pem': clusterapi_cluster_openstack_cacert}
+                   if clusterapi_cluster_openstack_cacert | d('') | length > 0
+                   else {}) }}
 
 - name: Copy CCM manifests
   ansible.builtin.copy:

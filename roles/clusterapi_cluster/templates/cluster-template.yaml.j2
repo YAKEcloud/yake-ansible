@@ -87,7 +87,6 @@ spec:
           - name: provider-id
             value: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
           name: "{% raw %}{{ local_hostname }}{% endraw %}"
-          # node-labels: "topology.kubernetes.io/zone={{ clusterapi_cluster_openstack_failure_domain }}"
           taints:
           - key: "node.cilium.io/agent-not-ready"
             value: "true"
@@ -306,11 +305,13 @@ spec:
       image:
         id: {{ clusterapi_cluster_openstack_image_id }}
       sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
+{% if clusterapi_cluster_root_volume_enabled | bool %}
       rootVolume:
-        sizeGiB: {{ clusterapi_cluster_root_volume_size | d(50) }}
+        sizeGiB: {{ clusterapi_cluster_root_volume_size }}
         type: {{ clusterapi_cluster_root_volume_type }}
         availabilityZone:
           name: {{ clusterapi_cluster_root_volume_availability_zone }}
+{% endif %}
 {% for md in clusterapi_cluster_worker_machine_deployments %}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
@@ -324,9 +325,11 @@ spec:
       image:
         id: {{ md.image_id }}
       sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
+{% if clusterapi_cluster_root_volume_enabled | bool %}
       rootVolume:
-        sizeGiB: {{ clusterapi_cluster_root_volume_size}}
+        sizeGiB: {{ clusterapi_cluster_root_volume_size }}
         type: {{ clusterapi_cluster_root_volume_type }}
         availabilityZone:
           name: {{ md.failure_domain }}
+{% endif %}
 {% endfor %}

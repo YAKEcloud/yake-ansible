@@ -129,7 +129,7 @@ gardener_operator_shoot_oidc_service_version: '0.39.0'
 
 # S3 backup extension is deployed automatically when any backup provider is set to 'S3'.
 # renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3
-gardener_operator_backup_s3_version: '0.8.2'
+gardener_operator_backup_s3_version: '0.8.3'
 
 # Garden etcd backup — enabled when credentials are non-empty.
 gardener_operator_garden_backup_provider: openstack

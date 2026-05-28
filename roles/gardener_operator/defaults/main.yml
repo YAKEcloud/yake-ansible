@@ -86,7 +86,7 @@ gardener_operator_dns_credentials: {}
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws
 gardener_operator_provider_aws_version: '1.70.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure
-gardener_operator_provider_azure_version: '1.60.1'
+gardener_operator_provider_azure_version: '1.61.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
 gardener_operator_provider_gcp_version: '1.52.0'
 

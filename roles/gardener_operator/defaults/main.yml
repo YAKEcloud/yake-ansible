@@ -11,7 +11,7 @@ gardener_operator_helm_values:
   replicaCount: 1
 
 # renovate: datasource=github-releases depName=dexidp/helm-charts extractVersion=^dex-(?<version>.+)$
-gardener_operator_dex_version: '0.24.0'
+gardener_operator_dex_version: '0.24.1'
 gardener_operator_dex:
   dashboard_secret: ""
   static_passwords: []

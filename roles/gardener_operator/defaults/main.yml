@@ -115,7 +115,7 @@ gardener_operator_networking_calico_version: '1.58.0'
 gardener_operator_os_types:
   - gardenlinux
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-gardenlinux
-gardener_operator_os_gardenlinux_version: '0.42.0'
+gardener_operator_os_gardenlinux_version: '0.43.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu
 gardener_operator_os_ubuntu_version: '1.39.0'
 

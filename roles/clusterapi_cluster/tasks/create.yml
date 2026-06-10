@@ -24,6 +24,27 @@
     group: "{{ clusterapi_cluster_gid }}"
     mode: 0644
 
+- name: Get image info
+  openstack.cloud.image_info:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
+    image: "{{ clusterapi_cluster_openstack_image_id }}"
+  register: _clusterapi_cluster_image_info  # noqa: var-naming[no-role-prefix]
+
+- name: Fail if image not found
+  ansible.builtin.fail:
+    msg: "Image ID '{{ clusterapi_cluster_openstack_image_id }}' was not found in OpenStack."
+  when: _clusterapi_cluster_image_info.images | length == 0
+
+- name: Fail if image name does not match expected name
+  ansible.builtin.fail:
+    msg: >-
+      Image ID '{{ clusterapi_cluster_openstack_image_id }}' points to '{{ _clusterapi_cluster_image_info.images[0].name }}'
+      but '{{ clusterapi_cluster_openstack_image_name }}' was expected.
+      Please verify you are using the correct image ID.
+  when:
+    - clusterapi_cluster_openstack_image_name | d('') | length > 0
+    - _clusterapi_cluster_image_info.images[0].name != clusterapi_cluster_openstack_image_name
+
 - name: Get external network ID
   openstack.cloud.networks_info:
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"

@@ -14,7 +14,7 @@
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
       register: volume_state
       until: >
-        volume_state.volumes
+        (volume_state.volumes | default([]))
         | selectattr('status', 'in', ['creating', 'reserved', 'attaching', 'detaching', 'downloading'])
         | list | length == 0
       retries: 40
@@ -57,7 +57,7 @@
         name: "{{ item.name }}"
         wait: true
         timeout: 300
-      loop: "{{ volume_list.volumes }}"
+      loop: "{{ volume_list.volumes | default([]) }}"
       environment:
         OS_CLIENT_CONFIG_FILE: "{{ cleanup_clouds_file }}"
 

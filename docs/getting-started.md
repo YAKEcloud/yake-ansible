@@ -32,6 +32,10 @@ The following OpenStack services must be available:
 | Cinder (Block Storage) | Required for persistent volumes in clusters |
 | Object Store (optional) | Required only if etcd or shoot backups are enabled |
 
+### Cinder Volume Attachments
+
+Each VM must support attaching a large number of Cinder volumes simultaneously. Gardener attaches multiple volumes per node — for root disks, etcd storage, and PersistentVolumes of shoot clusters running on the seed. Ensure your OpenStack environment does not impose a low limit on the number of volumes attachable per instance. If necessary, coordinate with your OpenStack administrator to raise the limit.
+
 ## Control Host Requirements
 
 The control host is the machine from which you run the Ansible playbooks.

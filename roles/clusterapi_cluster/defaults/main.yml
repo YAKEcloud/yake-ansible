@@ -35,6 +35,8 @@ clusterapi_cluster_openstack_region_name: ""
 clusterapi_cluster_openstack_external_network: public
 clusterapi_cluster_openstack_ssh_key_name: "{{ clusterapi_cluster_name }}"
 clusterapi_cluster_openstack_image_id: ""
+# Strongly recommended: set this to the expected image name to verify the image ID is correct.
+clusterapi_cluster_openstack_image_name: ""
 clusterapi_cluster_openstack_cacert: ""
 clusterapi_cluster_openstack_ignore_volume_az: false
 clusterapi_cluster_openstack_cloud:

@@ -76,6 +76,7 @@ spec:
             hosts:
             - host: "{{ mirror.host }}"
               capabilities: ["pull", "resolve"]
+              overridePath: {{ mirror.override_path | d(false) | lower }}
 {% if mirror.ca | d(false) %}
               caBundleSecretReferenceName: private-mirrors-ca-bundle
 {% endif %}
@@ -102,6 +103,13 @@ spec:
       kind: InfrastructureConfig
       floatingPoolName: {{ item.floating_pool_name }}
       networks:
+{% if item.network_id is defined %}
+        id: {{ item.network_id }}
+{% endif %}
+{% if item.router_id is defined %}
+        router:
+          id: {{ item.router_id }}
+{% endif %}
 {% if item.subnet_pool is defined %}
         subnetPool:
           id: {{ item.subnet_pool.id }}
@@ -125,11 +133,13 @@ spec:
             version: {{ w.image_version }}
         minimum: {{ w.minimum }}
         maximum: {{ w.maximum }}
+{% if w.volume_size is defined %}
         volume:
 {% if w.volume_type is defined and w.volume_type %}
           type: {{ w.volume_type }}
 {% endif %}
           size: {{ w.volume_size }}
+{% endif %}
         zones: {{ w.zones }}
 {% endfor %}
   networking:
@@ -170,8 +180,6 @@ spec:
           labels:
             name: {{ item.name }}
             yake.cloud/generate-controlplane-cert: "true"
-        taints:
-          seed.gardener.cloud/protected: false
         spec:
 {% if item.settings.backup | d({}) | length > 0 %}
           backup:
@@ -219,4 +227,4 @@ spec:
             scheduling:
               visible: true
             excessCapacityReservation:
-              enabled: {{ item.settings.excess_capacity_reservation }}
+              enabled: {{ item.settings.excess_capacity_reservation | lower }}

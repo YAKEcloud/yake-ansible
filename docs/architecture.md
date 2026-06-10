@@ -5,15 +5,39 @@ yake-ansible deploys a multi-layer Kubernetes platform where each layer is manag
 ## Overview
 
 ```
-Control Host
-  Management Cluster (kind or k3s)
-    Cluster API (CAPO)
-      Garden Cluster (on OpenStack)
-        Gardener Operator
-          Virtual Garden
-            Internal Seed
-            Managed Seeds (on OpenStack)
-              Shoot Clusters
+  +--------------------------------------------+
+  |  Control Host                              |
+  |  +--------------------------------------+  |
+  |  |  Management Cluster (kind/k3s)       |  |
+  |  |  +- Cluster API + CAPO               |  |
+  |  +-------------------+------------------+  |
+  +--------------------+-----------------------+
+                       |  provisions via OpenStack API
+                       v
+  +--------------------+-----------------------+
+  |  Garden Cluster  (OpenStack)               |
+  |                                            |
+  |  +- Gardener Operator                      |
+  |      +- Virtual Garden                     |
+  |          +- gardener-apiserver, etcd       |
+  |          +- dashboard, dex                 |
+  |          +- Internal Seed                  |
+  |          |  (the garden cluster itself)    |
+  |          +- Managed Seed objects           |
+  +--------------------+-----------------------+
+       ^               |  creates as OS shoots
+       |               v
+  +----+---------------------------------------+
+  |  Managed Seed  (OpenStack)                 |
+  |                                            |
+  |  +- Gardenlet                              |
+  |      connects back to virtual              |
+  |      garden API (TLS outbound)             |
+  |      runs shoot control planes             |
+  |                                            |
+  |  +- Shoot Clusters  (OpenStack)            |
+  |      worker nodes on OpenStack VMs         |
+  +--------------------+-----------------------+
 ```
 
 ## Layers
@@ -75,6 +99,8 @@ Each layer has its own network boundary:
 - The garden cluster gets a dedicated Neutron network and subnet allocated by CAPO. The CIDR is configured via `clusterapi_cluster_openstack_managed_subnets` or by referencing an existing subnet via `clusterapi_cluster_openstack_subnets`.
 - Each managed seed shoot gets its own network within the workers CIDR defined in its InfrastructureConfig. The CIDR can be set explicitly (`workers_cidr`) or allocated from an OpenStack subnet pool (`subnet_pool`).
 - Shoot clusters get their own networks provisioned by the OpenStack infrastructure extension based on the cloud profile and InfrastructureConfig.
+
+For a complete reference of all IP ranges, exposed ports, DNS zones, load balancers, and security group rules see [networking.md](networking.md).
 
 ## Tool Install Methods
 

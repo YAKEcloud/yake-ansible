@@ -6,20 +6,40 @@ The result is a fully operational Gardener installation that can manage Kubernet
 
 ## Architecture
 
-Deployments follow a layered model where each layer is managed by the one above it:
-
 ```
-Control Host
-  Management Cluster (kind or k3s)
-    Cluster API (OpenStack provider)
-      Garden Cluster (on OpenStack)
-        Gardener Operator
-          Virtual Garden (Gardener API)
-            Managed Seeds
-              Shoot Clusters
+  +-------------------------------------------+
+  |  Control Host                             |
+  |  +--------------------------------------+ |
+  |  |  Management Cluster (kind/k3s)       | |
+  |  |  Cluster API + CAPO                  | |
+  |  +-------------------+------------------+ |
+  +--------------------+----------------------+
+                       |  provisions via OpenStack API
+                       v
+  +-------------------------------------------+
+  |  Garden Cluster (OpenStack)               |
+  |  Gardener Operator                        |
+  |  +- Virtual Garden                        |
+  |      +- gardener-apiserver, etcd          |
+  |      +- dashboard, dex (OIDC)             |
+  |      +- Internal Seed (this cluster)      |
+  |      +- Managed Seeds (registered shoots) |
+  +--------------------+----------------------+
+       ^               |
+       |  gardenlet connects back (TLS :443)
+  +----+--------------------------------------+
+  |  Managed Seed (OpenStack)                 |
+  |  +- Gardenlet                             |
+  |  +- Shoot control planes (per shoot)      |
+  |      kube-apiserver exposed via own LB    |
+  |      VPN tunnel to shoot workers          |
+  |                                           |
+  |  +- Shoot Clusters  (OpenStack)           |
+  |      worker nodes, own Neutron network    |
+  +-------------------------------------------+
 ```
 
-See [docs/architecture.md](docs/architecture.md) for a detailed description of each layer.
+See [docs/architecture.md](docs/architecture.md) for a detailed description of each layer and [docs/networking.md](docs/networking.md) for ports, IP ranges, and traffic flows.
 
 ## Requirements
 
@@ -95,6 +115,7 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 | Document | Description |
 |----------|-------------|
 | [Architecture](docs/architecture.md) | Layer model, component roles, and data flow |
+| [Networking](docs/networking.md) | Network topology, ports, IP ranges, DNS, VPN |
 | [Getting Started](docs/getting-started.md) | OpenStack requirements, installation, first run |
 | [Configuration](docs/configuration.md) | Complete variable reference for all roles |
 | [Operations](docs/operations.md) | Upgrades, cleanup, troubleshooting |

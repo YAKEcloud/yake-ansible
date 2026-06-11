@@ -71,13 +71,11 @@ All address ranges are configurable defaults. They must be non-overlapping acros
 | Layer | OpenStack Subnet | Pod CIDR | Service CIDR |
 |-------|-----------------|----------|-------------|
 | Garden cluster | `192.168.0.0/24` | `10.244.0.0/16` | from kube-apiserver |
-| Virtual garden | — (in-cluster only) | — | `100.64.0.0/13` |
+| Virtual garden | — (in-cluster only) | - | `100.64.0.0/13` |
 | Managed seed | `10.120.0.0/16` | `100.72.0.0/16` | `100.80.0.0/13` |
 | Shoot (default) | `10.121.0.0/16` | `100.73.0.0/16` | `100.88.0.0/13` |
 
-Each layer gets its own Neutron network and is isolated from the others by separate security groups. CAPO sets `allowAllInClusterTraffic: true` — node-to-node traffic within a cluster is unrestricted at the OpenStack level; isolation is handled by Kubernetes NetworkPolicies.
-
----
+Each layer gets its own Neutron network and is isolated from the others by separate security groups. CAPO sets `allowAllInClusterTraffic: true`; node-to-node traffic within a cluster is unrestricted at the OpenStack level; isolation is handled by Kubernetes NetworkPolicies.
 
 ## Shoot Control Plane and Worker Connectivity
 
@@ -98,20 +96,18 @@ The shoot's kube-apiserver is exposed via a dedicated LoadBalancer service on th
 
 **Quota implication:** every shoot adds at least one floating IP and one load balancer to the seed's OpenStack project.
 
----
-
 ## Ports
 
 ### External (reachable from outside OpenStack)
 
 | Port | Protocol | Endpoint | Purpose |
 |------|----------|---------|---------|
-| 443 | TCP | Garden cluster — API LB | Kubernetes API (used by CAPO and Gardener Operator) |
-| 443 | TCP | Garden cluster — Ingress LB | Gardener services via Nginx ingress |
-| 80 | TCP | Garden cluster — Ingress LB | HTTP redirect to HTTPS |
-| 443 | TCP | Managed seed — API LB | Seed Kubernetes API server |
-| 443 | TCP | Per shoot — own LB on seed | Shoot kube-apiserver (user kubeconfig endpoint) |
-| 8132 | TCP | Per shoot — own LB on seed | vpn-seed-server (shoot workers connect here) |
+| 443 | TCP | Garden cluster API LB | Kubernetes API (used by CAPO and Gardener Operator) |
+| 443 | TCP | Garden cluster Ingress LB | Gardener services via Nginx ingress |
+| 80 | TCP | Garden cluster Ingress LB | HTTP redirect to HTTPS |
+| 443 | TCP | Managed seed API LB | Seed Kubernetes API server |
+| 443 | TCP | Per shoot own LB on seed | Shoot kube-apiserver (user kubeconfig endpoint) |
+| 8132 | TCP | Per shoot own LB on seed | vpn-seed-server (shoot workers connect here) |
 
 ### Gardener Component Ports (in-cluster only)
 
@@ -132,8 +128,6 @@ The shoot's kube-apiserver is exposed via a dedicated LoadBalancer service on th
 | 10250 | kubelet |
 | 10257 | kube-controller-manager |
 | 10259 | kube-scheduler |
-
----
 
 ## DNS
 
@@ -166,19 +160,13 @@ The control host and all cluster nodes require outbound access to the OpenStack 
 
 A custom CA certificate can be injected via `clusterapi_cluster_openstack_cacert`.
 
----
-
 ## CNI
 
 Configurable per cluster: `cilium` (default) or `calico`. Set via `clusterapi_cluster_network` for the garden cluster and `gardener_operator_networking_type` for seeds and shoots.
 
----
-
 ## Container Registry
 
 Nodes pull images through configurable mirrors. Defaults point to `registry.osism.tech`. Override via `clusterapi_cluster_container_registry_cache_*` variables.
-
----
 
 ## OpenStack Quota
 

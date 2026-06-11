@@ -29,7 +29,7 @@ repositories:
         dstFile: roles/clusterapi_cluster/files/cloud-controller-manager/openstack-cloud-controller-manager-ds.yaml
   - git: https://github.com/k-orc/openstack-resource-controller
     # renovate: datasource=github-releases depName=k-orc/openstack-resource-controller
-    version: 'v2.5.0'
+    version: 'v2.6.0'
     sources:
       - src: dist/install.yaml
         dstFile: roles/clusterapi_install/files/orc.yaml

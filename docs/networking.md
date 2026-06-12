@@ -71,7 +71,7 @@ All address ranges are configurable defaults. They must be non-overlapping acros
 | Layer | OpenStack Subnet | Pod CIDR | Service CIDR |
 |-------|-----------------|----------|-------------|
 | Garden cluster | `192.168.0.0/24` | `10.244.0.0/16` | from kube-apiserver |
-| Virtual garden | — (in-cluster only) | - | `100.64.0.0/13` |
+| Virtual garden | - (in-cluster only) | - | `100.64.0.0/13` |
 | Managed seed | `10.120.0.0/16` | `100.72.0.0/16` | `100.80.0.0/13` |
 | Shoot (default) | `10.121.0.0/16` | `100.73.0.0/16` | `100.88.0.0/13` |
 
@@ -131,7 +131,7 @@ The shoot's kube-apiserver is exposed via a dedicated LoadBalancer service on th
 
 ## DNS
 
-Default backend: OpenStack Designate (`openstack-designate`). Alternatives: `aws-route53`, `azure-dns`, `google-clouddns` — set via `gardener_operator_dns_provider_type`.
+Default backend: OpenStack Designate (`openstack-designate`). Alternatives: `aws-route53`, `azure-dns`, `google-clouddns`; set via `gardener_operator_dns_provider_type`.
 
 | Zone | Purpose |
 |------|---------|

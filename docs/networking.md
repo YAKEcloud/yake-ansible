@@ -124,7 +124,7 @@ The shoot's kube-apiserver is exposed via a dedicated LoadBalancer service on th
 | Port | Component |
 |------|-----------|
 | 6443 | kube-apiserver |
-| 2379–2380 | etcd |
+| 2379 - 2380 | etcd |
 | 10250 | kubelet |
 | 10257 | kube-controller-manager |
 | 10259 | kube-scheduler |

@@ -125,7 +125,7 @@ gardener_operator_extension_registry_cache_version: '0.23.1'
 
 gardener_operator_shoot_oidc_service_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-oidc-service
-gardener_operator_shoot_oidc_service_version: '0.39.0'
+gardener_operator_shoot_oidc_service_version: '0.40.0'
 
 # S3 backup extension is deployed automatically when any backup provider is set to 'S3'.
 # renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3

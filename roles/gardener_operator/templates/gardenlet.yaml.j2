@@ -106,6 +106,10 @@ spec:
   config:
     apiVersion: gardenlet.config.gardener.cloud/v1alpha1
     kind: GardenletConfiguration
+{% if gardener_operator_gardenlet_feature_gates | d({}) %}
+    featureGates:
+{{ gardener_operator_gardenlet_feature_gates | to_nice_yaml(indent=2) | indent(6, true) }}
+{% endif %}
     gardenClientConnection:
       gardenClusterAddress: https://api.garden.{{ gardener_operator_garden_url }}
     controllers:
@@ -160,15 +164,21 @@ spec:
         ingress:
           controller:
             kind: nginx
-          domain: internal.{{ gardener_operator_garden_url }}
+          domain: ingress.{{ gardener_operator_garden_url }}
         networks:
           nodes: {{ gardener_operator_nodes_cidr }}
-          pods: 10.0.0.0/16
+          pods: 10.0.0.0/20
           services: {{ gardener_operator_services_cidr }}
           shootDefaults:
             nodes: 100.100.0.0/16
             pods: 100.101.0.0/16
             services: 100.102.0.0/16
+{% if gardener_operator_seed_block_cidrs | d([]) %}
+          blockCIDRs:
+{% for cidr in gardener_operator_seed_block_cidrs %}
+          - {{ cidr }}
+{% endfor %}
+{% endif %}
         provider:
           region: {{ gardener_operator_openstack_region_name }}
           type: openstack

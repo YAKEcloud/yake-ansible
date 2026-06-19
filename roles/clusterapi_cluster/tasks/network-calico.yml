@@ -10,6 +10,7 @@
     create_namespace: true
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     wait: true
+    values: "{{ clusterapi_cluster_calico_helm_values }}"
   environment: "{{ clusterapi_cluster_proxy_env }}"
 
 - name: Wait for calico-node pods

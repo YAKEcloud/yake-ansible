@@ -10,7 +10,9 @@ metadata:
   name: seed-ingress
   namespace: garden
 spec:
-  commonName: "*.internal.{{ gardener_operator_garden_url }}"
+  commonName: "*.ingress.{{ gardener_operator_garden_url }}"
+  dnsNames:
+  - "*.{{ gardener_operator_garden_url }}"
   issuerRef:
     name: garden
     namespace: garden

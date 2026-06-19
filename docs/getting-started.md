@@ -19,7 +19,8 @@ A productive Gardener installation with at least one managed seed and the abilit
 
 At least two OpenStack projects are recommended:
 
-- One project for the control plane and managed seed infrastructure.
+- One project for the control plane
+- One for the managed seed infrastructure.
 - One or more projects for shoot cluster workloads.
 
 The following OpenStack services must be available:
@@ -27,7 +28,7 @@ The following OpenStack services must be available:
 | Service | Purpose |
 |---------|---------|
 | Octavia (Load Balancer) | Required for Kubernetes API load balancers |
-| Designate (DNS) | Required for internal and external DNS records |
+| Designate or another Service for DNS | Required for internal and external DNS records |
 | Glance (Image) | Required for machine images (GardenLinux or Ubuntu) |
 | Cinder (Block Storage) | Required for persistent volumes in clusters |
 | Object Store (optional) | Required only if etcd or shoot backups are enabled |

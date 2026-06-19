@@ -167,7 +167,7 @@ spec:
                 candidateDeterminationStrategy: MinimalDistance
       gardenerDashboard:
         oidcConfig:
-          clientIDPublic: "Gardener Dashboard"
+          clientIDPublic: "kube-kubectl"
           issuerURL: https://identity.{{ gardener_operator_garden_url }}
           sessionLifetime: 12h
           additionalScopes: [ profile, offline_access ]
@@ -175,8 +175,12 @@ spec:
             name: gardener-dashboard-oidc
         terminal:
           allowedHosts:
-          - "*.internal.{{ gardener_operator_garden_url }}"
-          - "*.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}"
+          - "api.garden.{{ gardener_operator_garden_url }}"
+          - "*.{{ gardener_operator_garden_url }}"
+          - "*.ingress.{{ gardener_operator_garden_url }}"
+{% for seed in gardener_operator_managed_seeds | d([]) %}
+          - "*.ingress.{{ seed.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}"
+{% endfor %}
           container:
             image: {{ gardener_operator_image_registry }}/gardener-project/releases/gardener/ops-toolbelt:latest
         ingress:

@@ -50,7 +50,7 @@ clusterapi_cluster_openstack_cloud:
   auth_type: "v3applicationcredential"
 clusterapi_cluster_openstack_loadbalancer_provider: ovn
 clusterapi_cluster_openstack_managed_subnets:
-  - cidr: "192.168.0.23/24"
+  - cidr: "172.28.0.0/24"
     dns_nameservers:
       - "1.1.1.1"
 # Use existing subnets by ID instead of creating new ones (mutually exclusive with managedSubnets).
@@ -99,3 +99,4 @@ clusterapi_cluster_cilium_helm_values:
 
 # renovate: datasource=helm registryUrl=https://projectcalico.docs.tigera.io/charts depName=tigera-operator
 clusterapi_cluster_calico_version: "v3.32.0"
+clusterapi_cluster_calico_helm_values: {}

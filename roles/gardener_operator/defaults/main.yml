@@ -7,8 +7,7 @@ gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
 
 # renovate: datasource=github-releases depName=gardener/gardener
 gardener_operator_version: '1.144.2'
-gardener_operator_helm_values:
-  replicaCount: 1
+gardener_operator_helm_values: {}
 
 # renovate: datasource=github-releases depName=dexidp/helm-charts extractVersion=^dex-(?<version>.+)$
 gardener_operator_dex_version: '0.24.1'
@@ -56,6 +55,9 @@ gardener_operator_gardenlet_image_vector_overwrite: ""
 #   - name: gardener-node-agent
 #     repository: "{{ gardener_operator_image_registry }}/gardener-project/releases/gardener/node-agent"
 #     tag: "v{{ gardener_operator_version }}"
+
+# Feature gates for all gardenlets (internal seed and managed seeds).
+gardener_operator_gardenlet_feature_gates: {}
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
 gardener_operator_provider_openstack_version: '1.55.3'
@@ -192,6 +194,10 @@ gardener_operator_cloudprofiles:
         zones:
           - nova
 
+# CIDRs blocked in all shoot clusters via NetworkPolicy (e.g. cloud metadata service).
+gardener_operator_seed_block_cidrs:
+  - 169.254.169.254/32
+
 gardener_operator_managed_seeds_project_name: seeds
 
 gardener_operator_managed_seeds_registry_mirrors_ca: ""
@@ -220,8 +226,8 @@ gardener_operator_managed_seeds:
     # internal_domain: foo.example.com
     # Optional: load balancer provider (default: amphora); alternatives: haproxy, ovn
     # loadbalancer_provider: amphora
-    # Optional: use an explicit worker CIDR (default: 10.120.0.0/16)
-    # workers_cidr: "10.120.0.0/16"
+    # Optional: use an explicit worker CIDR (default: 100.96.0.0/16)
+    # workers_cidr: "100.96.0.0/16"
     # Optional: use a subnet pool instead of an explicit CIDR (mutually exclusive with workers_cidr)
     # subnet_pool:
     #   id: "subnet-pool-uuid"

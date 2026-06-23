@@ -111,7 +111,7 @@ gardener_operator_networking_type: cilium
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
 gardener_operator_networking_cilium_version: '1.47.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-calico
-gardener_operator_networking_calico_version: '1.58.0'
+gardener_operator_networking_calico_version: '1.59.0'
 
 # OS extensions to install. Add 'ubuntu' to also support ubuntu-based shoot workers.
 gardener_operator_os_types:

@@ -17,12 +17,11 @@
     name: helm
     command: sleep infinity
     image: "{{ helm_install_container_registry }}/{{ helm_install_container_image }}:{{ helm_install_version }}"
-    env:
-      USER_ID: "{{ helm_install_uid }}"
-      GROUP_ID: "{{ helm_install_gid }}"
+    env: "{{ {'USER_ID': helm_install_uid, 'GROUP_ID': helm_install_gid} | combine(helm_install_proxy_env) }}"
     volumes:
       - /var/lib/yake:/var/lib/yake
       - /tmp:/tmp
+    restart_policy: unless-stopped
     state: started
   when: helm_install_method == "docker"
 

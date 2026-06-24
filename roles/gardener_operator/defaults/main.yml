@@ -104,7 +104,7 @@ gardener_operator_shoot_cert_service_ca_certificates: ""
 gardener_operator_shoot_cert_service_precheck_nameservers: "1.1.1.1,1.0.0.1"
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-dns-service
-gardener_operator_shoot_dns_service_version: '1.86.0'
+gardener_operator_shoot_dns_service_version: '1.87.0'
 
 # Networking extension: exactly one of 'cilium' or 'calico'.
 gardener_operator_networking_type: cilium

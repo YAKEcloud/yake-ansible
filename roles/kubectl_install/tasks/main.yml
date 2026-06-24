@@ -17,12 +17,11 @@
     name: kubectl
     command: sleep infinity
     image: "{{ kubectl_install_container_registry }}/{{ kubectl_install_container_image }}:{{ kubectl_install_version }}"
-    env:
-      USER_ID: "{{ kubectl_install_uid }}"
-      GROUP_ID: "{{ kubectl_install_gid }}"
+    env: "{{ {'USER_ID': kubectl_install_uid, 'GROUP_ID': kubectl_install_gid} | combine(kubectl_install_proxy_env) }}"
     volumes:
       - /var/lib/yake:/var/lib/yake
     network_mode: host
+    restart_policy: unless-stopped
     state: started
   when: kubectl_install_method == "docker"
 

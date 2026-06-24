@@ -5,13 +5,12 @@
     name: kind
     command: sleep infinity
     image: "{{ management_cluster_kind_registry }}/{{ management_cluster_kind_image }}:{{ management_cluster_kind_version }}"
-    env:
-      USER_ID: "{{ management_cluster_uid }}"
-      GROUP_ID: "{{ management_cluster_gid }}"
+    env: "{{ {'USER_ID': management_cluster_uid, 'GROUP_ID': management_cluster_gid} | combine(management_cluster_proxy_env) }}"
     volumes:
       - /var/lib/yake:/var/lib/yake
       - /var/run/docker.sock:/var/run/docker.sock
     network_mode: host
+    restart_policy: unless-stopped
     state: started
   when: management_cluster_kind_method == "docker"
 

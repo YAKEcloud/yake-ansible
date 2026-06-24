@@ -17,12 +17,11 @@
     name: clusterctl
     command: sleep infinity
     image: "{{ clusterctl_install_container_registry }}/{{ clusterctl_install_container_image }}:{{ clusterctl_install_version }}"
-    env:
-      USER_ID: "{{ clusterctl_install_uid }}"
-      GROUP_ID: "{{ clusterctl_install_gid }}"
+    env: "{{ {'USER_ID': clusterctl_install_uid, 'GROUP_ID': clusterctl_install_gid} | combine(clusterctl_install_proxy_env) }}"
     volumes:
       - /var/lib/yake://var/lib/yake
     network_mode: host
+    restart_policy: unless-stopped
     state: started
   when: clusterctl_install_method == "docker"
 

@@ -61,7 +61,6 @@
     --image {{ management_cluster_kind_cluster_image }}
     --kubeconfig {{ management_cluster_kubeconfig }}
     --config /var/lib/yake/config.{{ management_cluster_name }}.yml
-  environment: "{{ management_cluster_proxy_env }}"
   when:
     - management_cluster_kind_state == 'present'
     - management_cluster_name not in kind_clusters.stdout_lines

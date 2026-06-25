@@ -208,6 +208,7 @@
     executable: /bin/bash
   loop: "{{ clusterapi_cluster_hosts_entries }}"
   when: clusterapi_cluster_hosts_entries | d([]) | length > 0
+  changed_when: false
 
 - name: Apply CCM manifests
   kubernetes.core.k8s:
@@ -264,13 +265,16 @@
     executable: /bin/bash
   loop: "{{ ['cinder-csi-controllerplugin.yaml', 'cinder-csi-nodeplugin.yaml'] | product(clusterapi_cluster_hosts_entries) | list }}"
   when: clusterapi_cluster_hosts_entries | d([]) | length > 0
+  changed_when: false
 
 - name: Remove csi-snapshotter if disabled
   ansible.builtin.shell:
     cmd: |
+      set -o pipefail
       yq -yi '.spec.template.spec.containers |= map(select(.name != "csi-snapshotter"))' /var/lib/yake/cinder-csi-controllerplugin.yaml
     executable: /bin/bash
   when: not clusterapi_cluster_csi_snapshotter_enabled | bool
+  changed_when: false
 
 - name: Apply CSI manifests
   kubernetes.core.k8s:

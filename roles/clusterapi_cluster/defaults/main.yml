@@ -86,7 +86,8 @@ clusterapi_cluster_root_volume_size: 20
 clusterapi_cluster_root_volume_type: "__DEFAULT__"
 clusterapi_cluster_root_volume_availability_zone: "{{ clusterapi_cluster_openstack_failure_domain }}"
 
-clusterapi_cluster_csi_snapshotter_enable: false
+# Requires VolumeSnapshot CRDs and a SnapshotClass to be installed separately.
+clusterapi_cluster_csi_snapshotter_enabled: false
 
 clusterapi_cluster_extra: {}
 

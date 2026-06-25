@@ -86,6 +86,41 @@
         gardener_operator_services_cidr == '' or
         gardener_operator_pods_cidr == ''
 
+- name: Install Kyverno
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    chart_ref: kyverno
+    chart_repo_url: https://kyverno.github.io/kyverno/
+    chart_version: "{{ gardener_operator_kyverno_version }}"
+    create_namespace: true
+    release_name: kyverno
+    release_namespace: kyverno
+    release_state: present
+    wait: true
+    values:
+      features:
+        forceFailurePolicyIgnore:
+          enabled: true
+  environment: "{{ gardener_operator_proxy_env }}"
+  when: gardener_operator_proxy_env | d({}) | length > 0
+
+- name: Template Kyverno proxy injection policy
+  ansible.builtin.template:
+    src: kyverno-proxy-policy.yaml.j2
+    dest: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  when: gardener_operator_proxy_env | d({}) | length > 0
+
+- name: Apply Kyverno proxy injection policy
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    src: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
+  when: gardener_operator_proxy_env | d({}) | length > 0
+
 - name: Template garden files and dependencies
   ansible.builtin.template:
     src: "{{ item }}.j2"

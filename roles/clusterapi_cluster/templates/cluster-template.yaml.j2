@@ -73,11 +73,25 @@ spec:
           content: |
 {{ clusterapi_cluster_openstack_cacert | indent(12, true) }}
 {% endif %}
-{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 %}
+{% if clusterapi_cluster_proxy_env | d({}) | length > 0 %}
+        - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+          owner: root:root
+          permissions: "0644"
+          content: |
+            [Service]
+{% for key, value in clusterapi_cluster_proxy_env.items() %}
+            Environment="{{ key | upper }}={{ value }}"
+{% endfor %}
+{% endif %}
+{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 %}
       preKubeadmCommands:
-{% for entry in clusterapi_cluster_hosts_entries %}
+{% for entry in clusterapi_cluster_hosts_entries | d([]) %}
         - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
 {% endfor %}
+{% if clusterapi_cluster_proxy_env | d({}) | length > 0 %}
+        - systemctl daemon-reload
+        - systemctl restart containerd
+{% endif %}
 {% endif %}
       joinConfiguration:
         nodeRegistration:
@@ -211,11 +225,25 @@ spec:
         content: |
 {{ clusterapi_cluster_openstack_cacert | indent(10, true) }}
 {% endif %}
-{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 %}
+{% if clusterapi_cluster_proxy_env | d({}) | length > 0 %}
+      - path: /etc/systemd/system/containerd.service.d/http-proxy.conf
+        owner: root:root
+        permissions: "0644"
+        content: |
+          [Service]
+{% for key, value in clusterapi_cluster_proxy_env.items() %}
+          Environment="{{ key | upper }}={{ value }}"
+{% endfor %}
+{% endif %}
+{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 %}
     preKubeadmCommands:
-{% for entry in clusterapi_cluster_hosts_entries %}
+{% for entry in clusterapi_cluster_hosts_entries | d([]) %}
       - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
 {% endfor %}
+{% if clusterapi_cluster_proxy_env | d({}) | length > 0 %}
+      - systemctl daemon-reload
+      - systemctl restart containerd
+{% endif %}
 {% endif %}
     clusterConfiguration:
       controllerManager:

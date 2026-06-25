@@ -36,6 +36,31 @@
     state: present
     src: /var/lib/yake/install-orc.yaml
 
+- name: Build host aliases for CAPO and ORC controllers
+  ansible.builtin.set_fact:
+    _clusterapi_install_host_aliases: "{{ _clusterapi_install_host_aliases | d([]) + [{'ip': item.ip, 'hostnames': [item.hostname]}] }}"
+  loop: "{{ clusterapi_install_hosts_entries }}"
+  when: clusterapi_install_hosts_entries | d([]) | length > 0
+
+- name: Add hosts entries to CAPO and ORC controllers
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}"
+    state: patched
+    kind: Deployment
+    namespace: "{{ item.namespace }}"
+    name: "{{ item.name }}"
+    definition:
+      spec:
+        template:
+          spec:
+            hostAliases: "{{ _clusterapi_install_host_aliases }}"
+  loop:
+    - namespace: capo-system
+      name: capo-controller-manager
+    - namespace: orc-system
+      name: orc-controller-manager
+  when: clusterapi_install_hosts_entries | d([]) | length > 0
+
 - name: Wait for all pods to be ready
   become: "{{ clusterapi_install_become }}"
   ansible.builtin.shell:

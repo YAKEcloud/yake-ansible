@@ -201,6 +201,15 @@
     - cloud-controller-manager-roles.yaml
     - openstack-cloud-controller-manager-ds.yaml
 
+- name: Add hosts entries to CCM DaemonSet manifest
+  ansible.builtin.shell:
+    cmd: |
+      yq -yi '.spec.template.spec.hostAliases += [{"ip": "{{ item.ip }}", "hostnames": ["{{ item.hostname }}"]}]' /var/lib/yake/openstack-cloud-controller-manager-ds.yaml
+    executable: /bin/bash
+  loop: "{{ clusterapi_cluster_hosts_entries }}"
+  when: clusterapi_cluster_hosts_entries | d([]) | length > 0
+  changed_when: false
+
 - name: Apply CCM manifests
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
@@ -249,15 +258,23 @@
     - cinder-csi-nodeplugin.yaml
     - csi-cinder-driver.yaml
 
+- name: Add hosts entries to CSI plugin manifests
+  ansible.builtin.shell:
+    cmd: |
+      yq -yi '.spec.template.spec.hostAliases += [{"ip": "{{ item.1.ip }}", "hostnames": ["{{ item.1.hostname }}"]}]' /var/lib/yake/{{ item.0 }}
+    executable: /bin/bash
+  loop: "{{ ['cinder-csi-controllerplugin.yaml', 'cinder-csi-nodeplugin.yaml'] | product(clusterapi_cluster_hosts_entries) | list }}"
+  when: clusterapi_cluster_hosts_entries | d([]) | length > 0
+  changed_when: false
+
 - name: Remove csi-snapshotter if disabled
   ansible.builtin.shell:
     cmd: |
       set -o pipefail
       yq -yi '.spec.template.spec.containers |= map(select(.name != "csi-snapshotter"))' /var/lib/yake/cinder-csi-controllerplugin.yaml
     executable: /bin/bash
-  register: disabled_csi_snapshotter  # noqa: var-naming[no-role-prefix]
-  changed_when: disabled_csi_snapshotter.rc != 0  # noqa: var-naming[no-role-prefix]
-  when: not clusterapi_cluster_csi_snapshotter_enable | bool
+  when: not clusterapi_cluster_csi_snapshotter_enabled | bool
+  changed_when: false
 
 - name: Apply CSI manifests
   kubernetes.core.k8s:

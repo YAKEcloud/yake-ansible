@@ -1,6 +1,6 @@
 {%- set _ns = namespace(items=[]) -%}
 {%- for key, value in gardener_operator_proxy_env.items() -%}
-{%- set _ns.items = _ns.items + ['{"name":"' + (key | upper) + '","value":"' + value + '"}'] -%}
+{%- set _ns.items = _ns.items + ['Object.spec.containers.env{name:"' + key + '",value:"' + value + '"}'] -%}
 {%- endfor -%}
 {%- set _cel_env = '[' + (_ns.items | join(', ')) + ']' -%}
 ---
@@ -26,7 +26,7 @@ spec:
           spec: Object.spec{
             containers: object.spec.containers.map(c, Object.spec.containers{
               name: c.name,
-              env: (has(c.env) ? c.env : []) + {{ _cel_env }}
+              env: {{ _cel_env }}
             })
           }
         }
@@ -38,7 +38,7 @@ spec:
           spec: Object.spec{
             initContainers: object.spec.initContainers.map(ic, Object.spec.initContainers{
               name: ic.name,
-              env: (has(ic.env) ? ic.env : []) + {{ _cel_env }}
+              env: {{ _cel_env }}
             })
           }
         } : Object{}

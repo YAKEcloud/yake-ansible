@@ -49,7 +49,8 @@ clusterapi_cluster_openstack_cloud:
   identity_api_version: 3
   auth_type: "v3applicationcredential"
 clusterapi_cluster_openstack_loadbalancer_provider: ovn
-clusterapi_cluster_pod_cidr: "10.244.0.0/16"
+clusterapi_cluster_pod_cidr_blocks:
+  - "10.244.0.0/16"
 
 clusterapi_cluster_openstack_managed_subnets:
   - cidr: "172.28.0.0/24"
@@ -101,8 +102,7 @@ clusterapi_cluster_cilium_helm_values:
   policyCIDRMatchMode: nodes
   ipam:
     operator:
-      clusterPoolIPv4PodCIDRList:
-        - "{{ clusterapi_cluster_pod_cidr }}"
+      clusterPoolIPv4PodCIDRList: "{{ clusterapi_cluster_pod_cidr_blocks }}"
 
 # renovate: datasource=helm registryUrl=https://projectcalico.docs.tigera.io/charts depName=tigera-operator
 clusterapi_cluster_calico_version: "v3.32.0"

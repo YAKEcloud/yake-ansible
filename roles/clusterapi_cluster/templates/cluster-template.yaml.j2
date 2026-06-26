@@ -113,8 +113,7 @@ metadata:
 spec:
   clusterNetwork:
     pods:
-      cidrBlocks:
-        - {{ clusterapi_cluster_pod_cidr }}
+      cidrBlocks: {{ clusterapi_cluster_pod_cidr_blocks | to_json }}
     serviceDomain: cluster.local
   controlPlaneRef:
     apiGroup: controlplane.cluster.x-k8s.io

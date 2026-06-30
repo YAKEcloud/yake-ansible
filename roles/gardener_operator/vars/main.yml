@@ -1,3 +1,9 @@
 ---
 _gardener_operator_helm_values:  # noqa: var-naming[no-role-prefix]
   replicaCount: 2
+
+_gardener_operator_dns_provider_namespace_map:  # noqa: var-naming[no-role-prefix]
+  azure-dns: runtime-extension-provider-azure
+  aws-route53: runtime-extension-provider-aws
+  google-clouddns: runtime-extension-provider-gcp
+  openstack-designate: runtime-extension-provider-openstack

@@ -4,6 +4,8 @@ gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
 
 gardener_operator_clusterapi_name: garden
 gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
+gardener_operator_proxy_host: ""
+gardener_operator_proxy_port: 3128
 
 # renovate: datasource=github-releases depName=gardener/gardener
 gardener_operator_version: '1.145.0'

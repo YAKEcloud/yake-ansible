@@ -170,6 +170,33 @@
     minutes: 4
   changed_when: false
 
+- name: Wait for DNS extension namespace
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    kind: Namespace
+    name: "{{ _gardener_operator_dns_provider_namespace_map[gardener_operator_dns_provider_type] }}"
+  register: dns_extension_ns  # noqa: var-naming[no-role-prefix]
+  until: dns_extension_ns.resources | length > 0
+  retries: 30
+  delay: 20
+  when: gardener_operator_proxy_host | d('') | length > 0
+
+- name: Template proxy NetworkPolicy for DNS extension namespace
+  ansible.builtin.template:
+    src: proxy-network-policy.yaml.j2
+    dest: /var/lib/yake/gardener-operator/proxy-network-policy.yaml
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  when: gardener_operator_proxy_host | d('') | length > 0
+
+- name: Apply proxy NetworkPolicy to DNS extension namespace
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    src: /var/lib/yake/gardener-operator/proxy-network-policy.yaml
+  when: gardener_operator_proxy_host | d('') | length > 0
+
 - name: Include dex tasks
   ansible.builtin.include_tasks: dex.yml
 

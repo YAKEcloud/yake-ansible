@@ -90,7 +90,7 @@ gardener_operator_provider_aws_version: '1.71.1'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure
 gardener_operator_provider_azure_version: '1.62.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp
-gardener_operator_provider_gcp_version: '1.52.0'
+gardener_operator_provider_gcp_version: '1.53.0'
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-cert-service
 gardener_operator_shoot_cert_service_version: '1.62.1'

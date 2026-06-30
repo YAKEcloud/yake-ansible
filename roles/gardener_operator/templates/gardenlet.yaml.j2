@@ -174,7 +174,7 @@ spec:
           domain: ingress.{{ gardener_operator_garden_url }}
         networks:
           nodes: {{ gardener_operator_nodes_cidr }}
-          pods: 10.0.0.0/20
+          pods: {{ gardener_operator_pods_cidr }}
           services: {{ gardener_operator_services_cidr }}
           shootDefaults:
             nodes: 100.100.0.0/16

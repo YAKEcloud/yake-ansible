@@ -125,9 +125,16 @@ gardener_operator_os_gardenlinux_version: '0.44.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-os-ubuntu
 gardener_operator_os_ubuntu_version: '1.40.1'
 
-# Registry cache extension is deployed automatically when gardener_operator_managed_seeds_registry_mirrors is non-empty.
+# Registry cache/mirror extension is deployed automatically when either variable below is non-empty.
 # renovate: datasource=github-releases depName=gardener/gardener-extension-registry-cache
 gardener_operator_extension_registry_cache_version: '0.23.1'
+
+gardener_operator_managed_seeds_registry_caches: []
+# - upstream: docker.io
+#   volume_size: 10Gi
+# - upstream: ghcr.io
+# - upstream: registry.k8s.io
+# - upstream: europe-docker.pkg.dev
 
 gardener_operator_shoot_oidc_service_enabled: false
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-oidc-service

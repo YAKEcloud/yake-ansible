@@ -65,6 +65,23 @@ spec:
   extensions:
     - type: shoot-cert-service
     - type: shoot-dns-service
+{% if gardener_operator_managed_seeds_registry_caches | d([]) | length > 0 %}
+    - type: registry-cache
+      providerConfig:
+        apiVersion: registry.extensions.gardener.cloud/v1alpha3
+        kind: RegistryConfig
+        caches:
+{% for cache in gardener_operator_managed_seeds_registry_caches %}
+        - upstream: {{ cache.upstream }}
+          volume:
+            size: {{ cache.volume_size | d('10Gi') }}
+{% if gardener_operator_proxy_host | d('') | length > 0 %}
+          proxy:
+            httpProxy: "http://{{ gardener_operator_proxy_host }}:{{ gardener_operator_proxy_port }}"
+            httpsProxy: "http://{{ gardener_operator_proxy_host }}:{{ gardener_operator_proxy_port }}"
+{% endif %}
+{% endfor %}
+{% endif %}
 {% if gardener_operator_managed_seeds_registry_mirrors | d([]) %}
     - type: registry-mirror
       providerConfig:

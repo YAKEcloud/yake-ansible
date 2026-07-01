@@ -28,7 +28,11 @@
     release_namespace: garden
     release_state: present
     wait: true
-    values: "{{ _gardener_operator_helm_values | combine(gardener_operator_helm_values, recursive=True) }}"
+    values: >-
+      {{ _gardener_operator_helm_values
+         | combine({'env': gardener_operator_proxy_env | dict2items(key_name='name', value_name='value')}
+                   if gardener_operator_proxy_env | d({}) | length > 0 else {}, recursive=True)
+         | combine(gardener_operator_helm_values, recursive=True) }}
   environment: "{{ gardener_operator_proxy_env }}"
 
 - name: Extract node CIDR from first InternalIP
@@ -86,6 +90,41 @@
         gardener_operator_services_cidr == '' or
         gardener_operator_pods_cidr == ''
 
+- name: Install Kyverno
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    chart_ref: kyverno
+    chart_repo_url: https://kyverno.github.io/kyverno/
+    chart_version: "{{ gardener_operator_kyverno_version }}"
+    create_namespace: true
+    release_name: kyverno
+    release_namespace: kyverno
+    release_state: present
+    wait: true
+    values:
+      features:
+        forceFailurePolicyIgnore:
+          enabled: true
+  environment: "{{ gardener_operator_proxy_env }}"
+  when: gardener_operator_proxy_env | d({}) | length > 0
+
+- name: Template Kyverno proxy injection policy
+  ansible.builtin.template:
+    src: kyverno-proxy-policy.yaml.j2
+    dest: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  when: gardener_operator_proxy_env | d({}) | length > 0
+
+- name: Apply Kyverno proxy injection policy
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    src: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
+  when: gardener_operator_proxy_env | d({}) | length > 0
+
 - name: Template garden files and dependencies
   ansible.builtin.template:
     src: "{{ item }}.j2"
@@ -130,6 +169,33 @@
   ansible.builtin.pause:
     minutes: 4
   changed_when: false
+
+- name: Wait for DNS extension namespace
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    kind: Namespace
+    name: "{{ _gardener_operator_dns_provider_namespace_map[gardener_operator_dns_provider_type] }}"
+  register: dns_extension_ns  # noqa: var-naming[no-role-prefix]
+  until: dns_extension_ns.resources | length > 0
+  retries: 30
+  delay: 20
+  when: gardener_operator_proxy_host | d('') | length > 0
+
+- name: Template proxy NetworkPolicy for DNS extension namespace
+  ansible.builtin.template:
+    src: proxy-network-policy.yaml.j2
+    dest: /var/lib/yake/gardener-operator/proxy-network-policy.yaml
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  when: gardener_operator_proxy_host | d('') | length > 0
+
+- name: Apply proxy NetworkPolicy to DNS extension namespace
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    src: /var/lib/yake/gardener-operator/proxy-network-policy.yaml
+  when: gardener_operator_proxy_host | d('') | length > 0
 
 - name: Include dex tasks
   ansible.builtin.include_tasks: dex.yml

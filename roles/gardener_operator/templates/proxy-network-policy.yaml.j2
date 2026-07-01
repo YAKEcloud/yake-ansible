@@ -1,0 +1,17 @@
+---
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-proxy-egress
+  namespace: {{ _gardener_operator_dns_provider_namespace_map[gardener_operator_dns_provider_type] }}
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - ipBlock:
+        cidr: "{{ gardener_operator_proxy_host }}/32"
+    ports:
+    - protocol: TCP
+      port: {{ gardener_operator_proxy_port }}

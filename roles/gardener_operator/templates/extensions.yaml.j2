@@ -144,6 +144,15 @@ spec:
       helm:
         ociRepository:
           ref: {{ gardener_operator_image_registry }}/gardener-project/releases/charts/gardener/extensions/shoot-dns-service:v{{ gardener_operator_shoot_dns_service_version }}
+{% if gardener_operator_proxy_env | d({}) | length > 0 %}
+      runtimeClusterValues:
+        dnsControllerManager:
+          env:
+{% for key, value in gardener_operator_proxy_env.items() %}
+          - name: {{ key | upper }}
+            value: "{{ value }}"
+{% endfor %}
+{% endif %}
   resources:
   - autoEnable:
     - shoot

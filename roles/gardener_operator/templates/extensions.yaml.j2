@@ -202,7 +202,7 @@ spec:
   - kind: OperatingSystemConfig
     type: gardenlinux
 {% endif %}
-{% if gardener_operator_managed_seeds_registry_mirrors | d([]) | length > 0 %}
+{% if gardener_operator_managed_seeds_registry_mirrors | d([]) | length > 0 or gardener_operator_managed_seeds_registry_caches | d([]) | length > 0 %}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension

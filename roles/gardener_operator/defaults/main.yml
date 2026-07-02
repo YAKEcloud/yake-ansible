@@ -90,7 +90,7 @@ gardener_operator_dns_provider_type: "openstack-designate"
 gardener_operator_dns_credentials: {}
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-aws
-gardener_operator_provider_aws_version: '1.71.1'
+gardener_operator_provider_aws_version: '1.71.2'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-azure
 gardener_operator_provider_azure_version: '1.62.0'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-gcp

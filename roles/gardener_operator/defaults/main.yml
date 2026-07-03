@@ -64,7 +64,7 @@ gardener_operator_gardenlet_image_vector_overwrite: ""
 gardener_operator_gardenlet_feature_gates: {}
 
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
-gardener_operator_provider_openstack_version: '1.56.0'
+gardener_operator_provider_openstack_version: '1.56.1'
 gardener_operator_provider_openstack_storageclass_name: default
 # gardener_operator_provider_openstack_storageclass_type: default
 gardener_operator_provider_openstack_storageclass_zone: nova

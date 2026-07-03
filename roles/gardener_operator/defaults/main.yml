@@ -8,7 +8,7 @@ gardener_operator_proxy_host: ""
 gardener_operator_proxy_port: 3128
 
 # renovate: datasource=github-releases depName=gardener/gardener
-gardener_operator_version: '1.145.0'
+gardener_operator_version: '1.145.1'
 # renovate: datasource=helm registryUrl=https://kyverno.github.io/kyverno/ depName=kyverno
 gardener_operator_kyverno_version: '3.8.1'
 gardener_operator_helm_values: {}

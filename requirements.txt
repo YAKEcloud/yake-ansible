@@ -6,7 +6,7 @@ openstacksdk==4.17.0
 python-gilt==2.2.5
 requests==2.34.2
 tqdm
-yq==4.0.0
+yq==4.1.1
 python-openstackclient
 python-octaviaclient
 python-designateclient

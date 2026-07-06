@@ -113,7 +113,7 @@ gardener_operator_shoot_dns_service_version: '1.87.0'
 # Networking extension: exactly one of 'cilium' or 'calico'.
 gardener_operator_networking_type: cilium
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-cilium
-gardener_operator_networking_cilium_version: '1.48.2'
+gardener_operator_networking_cilium_version: '1.48.3'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-networking-calico
 gardener_operator_networking_calico_version: '1.59.0'
 

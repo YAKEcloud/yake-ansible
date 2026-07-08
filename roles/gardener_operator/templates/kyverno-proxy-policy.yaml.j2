@@ -42,3 +42,148 @@ spec:
             })
           }
         } : Object{}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:mutate-gardener-operatingsystemconfigs:view
+  labels:
+    rbac.kyverno.io/aggregate-to-background-controller: 'true'
+    rbac.kyverno.io/aggregate-to-reports-controller: 'true'
+rules:
+  - apiGroups:
+      - extensions.gardener.cloud
+    resources:
+      - operatingsystemconfigs
+    verbs:
+      - get
+      - list
+      - watch
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: kyverno:mutate-gardener-operatingsystemconfigs:update
+  labels:
+    rbac.kyverno.io/aggregate-to-background-controller: 'true'
+rules:
+  - apiGroups:
+      - extensions.gardener.cloud
+    resources:
+      - operatingsystemconfigs
+    verbs:
+      - update
+---
+apiVersion: policies.kyverno.io/v1
+kind: MutatingPolicy
+metadata:
+  name: gardener-operatingsystemconfigs-inject-proxy-env
+spec:
+  matchConstraints:
+    resourceRules:
+    - apiGroups:
+      - "extensions.gardener.cloud"
+      apiVersions:
+      - "v1alpha1"
+      resources:
+      - "operatingsystemconfigs"
+      operations:
+      - "CREATE"
+      - "UPDATE"
+  mutations:
+{% if gardener_operator_proxy_env | d({}) | length > 0 %}
+{% set proxy_unit_name = "containerd.service" %}
+{% set proxy_dropin_name = "http-proxy.conf" %}
+{% set proxy_dropin_content = '[Service]\\n'
+                              + ['Environment']
+                                | product(
+                                  gardener_operator_proxy_env
+                                  | items
+                                  | map('join', '=')
+                                )
+                                | map('join', '=\\"')
+                                | join('\\"\\n')
+                              + '\\"'
+%}
+  - patchType: JSONPatch
+    jsonPatch:
+      # This expression concatenates lists of JSONPatches ([...] + [...] + [...]), where each list contains a patch on mutually exclusive conditions, so that in the end a list with a single patch is applied
+      # Common patterns are:
+      # condition ? patch : [], ternary conditional operator, so that a patch is returned when the condition is satisfied, otherwise an empty list
+      # object.map(v, condition(v) ? patch : null ).filter(p, p!= null), map the ternary operator to a list, so that it contains either patches or null, where the latter is removed afterwards. This is used to compute the index to target the patch
+      # object.map(v, condition(v) ? [patch] : []).flatten(), similar to the above, but with lists of patches and empty lists, which is later flattened. This is used to to operate on nested lists
+      # The following cases are handled:
+      # 1. No unit is found -> create the unit including the proxy dropIn
+      # 2. A unit is found, but does not contain any dropIns -> create the dropIn list including the proxy dropIn
+      # 3. A unit is found and does contain dropIns
+      # 3a. dropIns does not contain the proxy -> add the proxy dropIn
+      # 3b. dropIns does contain the proxy, but its contents do not match -> replace the contents
+      #
+      # Open questions:
+      # When to use `dyn({})` and when to use the object constructor `Object{}`?
+      # Why is it `dropIns: [Object.spec.units.dropIns{}]` when `Object.spec.units.dropIns` is the array of dropIns and not a dropIn object?
+      #
+      # I do not know the answer, but this is the version that results in the correctly patched OperatingSystemConfigs
+      expression: |
+        !object.spec.units.exists(u, u.name == "{{ proxy_unit_name }}") ?
+          [
+            JSONPatch{
+              op: "add",
+              path: "/spec/units/-",
+              value: Object.spec.units{
+                name: "{{ proxy_unit_name }}",
+                dropIns: [
+                  Object.spec.units.dropIns{
+                    name: "{{ proxy_dropin_name }}",
+                    content: "{{ proxy_dropin_content }}"
+                  }
+                ]
+              }
+            }
+          ]
+        : []
+        +
+        object.spec.units.map(u, u.name == "{{ proxy_unit_name }}" && !has(u.dropIns) ?
+          JSONPatch{
+            op: "add",
+            path: "/spec/units/" + string(object.spec.units.indexOf(u)) + "/dropIns",
+            value: [
+              dyn(
+                {
+                  "name": "{{ proxy_dropin_name }}",
+                  "content": "{{ proxy_dropin_content }}"
+                }
+              )
+            ]
+          }
+        : null
+        ).filter(p, p != null)
+        +
+        object.spec.units.map(u, u.name == "{{ proxy_unit_name }}" && has(u.dropIns) ?
+          (
+            !u.dropIns.exists(d, d.name == "{{ proxy_dropin_name }}") ?
+              [
+                JSONPatch{
+                  op: "add",
+                  path: "/spec/units/" + string(object.spec.units.indexOf(u)) + "/dropIns/-",
+                  value: dyn(
+                    {
+                      "name": "{{ proxy_dropin_name }}",
+                      "content": "{{ proxy_dropin_content }}"
+                    }
+                  )
+                }
+              ]
+            :
+              u.dropIns.map(d, d.name == "{{ proxy_dropin_name }}" && d.content != "{{ proxy_dropin_content }}" ?
+                JSONPatch{
+                  op: "replace",
+                  path: "/spec/units/" + string(object.spec.units.indexOf(u)) + "/dropIns/" + string(object.spec.units.indexOf(d)) + "/content",
+                  value: "{{ proxy_dropin_content }}"
+                }
+              : null
+              ).filter(p, p != null)
+          )
+        : []
+        ).flatten()
+{% endif %}

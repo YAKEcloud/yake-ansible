@@ -183,9 +183,9 @@ spec:
 {% endfor %}
           container:
             image: {{ gardener_operator_image_registry }}/gardener-project/releases/gardener/ops-toolbelt:latest
-        ingress:
-          enabled: true
-        domain: dashboard.{{ gardener_operator_garden_url }}
+        domain:
+          name: dashboard.{{ gardener_operator_garden_url }}
+          provider: dns-provider
       gardenerDiscoveryServer: {}
     maintenance:
       timeWindow:

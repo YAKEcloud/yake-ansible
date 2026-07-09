@@ -63,6 +63,19 @@ gardener_operator_gardenlet_image_vector_overwrite: ""
 # Feature gates for all gardenlets (internal seed and managed seeds).
 gardener_operator_gardenlet_feature_gates: {}
 
+# Collect all shoot Prometheus metrics from every seed (internal seed and managed seeds) via remote write.
+# https://gardener.cloud/docs/gardener/monitoring/#collect-all-shoot-prometheus-with-remote-write
+# Enabled when remote_write.url is non-empty.
+gardener_operator_monitoring:
+  remote_write:
+    url: ""
+    # Metric names to forward; leave empty to forward all metrics.
+    keep: []
+  # Basic auth credentials for the remote write endpoint; leave both empty to disable basic auth.
+  basic_auth:
+    username: ""
+    password: ""
+
 # renovate: datasource=github-releases depName=gardener/gardener-extension-provider-openstack
 gardener_operator_provider_openstack_version: '1.56.1'
 gardener_operator_provider_openstack_storageclass_name: default

@@ -65,6 +65,20 @@ type: Opaque
 stringData:
   {{ gardener_operator_internal_seed_backup_credentials }}
 {% endif %}
+{% if gardener_operator_monitoring.basic_auth.username | d('') and gardener_operator_monitoring.basic_auth.password | d('') %}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: monitoring-seed-remote-write-credentials
+  namespace: garden
+  labels:
+    gardener.cloud/role: global-shoot-remote-write-monitoring
+type: Opaque
+data:
+  username: {{ gardener_operator_monitoring.basic_auth.username | b64encode }}
+  password: {{ gardener_operator_monitoring.basic_auth.password | b64encode }}
+{% endif %}
 ---
 apiVersion: core.gardener.cloud/v1beta1
 kind: ControllerDeployment
@@ -135,6 +149,18 @@ spec:
         - production
         - development
         - evaluation
+{% if gardener_operator_monitoring.remote_write.url | d('') %}
+    monitoring:
+      shoot:
+        remoteWrite:
+          url: {{ gardener_operator_monitoring.remote_write.url }}
+{% if gardener_operator_monitoring.remote_write.keep | d([]) %}
+          keep:
+{% for metric in gardener_operator_monitoring.remote_write.keep %}
+          - {{ metric }}
+{% endfor %}
+{% endif %}
+{% endif %}
     seedConfig:
       apiVersion: core.gardener.cloud/v1beta1
       kind: Seed

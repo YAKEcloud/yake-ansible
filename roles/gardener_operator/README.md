@@ -145,6 +145,19 @@ Etcd backups for the virtual garden and the internal seed are enabled when the c
 | `gardener_operator_internal_seed_backup_bucket_name` | Bucket or container name. |
 | `gardener_operator_internal_seed_backup_credentials` | Provider credentials as a YAML string. |
 
+## Monitoring
+
+`gardener_operator_monitoring` configures remote write of shoot Prometheus metrics to a central Prometheus/Cortex instance, as described in the [Gardener monitoring docs](https://gardener.cloud/docs/gardener/monitoring/#collect-all-shoot-prometheus-with-remote-write). It applies to every shoot on the internal seed and on all managed seeds; there is nothing to configure per shoot.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `gardener_operator_monitoring.remote_write.url` | `""` | Remote write endpoint. Feature is disabled while empty. |
+| `gardener_operator_monitoring.remote_write.keep` | `[]` | Metric names to forward. Empty forwards all metrics. |
+| `gardener_operator_monitoring.basic_auth.username` | `""` | Basic auth username for the remote write endpoint. |
+| `gardener_operator_monitoring.basic_auth.password` | `""` | Basic auth password. Secret is only created when both username and password are set. |
+
+This only covers shoot metrics. Gardener's own seed/garden monitoring (cache, aggregate and seed Prometheus) has no remote write option — it is pull-based: the [aggregate Prometheus](https://gardener.cloud/docs/gardener/monitoring/#aggregate-prometheus) exposes an ingress in each seed's `garden` namespace so an external Prometheus/Cortex can scrape (federate) it instead. There is no role variable for this; set up such scraping directly on the central Prometheus/Cortex side.
+
 ## Files written
 
 | Path | Description |

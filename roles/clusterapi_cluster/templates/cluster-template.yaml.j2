@@ -357,6 +357,6 @@ spec:
         sizeGiB: {{ clusterapi_cluster_root_volume_size }}
         type: {{ clusterapi_cluster_root_volume_type }}
         availabilityZone:
-          name: {{ md.failure_domain }}
+          name: {{ md.root_volume_failure_domain | d(md.failure_domain) }}
 {% endif %}
 {% endfor %}

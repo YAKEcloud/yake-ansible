@@ -20,6 +20,10 @@ spec:
       helm:
         ociRepository:
           ref: {{ gardener_operator_image_registry }}/gardener-project/public/charts/gardener/extensions/provider-openstack:v{{ gardener_operator_provider_openstack_version }}
+{% if gardener_operator_provider_openstack_helm_values | d({}) %}
+        values:
+{{ gardener_operator_provider_openstack_helm_values | to_nice_yaml(indent=2) | indent(10, true) }}
+{% endif %}
       injectGardenKubeconfig: true
   resources:
     - kind: BackupBucket

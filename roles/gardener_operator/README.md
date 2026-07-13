@@ -44,6 +44,17 @@ This role deploys the Gardener Operator on an existing Kubernetes cluster and co
 | `gardener_operator_openstack_cacert` | PEM-encoded CA certificate (optional). |
 | `gardener_operator_openstack_zones` | List of availability zones. |
 
+`gardener_operator_provider_openstack_helm_values` is merged as-is into the `provider-openstack` extension's Helm chart values (empty by default, no override). Use it for anything the chart supports but this role doesn't expose directly, e.g. the etcd storage class provisioned for shoot control planes ([`config.etcd.storage`](https://github.com/gardener/gardener-extension-provider-openstack/blob/master/charts/gardener-extension-provider-openstack/values.yaml)):
+
+```yaml
+gardener_operator_provider_openstack_helm_values:
+  config:
+    etcd:
+      storage:
+        className: my-fast-storage-class
+        capacity: 25Gi
+```
+
 ### DNS Provider
 
 `gardener_operator_dns_provider_type` selects the DNS provider. Supported values: `openstack-designate`, `aws-route53`, `azure-dns`, `google-clouddns`.

@@ -81,6 +81,10 @@ gardener_operator_provider_openstack_version: '1.57.0'
 gardener_operator_provider_openstack_storageclass_name: default
 # gardener_operator_provider_openstack_storageclass_type: default
 gardener_operator_provider_openstack_storageclass_zone: nova
+# Raw values merged into the provider-openstack extension's Helm chart, e.g. to override
+# the etcd storage class it provisions for shoot control planes (config.etcd.storage).
+# https://github.com/gardener/gardener-extension-provider-openstack/blob/master/charts/gardener-extension-provider-openstack/values.yaml
+gardener_operator_provider_openstack_helm_values: {}
 
 # DNS Provider (independent of infrastructure provider)
 # Supported types: openstack-designate, aws-route53, azure-dns, google-clouddns

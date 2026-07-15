@@ -78,6 +78,7 @@ clusterapi_cluster_worker_machine_deployments:
   # - name: md-1
   #   replicas: 2
   #   failure_domain: nova2
+  #   root_volume_failure_domain: cinder1
   #   image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 clusterapi_cluster_worker_machine_flavor: "SCS-4V-8"
 

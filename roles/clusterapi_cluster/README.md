@@ -70,6 +70,21 @@ clusterapi_cluster_worker_machine_deployments:
     image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 ```
 
+To specify different failure domains for machines and their volumes use:
+
+```yaml
+clusterapi_cluster_worker_machine_deployments:
+  - name: md-0
+    replicas: 3
+    failure_domain: nova
+    root_volume_failure_domain: cinder
+    image_id: "{{ clusterapi_cluster_openstack_image_id }}"
+```
+
+Make sure to also specify
+`clusterapi_cluster_openstack_ignore_volume_az: "true"`, so that the cinder-csi
+does not expose it on the PV, causing an AZ mismatch.
+
 ### Networking
 
 Two networking approaches are available and are mutually exclusive.

@@ -144,7 +144,7 @@ gardener_operator_os_ubuntu_version: '1.40.1'
 
 # Registry cache/mirror extension is deployed automatically when either variable below is non-empty.
 # renovate: datasource=github-releases depName=gardener/gardener-extension-registry-cache
-gardener_operator_extension_registry_cache_version: '0.23.1'
+gardener_operator_extension_registry_cache_version: '0.24.0'
 
 gardener_operator_managed_seeds_registry_caches: []
 # - upstream: docker.io

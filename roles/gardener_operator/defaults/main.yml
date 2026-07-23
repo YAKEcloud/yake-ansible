@@ -47,7 +47,7 @@ gardener_operator_openstack_cacert: ""
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
-gardener_operator_kubernetes_version: '1.36.2'
+gardener_operator_kubernetes_version: '1.36.3'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
 
 # Optional: Override the gardenlet image vector, e.g. to pull images from a private registry.

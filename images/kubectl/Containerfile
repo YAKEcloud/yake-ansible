@@ -2,7 +2,7 @@ ARG ALPINE_VERSION=3.24@sha256:28bd5fe8b56d1bd048e5babf5b10710ebe0bae67db8691619
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v1.36.2  # renovate: datasource=github-releases depName=kubernetes/kubernetes
+ARG VERSION=v1.36.3  # renovate: datasource=github-releases depName=kubernetes/kubernetes
 ADD --chmod=0755 https://dl.k8s.io/release/${VERSION}/bin/linux/amd64/kubectl /usr/bin/kubectl
 
 ENV USER_NAME=kubectl

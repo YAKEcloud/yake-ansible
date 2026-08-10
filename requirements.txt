@@ -1,5 +1,5 @@
 PyYAML==6.0.3
-ansible-core==2.21.2
+ansible-core==2.21.3
 docker==7.2.0
 kubernetes==36.0.3
 openstacksdk==4.18.0

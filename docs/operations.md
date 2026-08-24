@@ -2,6 +2,26 @@
 
 This document covers day-to-day operations of the platform: upgrading components, accessing clusters, extending the platform, and cleaning up resources.
 
+## CI Variables (`group_vars/ci.yml`)
+
+The variables used by the `Yake-Ansible install` GitHub Actions workflow live in `group_vars/ci.yml`, encrypted with [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). Since this repository is public, the file is safe to commit — it's useless without the vault password.
+
+The vault password itself is never committed. It lives in:
+
+- **Locally**: `.vault-pass.txt` in the repo root (gitignored). `ansible.cfg` points `vault_password_file` at it, so `ansible-vault` and `ansible-playbook` pick it up automatically.
+- **In CI**: the `ANSIBLE_VAULT_PASSWORD` GitHub Actions secret. The workflow writes it to a temporary `.vault-pass.txt` at the start of the run and passes `--vault-password-file` to `ansible-playbook`.
+
+To view or edit the CI variables:
+
+```bash
+ansible-vault view group_vars/ci.yml
+ansible-vault edit group_vars/ci.yml
+```
+
+Both commands use `.vault-pass.txt` automatically (via `ansible.cfg`). Commit the resulting (still encrypted) diff normally.
+
+If the vault password ever needs to be rotated, generate a new one, run `ansible-vault rekey group_vars/ci.yml`, update `.vault-pass.txt` locally, and update the `ANSIBLE_VAULT_PASSWORD` secret in the repository settings.
+
 ## Upgrading
 
 All playbooks are idempotent. Re-running a playbook with an updated version variable upgrades the corresponding component.
@@ -94,6 +114,28 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ```
 
 ## Cleanup
+
+### Garden and Managed Seed Teardown
+
+Before tearing down the management cluster, the Garden and any ManagedSeed shoots must be deleted explicitly. Deleting the underlying cluster first leaves the Garden's cloud resources (DNS records, volumes, load balancers, backup buckets) orphaned in OpenStack, and the `Garden`/`Shoot` deletion webhooks require an explicit confirmation annotation anyway.
+
+Order: managed-seed shoots first (the Garden cannot be deleted while seeds/shoots still exist), then the Garden, then the underlying cluster.
+
+```bash
+export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
+
+# 1. Delete each managed-seed shoot
+./.local/yake-kubectl -n garden annotate shoot <SHOOT_NAME> confirmation.gardener.cloud/deletion=true --overwrite
+./.local/yake-kubectl -n garden delete shoot <SHOOT_NAME>
+# wait until the shoot is fully gone before continuing
+
+# 2. Delete the Garden
+./.local/yake-kubectl annotate garden gardener confirmation.gardener.cloud/deletion=true --overwrite
+./.local/yake-kubectl delete garden gardener
+# wait until the Garden is fully gone before tearing down the cluster
+```
+
+Only once both steps above have completed should the management cluster itself be torn down (see below).
 
 ### Full Teardown
 

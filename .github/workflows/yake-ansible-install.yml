@@ -40,17 +40,17 @@ jobs:
       - name: Install requirements
         run: pip install -r requirements.txt && ansible-galaxy install -f -r requirements.yml
 
-      - name: Create group_vars/all.yml from ALL_YML_BASE64 secret
+      - name: Write Ansible Vault password
         env:
-          ALL_BASE64: ${{ secrets.ALL_YML_BASE64 }}
-        run: printf '%s' "$ALL_BASE64" | base64 -d > group_vars/all.yml && chmod 600 group_vars/all.yml
+          ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
+        run: printf '%s' "$ANSIBLE_VAULT_PASSWORD" > .vault-pass.txt && chmod 600 .vault-pass.txt
 
       - name: Run ansible-playbook site.yml
         uses: nick-fields/retry@v4
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: ansible-playbook -i localhost, -c local site.yml -e "@group_vars/all.yml"
+          command: ansible-playbook -i localhost, -c local site.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
 
@@ -63,7 +63,7 @@ jobs:
           command: |
             ./.local/yake-kubectl \
               --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden \
-              -n garden wait shoot managed-seed-1 \
+              -n garden wait shoot managed-seed-bb \
               --for=condition=APIServerAvailable=True \
               --for=condition=ControlPlaneHealthy=True \
               --for=condition=EveryNodeReady=True \
@@ -77,4 +77,4 @@ jobs:
         with:
           timeout_minutes: 20
           max_attempts: 3
-          command: ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/all.yml"
+          command: ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt

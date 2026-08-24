@@ -8,17 +8,19 @@ The variables used by the `Yake-Ansible install` GitHub Actions workflow live in
 
 The vault password itself is never committed. It lives in:
 
-- **Locally**: `.vault-pass.txt` in the repo root (gitignored). `ansible.cfg` points `vault_password_file` at it, so `ansible-vault` and `ansible-playbook` pick it up automatically.
+- **Locally**: `.vault-pass.txt` in the repo root (gitignored).
 - **In CI**: the `ANSIBLE_VAULT_PASSWORD` GitHub Actions secret. The workflow writes it to a temporary `.vault-pass.txt` at the start of the run and passes `--vault-password-file` to `ansible-playbook`.
+
+It is deliberately **not** wired up via `ansible.cfg`'s `vault_password_file` setting, since that would apply to every `ansible-playbook`/`ansible-lint` invocation in the repo — including unrelated syntax checks in CI systems (e.g. Zuul/ansible-lint) that don't have the password file and don't need it, causing those to fail hard.
 
 To view or edit the CI variables:
 
 ```bash
-ansible-vault view group_vars/ci.yml
-ansible-vault edit group_vars/ci.yml
+ansible-vault view --vault-password-file .vault-pass.txt group_vars/ci.yml
+ansible-vault edit --vault-password-file .vault-pass.txt group_vars/ci.yml
 ```
 
-Both commands use `.vault-pass.txt` automatically (via `ansible.cfg`). Commit the resulting (still encrypted) diff normally.
+Commit the resulting (still encrypted) diff normally. If you use `ansible-vault`/`ansible-playbook` against `group_vars/ci.yml` often, export `ANSIBLE_VAULT_PASSWORD_FILE=.vault-pass.txt` in your shell instead of passing the flag every time.
 
 If the vault password ever needs to be rotated, generate a new one, run `ansible-vault rekey group_vars/ci.yml`, update `.vault-pass.txt` locally, and update the `ANSIBLE_VAULT_PASSWORD` secret in the repository settings.
 

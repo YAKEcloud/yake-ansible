@@ -4,3 +4,4 @@ chart-vendor
 clouds.yaml
 group_vars/all.yml
 .venv
+.vault-pass.txt

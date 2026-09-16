@@ -283,7 +283,9 @@ def sync_capi_image(
         "image_source": url,
     }
 
-    print(f"  [UPLOAD] {canonical_name}" + ("" if web_download else " (local download)"))
+    print(
+        f"  [UPLOAD] {canonical_name}" + ("" if web_download else " (local download)")
+    )
     try:
         if web_download:
             image = upload_via_web_download(

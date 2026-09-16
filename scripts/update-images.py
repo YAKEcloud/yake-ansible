@@ -154,6 +154,45 @@ def _wait_for_active(conn, image_id, timeout=3600):
     raise TimeoutError(f"Image {image_id} did not become active within {timeout}s")
 
 
+def _wait_for_import(conn, image_id, timeout=3600, poll_interval=10):
+    deadline = time.time() + timeout
+    last_status = None
+    while time.time() < deadline:
+        img = conn.image.get_image(image_id)
+        if img.status != last_status:
+            print(f"      status: {img.status}")
+            last_status = img.status
+        if img.status == "active":
+            return img
+        if img.status in ("killed", "deleted"):
+            raise RuntimeError(
+                f"Image {image_id} ended up in status '{img.status}' during import"
+            )
+        time.sleep(poll_interval)
+    raise TimeoutError(f"Image {image_id} did not become active within {timeout}s")
+
+
+def upload_via_web_download(conn, name, url, disk_format="qcow2", extra_props=None):
+    """Create an image record and let OpenStack download the data itself.
+
+    Requires the 'web-download' import method to be enabled on the cloud
+    (most public/managed OpenStack clouds support it). Use --no-web-download
+    to fall back to downloading locally and streaming the upload instead.
+    """
+    image = conn.image.create_image(
+        name=name,
+        disk_format=disk_format,
+        container_format="bare",
+        visibility="shared",
+        min_disk=20,
+        min_ram=512,
+        **(extra_props or {}),
+    )
+    print(f"    → requesting web-download import from {url}")
+    conn.image.import_image(image, method="web-download", uri=url)
+    return _wait_for_import(conn, image.id)
+
+
 class _ProgressReader:
     """Wraps a file object and updates a tqdm bar as data is read."""
 
@@ -210,7 +249,9 @@ def download_file(url, dest, label=""):
                     pbar.update(len(chunk))
 
 
-def sync_capi_image(conn, k8s_version, ubuntu_version="2404", dry_run=False):
+def sync_capi_image(
+    conn, k8s_version, ubuntu_version="2404", dry_run=False, web_download=True
+):
     print("\n=== CAPI Image (Gardener variant) ===")
 
     patch = k8s_version.lstrip("v")  # e.g. "1.35.4"
@@ -230,26 +271,31 @@ def sync_capi_image(conn, k8s_version, ubuntu_version="2404", dry_run=False):
         return canonical_name, existing.id
 
     if dry_run:
-        print(f"  [DRY-RUN] would download and upload {canonical_name}" f"  from {url}")
+        method = "web-download import" if web_download else "download and upload"
+        print(f"  [DRY-RUN] would {method} {canonical_name}" f"  from {url}")
         return canonical_name, None
 
-    print(f"  [UPLOAD] {canonical_name}")
+    extra_props = {
+        "os_purpose": "k8snode",
+        "os_distro": "ubuntu",
+        "kube_version": f"v{patch}",
+        "image_description": ("https://github.com/osism/k8s-capi-images"),
+        "image_source": url,
+    }
+
+    print(f"  [UPLOAD] {canonical_name}" + ("" if web_download else " (local download)"))
     try:
-        with tempfile.TemporaryDirectory() as tmp:
-            local = Path(tmp) / f"{canonical_name}.qcow2"
-            download_file(url, local, canonical_name)
-            image = upload_from_file(
-                conn,
-                canonical_name,
-                local,
-                extra_props={
-                    "os_purpose": "k8snode",
-                    "os_distro": "ubuntu",
-                    "kube_version": f"v{patch}",
-                    "image_description": ("https://github.com/osism/k8s-capi-images"),
-                    "image_source": url,
-                },
+        if web_download:
+            image = upload_via_web_download(
+                conn, canonical_name, url, extra_props=extra_props
             )
+        else:
+            with tempfile.TemporaryDirectory() as tmp:
+                local = Path(tmp) / f"{canonical_name}.qcow2"
+                download_file(url, local, canonical_name)
+                image = upload_from_file(
+                    conn, canonical_name, local, extra_props=extra_props
+                )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
     except Exception as exc:
@@ -404,6 +450,17 @@ def main():
         action="store_true",
         help="Disable TLS certificate verification (for self-signed certs)",
     )
+    parser.add_argument(
+        "--no-web-download",
+        action="store_true",
+        help=(
+            "Disable the OpenStack 'web-download' image import method and fall"
+            " back to downloading the image locally before uploading it."
+            " Use this if web-download is disabled on your cloud. Only"
+            " affects the CAPI image; GardenLinux images are always"
+            " downloaded locally since they ship as tar.xz archives."
+        ),
+    )
     args = parser.parse_args()
 
     if args.insecure:
@@ -429,7 +486,13 @@ def main():
 
     if not args.skip_capi:
         results.append(
-            sync_capi_image(conn, args.k8s_version, args.ubuntu_version, args.dry_run)
+            sync_capi_image(
+                conn,
+                args.k8s_version,
+                args.ubuntu_version,
+                args.dry_run,
+                web_download=not args.no_web_download,
+            )
         )
 
     if not args.skip_gardenlinux:

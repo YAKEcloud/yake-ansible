@@ -52,6 +52,10 @@ python3 scripts/update-images.py --dry-run
 
 # Skip TLS certificate verification for the OpenStack API (for self-signed certificates)
 python3 scripts/update-images.py --insecure --k8s-version 1.35.4
+
+# Disable OpenStack web-download import and download the CAPI image locally first
+# (use this if web-download is disabled on your cloud)
+python3 scripts/update-images.py --no-web-download --k8s-version 1.35.4
 ```
 
 ### What the script uploads
@@ -107,8 +111,15 @@ the script cannot detect it and will upload a new one — use `--dry-run` first 
 
 | Image type | Method |
 |---|---|
-| CAPI | Local download (qcow2) → upload |
-| GardenLinux | Local download (tar.xz) → extract → upload |
+| CAPI | OpenStack `web-download` import (default) — Glance downloads the qcow2 directly from the URL, nothing is transferred through the machine running the script |
+| GardenLinux | Local download (tar.xz) → extract → upload (always, since the image is packed inside an archive) |
+
+For the CAPI image, the script creates the Glance image record and then triggers an
+[interoperable image import](https://docs.openstack.org/glance/latest/admin/interoperable-image-import.html)
+with `method=web-download`, pointing Glance at the source URL. Not every cloud has this
+import method enabled; if it's disabled, uploads fail with an error mentioning the
+`web-download` method. In that case, pass `--no-web-download` to fall back to downloading
+the qcow2 to the local machine first and streaming the upload from there.
 
 All images are uploaded with `visibility=shared`. Temporary local files (downloads, extracted
 archives) are cleaned up automatically after each upload, even if an error occurs.

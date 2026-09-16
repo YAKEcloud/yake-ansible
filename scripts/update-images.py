@@ -5,10 +5,14 @@ Sync CAPI and GardenLinux images to OpenStack Glance.
 CAPI images (Gardener variant):
   Pulled from https://nbg1.your-objectstorage.com/osism/openstack-k8s-capi-images/
   One image per Kubernetes patch version (e.g. v1.35.4).
-  Downloaded locally, then uploaded to Glance.
+  Imported into Glance via the 'web-download' method by default, so
+  OpenStack downloads the qcow2 directly — use --no-web-download to
+  download it locally first instead.
 
 GardenLinux images:
-  Pulled from GitHub releases (gardenlinux/gardenlinux).
+  Pulled from GitHub releases (gardenlinux/gardenlinux); the highest
+  version among all non-draft, non-prerelease releases is used unless
+  --gardenlinux-version pins one.
   Assets are tar.xz archives containing a .raw or .qcow2 — always downloaded
   locally first.
   Glance name follows the cloudprofile convention: "Garden Linux 2150.3"
@@ -22,6 +26,7 @@ Usage:
   python3 update-images.py --skip-capi
   python3 update-images.py --skip-gardenlinux --k8s-version 1.35.4
   python3 update-images.py --gardenlinux-version 2150.3.0
+  python3 update-images.py --no-web-download --k8s-version 1.35.4
   python3 update-images.py --dry-run
 """
 

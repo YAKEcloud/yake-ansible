@@ -303,24 +303,8 @@ def sync_capi_image(
         return canonical_name, None
 
 
-def fetch_gardenlinux_release(version=None):
-    if version:
-        url = (
-            f"https://api.github.com/repos/{GARDENLINUX_REPO}"
-            f"/releases/tags/{version}"
-        )
-    else:
-        url = f"https://api.github.com/repos/{GARDENLINUX_REPO}" f"/releases/latest"
-
-    resp = requests.get(
-        url,
-        headers={"Accept": "application/vnd.github.v3+json"},
-        timeout=30,
-    )
-    resp.raise_for_status()
-    release = resp.json()
-    tag = release["tag_name"].lstrip("v")
-
+def _find_flavor_asset(release):
+    """Return (asset_url, asset_name) for GARDENLINUX_FLAVOR in a release, or None."""
     for asset in release["assets"]:
         n = asset["name"]
         if (
@@ -330,14 +314,80 @@ def fetch_gardenlinux_release(version=None):
             and "logs" not in n
             and "certs" not in n
         ):
-            return tag, asset["browser_download_url"], asset["name"]
+            return asset["browser_download_url"], asset["name"]
+    return None
 
-    raise RuntimeError(
-        f"No matching GardenLinux asset for flavor '{GARDENLINUX_FLAVOR}'"
-        f" (amd64) in release {tag}.\n"
-        f"Set GARDENLINUX_FLAVOR at the top of the script to one of the"
-        f" available variants."
-    )
+
+def _iter_gardenlinux_releases(max_pages=5, per_page=100):
+    for page in range(1, max_pages + 1):
+        resp = requests.get(
+            f"https://api.github.com/repos/{GARDENLINUX_REPO}/releases",
+            headers={"Accept": "application/vnd.github.v3+json"},
+            params={"per_page": per_page, "page": page},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        batch = resp.json()
+        if not batch:
+            return
+        yield from batch
+        if len(batch) < per_page:
+            return
+
+
+def fetch_gardenlinux_release(version=None):
+    if version:
+        url = (
+            f"https://api.github.com/repos/{GARDENLINUX_REPO}"
+            f"/releases/tags/{version}"
+        )
+        resp = requests.get(
+            url,
+            headers={"Accept": "application/vnd.github.v3+json"},
+            timeout=30,
+        )
+        resp.raise_for_status()
+        release = resp.json()
+        tag = release["tag_name"].lstrip("v")
+        asset = _find_flavor_asset(release)
+        if not asset:
+            raise RuntimeError(
+                f"No matching GardenLinux asset for flavor '{GARDENLINUX_FLAVOR}'"
+                f" (amd64) in release {tag}.\n"
+                f"Set GARDENLINUX_FLAVOR at the top of the script to one of the"
+                f" available variants."
+            )
+        return tag, asset[0], asset[1]
+
+    # GitHub's "latest" release is the most recently *published* one, not the
+    # one with the highest version — GardenLinux keeps patching older major
+    # versions (e.g. 1877.x) after newer ones (e.g. 2150.x) already exist, so
+    # /releases/latest can point at a stale major. Scan all releases instead
+    # and pick the highest (major, minor) that has a matching asset.
+    best = None
+    for release in _iter_gardenlinux_releases():
+        if release.get("draft") or release.get("prerelease"):
+            continue
+        tag = release["tag_name"].lstrip("v")
+        parts = tag.split(".")
+        if len(parts) < 2 or not all(p.isdigit() for p in parts[:2]):
+            continue
+        version_key = (int(parts[0]), int(parts[1]))
+        if best is not None and version_key <= best[0]:
+            continue
+        asset = _find_flavor_asset(release)
+        if asset:
+            best = (version_key, tag, asset)
+
+    if best is None:
+        raise RuntimeError(
+            f"No GardenLinux release found with a matching asset for flavor"
+            f" '{GARDENLINUX_FLAVOR}' (amd64).\n"
+            f"Set GARDENLINUX_FLAVOR at the top of the script to one of the"
+            f" available variants."
+        )
+    _, tag, asset = best
+    return tag, asset[0], asset[1]
 
 
 def extract_image(archive_path, dest_dir):

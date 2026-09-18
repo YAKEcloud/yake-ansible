@@ -138,11 +138,12 @@ def find_gardenlinux_image(conn, version):
     gl_keywords = ("gardenlinux", "garden linux", "garden-linux")
     for img in conn.image.images():
         name_lower = (img.name or "").lower()
-        if any(kw in name_lower for kw in gl_keywords):
-            if short in name_lower or version in name_lower:
-                return img, (
-                    f"fuzzy name match " f"(gardenlinux + version in '{img.name}')"
-                )
+        if any(kw in name_lower for kw in gl_keywords) and (
+            short in name_lower or version in name_lower
+        ):
+            return img, (
+                f"fuzzy name match " f"(gardenlinux + version in '{img.name}')"
+            )
 
     return None, None
 
@@ -213,25 +214,27 @@ class _ProgressReader:
 
 def upload_from_file(conn, name, path, disk_format="qcow2", extra_props=None):
     file_size = path.stat().st_size
-    with tqdm(
-        total=file_size,
-        unit="B",
-        unit_scale=True,
-        unit_divisor=1024,
-        desc=f"    ↑ {name}",
-        leave=False,
-    ) as pbar:
-        with open(path, "rb") as fh:
-            image = conn.image.create_image(
-                name=name,
-                disk_format=disk_format,
-                container_format="bare",
-                visibility="shared",
-                min_disk=20,
-                min_ram=512,
-                **(extra_props or {}),
-                data=_ProgressReader(fh, pbar),
-            )
+    with (
+        tqdm(
+            total=file_size,
+            unit="B",
+            unit_scale=True,
+            unit_divisor=1024,
+            desc=f"    ↑ {name}",
+            leave=False,
+        ) as pbar,
+        open(path, "rb") as fh,
+    ):
+        image = conn.image.create_image(
+            name=name,
+            disk_format=disk_format,
+            container_format="bare",
+            visibility="shared",
+            min_disk=20,
+            min_ram=512,
+            **(extra_props or {}),
+            data=_ProgressReader(fh, pbar),
+        )
     return _wait_for_active(conn, image.id)
 
 
@@ -240,18 +243,20 @@ def download_file(url, dest, label=""):
     with requests.get(url, stream=True, timeout=60) as resp:
         resp.raise_for_status()
         total = int(resp.headers.get("content-length", 0)) or None
-        with tqdm(
-            total=total,
-            unit="B",
-            unit_scale=True,
-            unit_divisor=1024,
-            desc=f"    ↓ {label}",
-            leave=False,
-        ) as pbar:
-            with open(dest, "wb") as fh:
-                for chunk in resp.iter_content(chunk_size=65536):
-                    fh.write(chunk)
-                    pbar.update(len(chunk))
+        with (
+            tqdm(
+                total=total,
+                unit="B",
+                unit_scale=True,
+                unit_divisor=1024,
+                desc=f"    ↓ {label}",
+                leave=False,
+            ) as pbar,
+            open(dest, "wb") as fh,
+        ):
+            for chunk in resp.iter_content(chunk_size=65536):
+                fh.write(chunk)
+                pbar.update(len(chunk))
 
 
 def sync_capi_image(
@@ -305,7 +310,7 @@ def sync_capi_image(
                 )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — keep syncing the remaining images
         print(f"  [ERROR]  {canonical_name}: {exc}", file=sys.stderr)
         return canonical_name, None
 
@@ -455,7 +460,7 @@ def sync_gardenlinux_image(conn, version=None, dry_run=False):
             )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — keep syncing the remaining images
         print(f"  [ERROR]  {canonical_name}: {exc}", file=sys.stderr)
         return canonical_name, None
 
@@ -527,7 +532,7 @@ def main():
     try:
         conn = openstack.connect(cloud=args.cloud, insecure=args.insecure)
         _ = conn.auth["auth_url"]
-    except Exception:
+    except Exception:  # noqa: BLE001 — turn any connect failure into a CLI error
         sys.exit(
             "No OpenStack credentials found." " Set OS_CLOUD or pass --cloud <name>."
         )
@@ -571,5 +576,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         sys.exit("\nAborted.")
-    except Exception as exc:
+    except Exception as exc:  # noqa: BLE001 — top-level guard, report and exit cleanly
         sys.exit(f"Error: {exc}")

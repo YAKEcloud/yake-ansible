@@ -77,17 +77,22 @@ def _short_gl_version(version):
     return version
 
 
-def find_capi_image(conn, patch_version):
+def find_capi_image(conn, patch_version, gardener_suffix=True):
     """
     Look for an existing CAPI image using three strategies, in order:
-      1. Exact Glance name match  (ubuntu-capi-image-v1.35.4)
+      1. Exact Glance name match  (ubuntu-capi-image-v1.35.4[-gardener])
       2. Custom property 'kube_version' set by this script on previous uploads
       3. Fuzzy name scan — finds images uploaded manually under any name,
-         as long as 'capi' and 'v<patch>' appear somewhere in the image name
+         as long as 'capi' and 'v<patch>[-gardener]' appear somewhere in the
+         image name. When looking for the plain (non-suffixed) variant,
+         images with a 'gardener' in their name are excluded so the two
+         variants never match each other.
     Returns (image, strategy_description) or (None, None).
     """
     patch = patch_version.lstrip("v")
-    canonical_name = f"ubuntu-capi-image-v{patch}"
+    suffix = "-gardener" if gardener_suffix else ""
+    canonical_name = f"ubuntu-capi-image-v{patch}{suffix}"
+    kube_version = f"v{patch}{suffix}"
 
     # 1. Exact name
     hits = list(conn.image.images(name=canonical_name))
@@ -96,14 +101,22 @@ def find_capi_image(conn, patch_version):
 
     # 2. Property: kube_version (set by this script) — verify after fetch since
     #    Glance may ignore unknown property filters and return all images
-    for img in conn.image.images(kube_version=f"v{patch}"):
-        if img.get("kube_version") == f"v{patch}":
-            return img, f"kube_version property 'v{patch}'"
+    for img in conn.image.images(kube_version=kube_version):
+        if img.get("kube_version") == kube_version:
+            return img, f"kube_version property '{kube_version}'"
 
     # 3. Fuzzy name scan
     for img in conn.image.images():
         name_lower = (img.name or "").lower()
-        if "capi" in name_lower and f"v{patch}" in name_lower:
+        if "capi" not in name_lower or f"v{patch}" not in name_lower:
+            continue
+        if gardener_suffix:
+            if "gardener" in name_lower:
+                return img, (
+                    f"fuzzy name match ('capi' + 'v{patch}-gardener'"
+                    f" in '{img.name}')"
+                )
+        elif "gardener" not in name_lower:
             return img, (f"fuzzy name match ('capi' + 'v{patch}' in '{img.name}')")
 
     return None, None
@@ -274,16 +287,16 @@ def sync_capi_image(
 
     patch = k8s_version.lstrip("v")  # e.g. "1.35.4"
     minor = ".".join(patch.split(".")[:2])  # e.g. "1.35"
-    canonical_name = f"ubuntu-capi-image-v{patch}"
-    # Directory is keyed by minor version; filename contains the full patch,
-    # optionally with a '-gardener' suffix depending on the image variant.
+    # Directory, filename and Glance name all carry the '-gardener' suffix
+    # depending on the image variant, so the two variants never collide.
     suffix = "-gardener" if gardener_suffix else ""
+    canonical_name = f"ubuntu-capi-image-v{patch}{suffix}"
     url = (
         f"{CAPI_BASE_URL}/ubuntu-{ubuntu_version}-kube-v{minor}{suffix}"
         f"/ubuntu-{ubuntu_version}-kube-v{patch}{suffix}.qcow2"
     )
 
-    existing, strategy = find_capi_image(conn, patch)
+    existing, strategy = find_capi_image(conn, patch, gardener_suffix)
     if existing:
         print(
             f"  [SKIP]   {canonical_name}" f"  — found via {strategy}  ({existing.id})"
@@ -298,7 +311,7 @@ def sync_capi_image(
     extra_props = {
         "os_purpose": "k8snode",
         "os_distro": "ubuntu",
-        "kube_version": f"v{patch}",
+        "kube_version": f"v{patch}{suffix}",
         "image_description": ("https://github.com/osism/k8s-capi-images"),
         "image_source": url,
     }

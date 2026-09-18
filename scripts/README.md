@@ -56,6 +56,9 @@ python3 scripts/update-images.py --insecure --k8s-version 1.35.4
 # Disable OpenStack web-download import and download the CAPI image locally first
 # (use this if web-download is disabled on your cloud)
 python3 scripts/update-images.py --no-web-download --k8s-version 1.35.4
+
+# Use the CAPI image without the '-gardener' filename suffix
+python3 scripts/update-images.py --no-gardener-suffix --k8s-version 1.35.4
 ```
 
 ### What the script uploads
@@ -64,18 +67,20 @@ python3 scripts/update-images.py --no-web-download --k8s-version 1.35.4
 
 | Glance name | Source |
 |---|---|
-| `ubuntu-capi-image-v1.35.4` | `nbg1.your-objectstorage.com/osism/openstack-k8s-capi-images/ubuntu-2404-kube-v1.35-gardener/ubuntu-2404-kube-v1.35.4.qcow2` |
+| `ubuntu-capi-image-v1.35.6` | `nbg1.your-objectstorage.com/osism/openstack-k8s-capi-images/ubuntu-2404-kube-v1.35-gardener/ubuntu-2404-kube-v1.35.6-gardener.qcow2` |
 
 The name follows the [SCS standard scs-0104-v2](https://docs.scs.community/standards/scs-0104-v2-standard-images).
 The directory in the object store is keyed by minor version (`v1.35-gardener`);
-the filename contains the full patch version (`v1.35.4.qcow2`).
+the filename contains the full patch version, with a `-gardener` suffix by default
+(`v1.35.6-gardener.qcow2`) — pass `--no-gardener-suffix` for the plain variant
+(`v1.35.6.qcow2`).
 
 The following properties are set automatically as required by the SCS standard:
 `os_purpose=k8snode`, `image_description`, `image_source`.
 
 These images are used by Cluster API for management and seed cluster nodes.
 Reference them in `group_vars/all.yml` via `clusterapi_cluster_openstack_image_id`
-(look up the ID after upload with `openstack image show ubuntu-2404-kube-v1.35.4 -f value -c id`).
+(look up the ID after upload with `openstack image show ubuntu-2404-kube-v1.35.6 -f value -c id`).
 
 **GardenLinux images** — OS images for Gardener shoot worker nodes:
 

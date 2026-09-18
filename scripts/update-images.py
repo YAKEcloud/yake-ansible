@@ -176,14 +176,46 @@ def _wait_for_active(conn, image_id, timeout=3600):
     raise TimeoutError(f"Image {image_id} did not become active within {timeout}s")
 
 
-def _wait_for_import(conn, image_id, timeout=3600, poll_interval=10):
-    deadline = time.time() + timeout
+def _human_size(num_bytes):
+    if not num_bytes:
+        return "unknown size"
+    size = float(num_bytes)
+    for unit in ("B", "KiB", "MiB", "GiB"):
+        if size < 1024:
+            return f"{size:.1f} {unit}"
+        size /= 1024
+    return f"{size:.1f} TiB"
+
+
+def _get_content_length(url):
+    """Best-effort HEAD request to learn the source file size upfront."""
+    try:
+        resp = requests.head(url, timeout=30, allow_redirects=True)
+        resp.raise_for_status()
+        length = resp.headers.get("content-length")
+        return int(length) if length else None
+    except requests.RequestException:
+        return None
+
+
+def _wait_for_import(conn, image_id, total_size=None, timeout=3600, poll_interval=10):
+    start = time.time()
+    deadline = start + timeout
     last_status = None
     while time.time() < deadline:
         img = conn.image.get_image(image_id)
+        elapsed = int(time.time() - start)
+        progress = ""
+        if total_size and img.size:
+            pct = min(100, img.size * 100 // total_size)
+            progress = (
+                f"  ~{pct}% ({_human_size(img.size)} / {_human_size(total_size)})"
+            )
         if img.status != last_status:
-            print(f"      status: {img.status}")
+            print(f"      status: {img.status}  (elapsed: {elapsed}s){progress}")
             last_status = img.status
+        elif img.status == "importing":
+            print(f"      still importing ...  (elapsed: {elapsed}s){progress}")
         if img.status == "active":
             return img
         if img.status in ("killed", "deleted"):
@@ -210,9 +242,11 @@ def upload_via_web_download(conn, name, url, disk_format="qcow2", extra_props=No
         min_ram=512,
         **(extra_props or {}),
     )
+    total_size = _get_content_length(url)
     print(f"    → requesting web-download import from {url}")
+    print(f"    → source size: {_human_size(total_size)}")
     conn.image.import_image(image, method="web-download", uri=url)
-    return _wait_for_import(conn, image.id)
+    return _wait_for_import(conn, image.id, total_size=total_size)
 
 
 class _ProgressReader:

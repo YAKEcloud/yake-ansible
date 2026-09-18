@@ -4,7 +4,9 @@ Sync CAPI and GardenLinux images to OpenStack Glance.
 
 CAPI images (Gardener variant):
   Pulled from https://nbg1.your-objectstorage.com/osism/openstack-k8s-capi-images/
-  One image per Kubernetes patch version (e.g. v1.35.4).
+  One image per Kubernetes patch version (e.g. v1.35.4). The source filename
+  carries a '-gardener' suffix by default (e.g. v1.35.6-gardener.qcow2); use
+  --no-gardener-suffix for the plain variant without it.
   Imported into Glance via the 'web-download' method by default, so
   OpenStack downloads the qcow2 directly — use --no-web-download to
   download it locally first instead.
@@ -27,6 +29,7 @@ Usage:
   python3 update-images.py --skip-gardenlinux --k8s-version 1.35.4
   python3 update-images.py --gardenlinux-version 2150.3.0
   python3 update-images.py --no-web-download --k8s-version 1.35.4
+  python3 update-images.py --no-gardener-suffix --k8s-version 1.35.4
   python3 update-images.py --dry-run
 """
 
@@ -260,17 +263,24 @@ def download_file(url, dest, label=""):
 
 
 def sync_capi_image(
-    conn, k8s_version, ubuntu_version="2404", dry_run=False, web_download=True
+    conn,
+    k8s_version,
+    ubuntu_version="2404",
+    dry_run=False,
+    web_download=True,
+    gardener_suffix=True,
 ):
     print("\n=== CAPI Image (Gardener variant) ===")
 
     patch = k8s_version.lstrip("v")  # e.g. "1.35.4"
     minor = ".".join(patch.split(".")[:2])  # e.g. "1.35"
     canonical_name = f"ubuntu-capi-image-v{patch}"
-    # Directory is keyed by minor version; filename contains the full patch.
+    # Directory is keyed by minor version; filename contains the full patch,
+    # optionally with a '-gardener' suffix depending on the image variant.
+    suffix = "-gardener" if gardener_suffix else ""
     url = (
-        f"{CAPI_BASE_URL}/ubuntu-{ubuntu_version}-kube-v{minor}-gardener"
-        f"/ubuntu-{ubuntu_version}-kube-v{patch}.qcow2"
+        f"{CAPI_BASE_URL}/ubuntu-{ubuntu_version}-kube-v{minor}{suffix}"
+        f"/ubuntu-{ubuntu_version}-kube-v{patch}{suffix}.qcow2"
     )
 
     existing, strategy = find_capi_image(conn, patch)
@@ -523,6 +533,15 @@ def main():
             " downloaded locally since they ship as tar.xz archives."
         ),
     )
+    parser.add_argument(
+        "--no-gardener-suffix",
+        action="store_true",
+        help=(
+            "Use the CAPI image without the '-gardener' filename suffix"
+            " (e.g. ubuntu-2404-kube-v1.35.6.qcow2 instead of"
+            " ubuntu-2404-kube-v1.35.6-gardener.qcow2). Default: with suffix."
+        ),
+    )
     args = parser.parse_args()
 
     if args.insecure:
@@ -554,6 +573,7 @@ def main():
                 args.ubuntu_version,
                 args.dry_run,
                 web_download=not args.no_web_download,
+                gardener_suffix=not args.no_gardener_suffix,
             )
         )
 

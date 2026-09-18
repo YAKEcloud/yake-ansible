@@ -630,12 +630,10 @@ def main():
         )
 
     print("\n=== Summary ===")
+    name_width = max((len(name) for name, _ in results), default=0)
     for name, image_id in results:
-        if image_id:
-            print(f"  {name}")
-            print(f"    ID: {image_id}")
-        else:
-            print(f"  {name}  — not uploaded (error or dry-run)")
+        label = image_id if image_id else "— not uploaded (error or dry-run)"
+        print(f"  {name:<{name_width}}  {label}")
 
 
 if __name__ == "__main__":

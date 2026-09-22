@@ -2,11 +2,15 @@
 """
 Sync CAPI and GardenLinux images to OpenStack Glance.
 
-CAPI images (Gardener variant):
+CAPI images:
   Pulled from https://nbg1.your-objectstorage.com/osism/openstack-k8s-capi-images/
-  One image per Kubernetes patch version (e.g. v1.35.4). The source filename
-  carries a '-gardener' suffix by default (e.g. v1.35.6-gardener.qcow2); use
-  --no-gardener-suffix for the plain variant without it.
+  One image per Kubernetes patch version (e.g. v1.35.4), which is
+  create-once and never overwritten upstream — unlike the unversioned
+  series file (v1.35.qcow2), which is silently replaced on every publish.
+  --k8s-version accepts either a full patch (1.35.4) or a bare minor
+  (1.35); a bare minor is resolved to its current patch via the series'
+  'last-X' pointer file before anything is named or uploaded, so the
+  Glance image is always named after a concrete, stable patch version.
   Imported into Glance via the 'web-download' method by default, so
   OpenStack downloads the qcow2 directly — use --no-web-download to
   download it locally first instead.
@@ -29,7 +33,7 @@ Usage:
   python3 update-images.py --skip-gardenlinux --k8s-version 1.35.4
   python3 update-images.py --gardenlinux-version 2150.3.0
   python3 update-images.py --no-web-download --k8s-version 1.35.4
-  python3 update-images.py --no-gardener-suffix --k8s-version 1.35.4
+  python3 update-images.py --k8s-version 1.35   # resolves current patch, e.g. 1.35.8
   python3 update-images.py --dry-run
 """
 
@@ -43,6 +47,7 @@ from pathlib import Path
 
 try:
     import openstack
+    from keystoneauth1.exceptions.connection import ConnectionError as OSConnectionError
 except ImportError:
     sys.exit("Missing dependency: pip install openstacksdk")
 
@@ -77,22 +82,18 @@ def _short_gl_version(version):
     return version
 
 
-def find_capi_image(conn, patch_version, gardener_suffix=True):
+def find_capi_image(conn, patch_version):
     """
     Look for an existing CAPI image using three strategies, in order:
-      1. Exact Glance name match  (ubuntu-capi-image-v1.35.4[-gardener])
+      1. Exact Glance name match  (ubuntu-capi-image-v1.35.4)
       2. Custom property 'kube_version' set by this script on previous uploads
       3. Fuzzy name scan — finds images uploaded manually under any name,
-         as long as 'capi' and 'v<patch>[-gardener]' appear somewhere in the
-         image name. When looking for the plain (non-suffixed) variant,
-         images with a 'gardener' in their name are excluded so the two
-         variants never match each other.
+         as long as 'capi' and 'v<patch>' appear somewhere in the image name.
     Returns (image, strategy_description) or (None, None).
     """
     patch = patch_version.lstrip("v")
-    suffix = "-gardener" if gardener_suffix else ""
-    canonical_name = f"ubuntu-capi-image-v{patch}{suffix}"
-    kube_version = f"v{patch}{suffix}"
+    canonical_name = f"ubuntu-capi-image-v{patch}"
+    kube_version = f"v{patch}"
 
     # 1. Exact name
     hits = list(conn.image.images(name=canonical_name))
@@ -108,18 +109,28 @@ def find_capi_image(conn, patch_version, gardener_suffix=True):
     # 3. Fuzzy name scan
     for img in conn.image.images():
         name_lower = (img.name or "").lower()
-        if "capi" not in name_lower or f"v{patch}" not in name_lower:
-            continue
-        if gardener_suffix:
-            if "gardener" in name_lower:
-                return img, (
-                    f"fuzzy name match ('capi' + 'v{patch}-gardener'"
-                    f" in '{img.name}')"
-                )
-        elif "gardener" not in name_lower:
-            return img, (f"fuzzy name match ('capi' + 'v{patch}' in '{img.name}')")
+        if "capi" in name_lower and f"v{patch}" in name_lower:
+            return img, f"fuzzy name match ('capi' + 'v{patch}' in '{img.name}')"
 
     return None, None
+
+
+def resolve_capi_patch_version(minor):
+    """Resolve a bare minor version (e.g. '1.36') to its current patch (e.g.
+    '1.36.4') via the series' 'last-X' pointer file, which osism updates on
+    every publish. Returns the patch version, e.g. '1.36.4'.
+    """
+    url = f"{CAPI_BASE_URL}/last-{minor}"
+    resp = requests.get(url, timeout=30)
+    resp.raise_for_status()
+    # format: "YYYY-MM-DD ubuntu-2404-kube-vX.YY/ubuntu-2404-kube-vX.YY.Z.qcow2"
+    line = resp.text.strip()
+    try:
+        path = line.split(maxsplit=1)[1]
+        patch = Path(path).stem.rsplit("-v", 1)[-1]
+    except (IndexError, ValueError) as exc:
+        raise RuntimeError(f"Could not parse pointer file '{url}': {line!r}") from exc
+    return patch
 
 
 def find_gardenlinux_image(conn, version):
@@ -164,10 +175,36 @@ def find_gardenlinux_image(conn, version):
     return None, None
 
 
+def _get_image_resilient(conn, image_id, max_retries=5):
+    """conn.image.get_image(), retrying transient connection drops.
+
+    Long-running web-download imports get polled for up to an hour; the
+    Glance API connection occasionally resets mid-poll, which shouldn't
+    abort an otherwise-healthy import.
+    """
+    for attempt in range(1, max_retries + 1):
+        try:
+            return conn.image.get_image(image_id)
+        except (
+            OSConnectionError,
+            requests.exceptions.ConnectionError,
+            requests.exceptions.Timeout,
+        ) as exc:
+            if attempt == max_retries:
+                raise
+            wait = min(30, 2**attempt)
+            print(
+                f"      connection hiccup polling image status"
+                f" (attempt {attempt}/{max_retries}): {exc} — retrying in {wait}s"
+            )
+            time.sleep(wait)
+    raise RuntimeError(f"Unable to fetch image {image_id} after {max_retries} attempts")
+
+
 def _wait_for_active(conn, image_id, timeout=3600):
     deadline = time.time() + timeout
     while time.time() < deadline:
-        img = conn.image.get_image(image_id)
+        img = _get_image_resilient(conn, image_id)
         if img.status == "active":
             return img
         if img.status in ("killed", "deleted"):
@@ -203,7 +240,7 @@ def _wait_for_import(conn, image_id, total_size=None, timeout=3600, poll_interva
     deadline = start + timeout
     last_status = None
     while time.time() < deadline:
-        img = conn.image.get_image(image_id)
+        img = _get_image_resilient(conn, image_id)
         elapsed = int(time.time() - start)
         progress = ""
         if total_size and img.size:
@@ -315,22 +352,31 @@ def sync_capi_image(
     ubuntu_version="2404",
     dry_run=False,
     web_download=True,
-    gardener_suffix=True,
 ):
-    print("\n=== CAPI Image (Gardener variant) ===")
+    print("\n=== CAPI Image ===")
 
-    patch = k8s_version.lstrip("v")  # e.g. "1.35.4"
-    minor = ".".join(patch.split(".")[:2])  # e.g. "1.35"
-    # Directory, filename and Glance name all carry the '-gardener' suffix
-    # depending on the image variant, so the two variants never collide.
-    suffix = "-gardener" if gardener_suffix else ""
-    canonical_name = f"ubuntu-capi-image-v{patch}{suffix}"
-    url = (
-        f"{CAPI_BASE_URL}/ubuntu-{ubuntu_version}-kube-v{minor}{suffix}"
-        f"/ubuntu-{ubuntu_version}-kube-v{patch}{suffix}.qcow2"
-    )
+    version = k8s_version.lstrip("v")
+    if version.count(".") < 2:
+        # Bare minor: resolve the current patch for naming/dedup, but still
+        # download the series file — it's rebuilt (and overwritten) on every
+        # publish, including image-only fixes that don't bump the patch, so
+        # it's the only URL that's guaranteed to be current. The create-once
+        # per-patch file can lag behind it.
+        minor = version
+        print(f"  Resolving current patch for series v{minor} ...")
+        patch = resolve_capi_patch_version(minor)
+        print(f"  Resolved: v{minor} → v{patch}")
+        filename = f"ubuntu-{ubuntu_version}-kube-v{minor}.qcow2"
+    else:
+        # Exact patch requested: fetch that immutable, create-once file.
+        patch = version
+        minor = ".".join(patch.split(".")[:2])
+        filename = f"ubuntu-{ubuntu_version}-kube-v{patch}.qcow2"
 
-    existing, strategy = find_capi_image(conn, patch, gardener_suffix)
+    canonical_name = f"ubuntu-capi-image-v{patch}"
+    url = f"{CAPI_BASE_URL}/ubuntu-{ubuntu_version}-kube-v{minor}/{filename}"
+
+    existing, strategy = find_capi_image(conn, patch)
     if existing:
         print(
             f"  [SKIP]   {canonical_name}" f"  — found via {strategy}  ({existing.id})"
@@ -345,7 +391,7 @@ def sync_capi_image(
     extra_props = {
         "os_purpose": "k8snode",
         "os_distro": "ubuntu",
-        "kube_version": f"v{patch}{suffix}",
+        "kube_version": f"v{patch}",
         "image_description": ("https://github.com/osism/k8s-capi-images"),
         "image_source": url,
     }
@@ -534,11 +580,12 @@ def main():
     )
     parser.add_argument(
         "--k8s-version",
-        metavar="X.Y.Z",
+        metavar="X.Y[.Z]",
         default=None,
         help=(
-            "Kubernetes patch version for the CAPI image, e.g. 1.35.4"
-            " (required unless --skip-capi)"
+            "Kubernetes version for the CAPI image: a full patch (1.35.4)"
+            " or a bare minor (1.35), which is resolved to its current"
+            " patch automatically (required unless --skip-capi)"
         ),
     )
     parser.add_argument(
@@ -580,15 +627,6 @@ def main():
             " downloaded locally since they ship as tar.xz archives."
         ),
     )
-    parser.add_argument(
-        "--no-gardener-suffix",
-        action="store_true",
-        help=(
-            "Use the CAPI image without the '-gardener' filename suffix"
-            " (e.g. ubuntu-2404-kube-v1.35.6.qcow2 instead of"
-            " ubuntu-2404-kube-v1.35.6-gardener.qcow2). Default: with suffix."
-        ),
-    )
     args = parser.parse_args()
 
     if args.insecure:
@@ -620,7 +658,6 @@ def main():
                 args.ubuntu_version,
                 args.dry_run,
                 web_download=not args.no_web_download,
-                gardener_suffix=not args.no_gardener_suffix,
             )
         )
 

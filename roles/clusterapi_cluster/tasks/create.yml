@@ -210,19 +210,6 @@
   when: clusterapi_cluster_hosts_entries | d([]) | length > 0
   changed_when: false
 
-- name: Set CCM resource requests and limits
-  ansible.builtin.shell:
-    cmd: |
-      set -o pipefail
-      yq -yi '
-        if .kind == "DaemonSet" then
-          (.spec.template.spec.containers[] | select(.name=="openstack-cloud-controller-manager")).resources =
-            {"requests": {"cpu": "200m", "memory": "128Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}}
-        else . end
-      ' /var/lib/yake/openstack-cloud-controller-manager-ds.yaml
-    executable: /bin/bash
-  changed_when: false
-
 - name: Apply CCM manifests
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
@@ -303,46 +290,11 @@
   when: not clusterapi_cluster_csi_snapshotter_enabled | bool
   changed_when: false
 
-- name: Configure CSI controller plugin HA and resources
+- name: Configure CSI controller plugin HA
   ansible.builtin.shell:
     cmd: |
       set -o pipefail
-      yq -yi '
-        .spec.replicas = 2 |
-        .spec.template.spec.topologySpreadConstraints = [{
-          "maxSkew": 1,
-          "topologyKey": "kubernetes.io/hostname",
-          "whenUnsatisfiable": "ScheduleAnyway",
-          "labelSelector": {"matchLabels": {"app": "csi-cinder-controllerplugin"}}
-        }] |
-        (.spec.template.spec.containers[] | select(.name=="csi-attacher")).resources =
-          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
-        (.spec.template.spec.containers[] | select(.name=="csi-provisioner")).resources =
-          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
-        (.spec.template.spec.containers[] | select(.name=="csi-snapshotter")).resources =
-          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
-        (.spec.template.spec.containers[] | select(.name=="csi-resizer")).resources =
-          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
-        (.spec.template.spec.containers[] | select(.name=="liveness-probe")).resources =
-          {"requests": {"cpu": "10m", "memory": "16Mi"}, "limits": {"cpu": "50m", "memory": "64Mi"}} |
-        (.spec.template.spec.containers[] | select(.name=="cinder-csi-plugin")).resources =
-          {"requests": {"cpu": "100m", "memory": "128Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}}
-      ' /var/lib/yake/cinder-csi-controllerplugin.yaml
-    executable: /bin/bash
-  changed_when: false
-
-- name: Set CSI node plugin resource requests and limits
-  ansible.builtin.shell:
-    cmd: |
-      set -o pipefail
-      yq -yi '
-        (.spec.template.spec.containers[] | select(.name=="node-driver-registrar")).resources =
-          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
-        (.spec.template.spec.containers[] | select(.name=="liveness-probe")).resources =
-          {"requests": {"cpu": "10m", "memory": "16Mi"}, "limits": {"cpu": "50m", "memory": "64Mi"}} |
-        (.spec.template.spec.containers[] | select(.name=="cinder-csi-plugin")).resources =
-          {"requests": {"cpu": "100m", "memory": "128Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}}
-      ' /var/lib/yake/cinder-csi-nodeplugin.yaml
+      yq -yi '.spec.replicas = 2' /var/lib/yake/cinder-csi-controllerplugin.yaml
     executable: /bin/bash
   changed_when: false
 

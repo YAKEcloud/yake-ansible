@@ -40,6 +40,12 @@ config:
 {{ gardener_operator_dex.connectors | to_nice_yaml(indent=2) | indent(4, true) }}
 {% endif %}
 
+replicaCount: 2
+
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+
 podLabels:
   networking.gardener.cloud/to-dns: allowed
   networking.gardener.cloud/to-runtime-apiserver: allowed

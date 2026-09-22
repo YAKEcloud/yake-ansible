@@ -121,23 +121,53 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 
 Before tearing down the management cluster, the Garden and any ManagedSeed shoots must be deleted explicitly. Deleting the underlying cluster first leaves the Garden's cloud resources (DNS records, volumes, load balancers, backup buckets) orphaned in OpenStack, and the `Garden`/`Shoot` deletion webhooks require an explicit confirmation annotation anyway.
 
-Order: managed-seed shoots first (the Garden cannot be deleted while seeds/shoots still exist), then the Garden, then the underlying cluster.
+Order: managed-seed shoots first, then the `internal-seed` gardenlet, then the Garden, then the
+underlying cluster. Each step targets a different API, so extract the virtual garden kubeconfig
+first if you don't already have it (see [Accessing Clusters](#accessing-clusters)):
 
 ```bash
-export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
+export KUBECONFIG=/var/lib/yake/kubeconfig.garden
+kubectl get secret gardener -n garden -o jsonpath='{.data.kubeconfig}' \
+  | base64 -d > /var/lib/yake/gardener-operator/kubeconfig.vgarden
+```
 
-# 1. Delete each managed-seed shoot
-./.local/yake-kubectl -n garden annotate shoot <SHOOT_NAME> confirmation.gardener.cloud/deletion=true --overwrite
-./.local/yake-kubectl -n garden delete shoot <SHOOT_NAME>
+**1. Delete each managed-seed shoot** — `managedseed`/`shoot` are Gardener API resources, so this
+goes against the virtual garden:
+
+```bash
+export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
+./.local/yake-kubectl -n garden delete managedseed managed-seed-a
+./.local/yake-kubectl -n garden annotate shoot managed-seed-a confirmation.gardener.cloud/deletion=true --overwrite
+./.local/yake-kubectl -n garden delete shoot managed-seed-a
 # wait until the shoot is fully gone before continuing
+```
 
-# 2. Delete the Garden
+**2. Delete the `internal-seed` gardenlet** — also a virtual garden resource. Unlike
+`managed-seed-a`, whose seed registration goes away with the `ManagedSeed` in step 1,
+`internal-seed`'s `Gardenlet` is applied independently and isn't a child of the `Garden`
+resource — deleting `Garden` alone won't remove it, so it needs this separate step. It also fails
+as long as any shoot's `spec.seedName` still points at `internal-seed`, which is why it comes
+after step 1 (this is standard Gardener seed-deletion behavior, not something enforced by this
+repo):
+
+```bash
+export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
+./.local/yake-kubectl -n garden delete gardenlet internal-seed
+# wait until the seed is fully gone before continuing
+./.local/yake-kubectl get seed internal-seed
+```
+
+**3. Delete the Garden** — `Garden` is reconciled by gardener-operator running on the garden
+cluster itself, so this uses that cluster's own kubeconfig, not the virtual garden:
+
+```bash
+export KUBECONFIG=/var/lib/yake/kubeconfig.garden
 ./.local/yake-kubectl annotate garden gardener confirmation.gardener.cloud/deletion=true --overwrite
 ./.local/yake-kubectl delete garden gardener
 # wait until the Garden is fully gone before tearing down the cluster
 ```
 
-Only once both steps above have completed should the management cluster itself be torn down (see below).
+Only once all three steps above have completed should the management cluster itself be torn down (see below).
 
 ### Full Teardown
 
@@ -146,6 +176,7 @@ Only once both steps above have completed should the management cluster itself b
 ```bash
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 ./.local/yake-kubectl delete cluster garden
+./.local/yake-kubectl wait --for=delete cluster/garden --timeout=30m
 ./.local/yake-kind delete cluster --name clusterapi
 docker rm -f $(docker ps -qa)
 sudo rm -rf /var/lib/yake/
@@ -156,9 +187,15 @@ sudo rm -rf /var/lib/yake/
 ```bash
 export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 ./.local/yake-kubectl delete cluster garden
+./.local/yake-kubectl wait --for=delete cluster/garden --timeout=30m
 sudo /usr/local/bin/k3s-uninstall.sh
 sudo rm -rf /var/lib/yake/
 ```
+
+The `wait` step matters: `capo-controller-manager`, which actually deprovisions the garden
+cluster's OpenStack nodes and load balancer, runs *on the management cluster itself*. Tearing
+down the management cluster (kind/k3s) before the `Cluster` object has finished deleting kills
+the controller mid-reconciliation and leaves those OpenStack resources behind.
 
 ### OpenStack Resource Cleanup
 
@@ -169,6 +206,14 @@ Review the variables in the playbook before running it, as some resources may be
 ```bash
 ansible-playbook -i localhost, -c local cleanup.yml
 ```
+
+This is a project-wide sweep, not scoped to a specific Shoot or Cluster — it removes matching
+resources regardless of what created them (garden cluster, a managed seed's own worker nodes, or
+anything else in the project). It's the practical fallback if the graceful teardown above was
+skipped, interrupted, or left something behind (e.g. a stuck finalizer): rather than tracking down
+every orphaned resource by hand, re-running `cleanup.yml` reclaims it. Only skip the graceful
+`Garden`/`ManagedSeed` teardown steps entirely and rely on this instead when the OpenStack project
+is dedicated to this environment (e.g. ephemeral CI runs) and nothing else in it needs to survive.
 
 ## Troubleshooting
 

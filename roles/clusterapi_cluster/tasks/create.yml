@@ -210,6 +210,19 @@
   when: clusterapi_cluster_hosts_entries | d([]) | length > 0
   changed_when: false
 
+- name: Set CCM resource requests and limits
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      yq -yi '
+        if .kind == "DaemonSet" then
+          (.spec.template.spec.containers[] | select(.name=="openstack-cloud-controller-manager")).resources =
+            {"requests": {"cpu": "200m", "memory": "128Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}}
+        else . end
+      ' /var/lib/yake/openstack-cloud-controller-manager-ds.yaml
+    executable: /bin/bash
+  changed_when: false
+
 - name: Apply CCM manifests
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
@@ -244,6 +257,20 @@
   retries: 30
   delay: 10
 
+- name: Deploy metrics-server
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    release_name: metrics-server
+    chart_ref: metrics-server
+    chart_repo_url: https://kubernetes-sigs.github.io/metrics-server/
+    chart_version: "{{ clusterapi_cluster_metrics_server_version }}"
+    release_namespace: kube-system
+    create_namespace: true
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    wait: true
+    values: "{{ clusterapi_cluster_metrics_server_helm_values }}"
+  environment: "{{ clusterapi_cluster_proxy_env }}"
+
 - name: Copy CSI manifests
   ansible.builtin.copy:
     src: "cinder-csi/{{ item }}"
@@ -274,6 +301,49 @@
       yq -yi '.spec.template.spec.containers |= map(select(.name != "csi-snapshotter"))' /var/lib/yake/cinder-csi-controllerplugin.yaml
     executable: /bin/bash
   when: not clusterapi_cluster_csi_snapshotter_enabled | bool
+  changed_when: false
+
+- name: Configure CSI controller plugin HA and resources
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      yq -yi '
+        .spec.replicas = 2 |
+        .spec.template.spec.topologySpreadConstraints = [{
+          "maxSkew": 1,
+          "topologyKey": "kubernetes.io/hostname",
+          "whenUnsatisfiable": "ScheduleAnyway",
+          "labelSelector": {"matchLabels": {"app": "csi-cinder-controllerplugin"}}
+        }] |
+        (.spec.template.spec.containers[] | select(.name=="csi-attacher")).resources =
+          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
+        (.spec.template.spec.containers[] | select(.name=="csi-provisioner")).resources =
+          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
+        (.spec.template.spec.containers[] | select(.name=="csi-snapshotter")).resources =
+          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
+        (.spec.template.spec.containers[] | select(.name=="csi-resizer")).resources =
+          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
+        (.spec.template.spec.containers[] | select(.name=="liveness-probe")).resources =
+          {"requests": {"cpu": "10m", "memory": "16Mi"}, "limits": {"cpu": "50m", "memory": "64Mi"}} |
+        (.spec.template.spec.containers[] | select(.name=="cinder-csi-plugin")).resources =
+          {"requests": {"cpu": "100m", "memory": "128Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}}
+      ' /var/lib/yake/cinder-csi-controllerplugin.yaml
+    executable: /bin/bash
+  changed_when: false
+
+- name: Set CSI node plugin resource requests and limits
+  ansible.builtin.shell:
+    cmd: |
+      set -o pipefail
+      yq -yi '
+        (.spec.template.spec.containers[] | select(.name=="node-driver-registrar")).resources =
+          {"requests": {"cpu": "10m", "memory": "32Mi"}, "limits": {"cpu": "100m", "memory": "128Mi"}} |
+        (.spec.template.spec.containers[] | select(.name=="liveness-probe")).resources =
+          {"requests": {"cpu": "10m", "memory": "16Mi"}, "limits": {"cpu": "50m", "memory": "64Mi"}} |
+        (.spec.template.spec.containers[] | select(.name=="cinder-csi-plugin")).resources =
+          {"requests": {"cpu": "100m", "memory": "128Mi"}, "limits": {"cpu": "500m", "memory": "512Mi"}}
+      ' /var/lib/yake/cinder-csi-nodeplugin.yaml
+    executable: /bin/bash
   changed_when: false
 
 - name: Apply CSI manifests
@@ -315,3 +385,19 @@
     )
   retries: 30
   delay: 10
+
+- name: Create PodDisruptionBudget for CSI controller plugin
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+    state: present
+    definition:
+      apiVersion: policy/v1
+      kind: PodDisruptionBudget
+      metadata:
+        name: csi-cinder-controllerplugin
+        namespace: kube-system
+      spec:
+        minAvailable: 1
+        selector:
+          matchLabels:
+            app: csi-cinder-controllerplugin

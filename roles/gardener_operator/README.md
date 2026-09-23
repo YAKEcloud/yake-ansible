@@ -70,6 +70,7 @@ Key fields per profile:
 | Field | Description |
 |-------|-------------|
 | `name` | Cloud profile name. |
+| `ignore_volume_az` | Set to `true` when the Cinder volume availability zone differs from the Nova compute availability zone (e.g., compute in `AZ1`, volumes in `nova`). Without this, dynamic volume provisioning for shoot/seed control planes (e.g. etcd) fails with `Availability zone '<compute-az>' is invalid` because the CSI driver otherwise derives the volume AZ from the node's compute AZ. Defaults to `false`. |
 | `storageclasses` | Cinder storage classes with type, availability zone, and optional default flag. |
 | `floating_pools` | List of floating pool names available for shoot load balancers. |
 | `loadbalancer_providers` | List of available load balancer providers (e.g., `amphora`, `ovn`). |

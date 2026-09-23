@@ -8,6 +8,7 @@ spec:
   providerConfig:
     apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
     kind: CloudProfileConfig
+    ignoreVolumeAZ: {{ item.ignore_volume_az | d(false) | lower }}
     storageClasses:
 {% for sc in item.storageclasses %}
       - name: {{ sc.name }}
@@ -15,7 +16,9 @@ spec:
         provisioner: cinder.csi.openstack.org
         volumeBindingMode: WaitForFirstConsumer
         parameters:
+{% if sc.type is defined and sc.type %}
           type: {{ sc.type }}
+{% endif %}
           availability: {{ sc.availability }}
 {% endfor %}
     constraints:
@@ -73,11 +76,15 @@ spec:
       gpu: {{ mt.gpu }}
       memory: {{ mt.memory }}
 {% endfor %}
+{% if item.storageclasses | selectattr('type', 'defined') | selectattr('type') | list %}
   volumeTypes:
 {% for sc in item.storageclasses %}
+{% if sc.type is defined and sc.type %}
     - name: {{ sc.type }}
       class: {{ sc.name }}
+{% endif %}
 {% endfor %}
+{% endif %}
   regions:
 {% for region in item.regions %}
     - name: {{ region.name }}

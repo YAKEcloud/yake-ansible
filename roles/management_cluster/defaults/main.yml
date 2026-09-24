@@ -9,7 +9,7 @@ management_cluster_name: clusterapi
 management_cluster_kubeconfig: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
 
 # renovate: datasource=github-releases depName=k3s-io/k3s
-management_cluster_k3s_version: '1.35.1'
+management_cluster_k3s_version: '1.37.0'
 management_cluster_k3s_env:
   INSTALL_K3S_VERSION: "v{{ management_cluster_k3s_version }}+k3s1"
   INSTALL_K3S_EXEC: "--disable=metrics-server"

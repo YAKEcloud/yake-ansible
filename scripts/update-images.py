@@ -201,18 +201,6 @@ def _get_image_resilient(conn, image_id, max_retries=5):
     raise RuntimeError(f"Unable to fetch image {image_id} after {max_retries} attempts")
 
 
-def _wait_for_active(conn, image_id, timeout=3600):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
-        img = _get_image_resilient(conn, image_id)
-        if img.status == "active":
-            return img
-        if img.status in ("killed", "deleted"):
-            raise RuntimeError(f"Image {image_id} ended up in status '{img.status}'")
-        time.sleep(15)
-    raise TimeoutError(f"Image {image_id} did not become active within {timeout}s")
-
-
 def _human_size(num_bytes):
     if not num_bytes:
         return "unknown size"
@@ -320,9 +308,15 @@ def upload_from_file(conn, name, path, disk_format="qcow2", extra_props=None):
             min_disk=20,
             min_ram=512,
             **(extra_props or {}),
-            data=_ProgressReader(fh, pbar),
         )
-    return _wait_for_active(conn, image.id)
+        if not conn.image.stage_image(
+            image,
+            data=_ProgressReader(fh, pbar),
+        ):
+            raise RuntimeError(f"Failure staging image data for image {image.id}")
+
+        conn.image.import_image(image, method="glance-direct")
+    return _wait_for_import(conn, image.id)
 
 
 def download_file(url, dest, label=""):
@@ -384,7 +378,9 @@ def sync_capi_image(
         return canonical_name, existing.id
 
     if dry_run:
-        method = "web-download import" if web_download else "download and upload"
+        method = (
+            "web-download import" if web_download else "download, upload and import"
+        )
         print(f"  [DRY-RUN] would {method} {canonical_name}" f"  from {url}")
         return canonical_name, None
 

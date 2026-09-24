@@ -10,9 +10,7 @@
   "platformAutomerge": true,
   "separateMinorPatch": true,
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
-  "ignorePaths": ["charts/**"],
   "packageRules": [
-    {"matchFileNames": ["^.charts.yml"], "versioning": "loose"},
     {
       "groupName": "kind and kindest/node",
       "description": "kind CLI and kindest/node must stay on compatible kubeadm config versions; bump together.",
@@ -23,40 +21,11 @@
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^roles\\/gardener_operator\\/defaults\\/main\\.yml$/"
-      ],
-      "matchStrings": [
-        "gardener_operator_keycloak_cnpg_version: '(?<currentValue>.*?)'"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "cloudnative-pg/charts",
-      "extractVersionTemplate": "cloudnative-pg-(?<version>\\d+\\.\\d+\\.\\d+)",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
-        "/^roles\\/gardener_operator\\/defaults\\/main\\.yml$/"
-      ],
-      "matchStrings": [
-        "gardener_operator_keycloak_cnpg_cluster_version: '(?<currentValue>.*?)'"
-      ],
-      "datasourceTemplate": "github-releases",
-      "depNameTemplate": "cloudnative-pg/charts",
-      "extractVersionTemplate": "cluster-v(?<version>\\d+\\.\\d+\\.\\d+)",
-      "versioningTemplate": "semver"
-    },
-    {
-      "customType": "regex",
-      "managerFilePatterns": [
         "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
         "/^roles\\/helm_install\\/defaults\\/main.yml$/",
-        "/^roles\\/kind_install\\/defaults\\/main.yml$/",
         "/^roles\\/kubectl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/kind_cluster\\/defaults\\/main.yml$/",
         "/^group_vars\\/all\\.yml\\.example/",
         "/^roles\\/clusterapi_cluster\\/defaults\\/main.yml$/",
-        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
         "/^roles\\/gardener_operator\\/defaults\\/main.yml$/",
         "/^roles\\/management_cluster\\/defaults\\/main.yml$/"
       ],
@@ -68,12 +37,12 @@
       "customType": "regex",
       "managerFilePatterns": ["/^\\.github\\/workflows\\/build-.*\\.yml/"],
       "matchStrings": [
-        "- (?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
+        "version: (?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
       ]
     },
     {
       "customType": "regex",
-      "managerFilePatterns": ["/^Giltfile.yaml/", "/^.charts.yml/"],
+      "managerFilePatterns": ["/^Giltfile.yaml/"],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n.*?version: '(?<currentValue>.*?)'"
       ]
@@ -82,9 +51,7 @@
       "customType": "regex",
       "managerFilePatterns": [
         "/^images\\/clusterctl\\/Containerfile$/",
-        "/^images\\/flux\\/Containerfile$/",
         "/^images\\/helm\\/Containerfile$/",
-        "/^images\\/k9s\\/Containerfile$/",
         "/^images\\/kind\\/Containerfile$/",
         "/^images\\/kubectl\\/Containerfile$/"
       ],

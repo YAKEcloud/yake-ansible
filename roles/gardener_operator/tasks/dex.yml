@@ -63,13 +63,13 @@
           - Egress
         egress:
           - to:
-            - namespaceSelector:
-                matchLabels:
-                  kubernetes.io/metadata.name: garden
-              podSelector:
-                matchLabels:
-                  app.kubernetes.io/name: dex
-                  app.kubernetes.io/instance: identity
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: garden
+                podSelector:
+                  matchLabels:
+                    app.kubernetes.io/name: dex
+                    app.kubernetes.io/instance: identity
             ports:
               - port: 5556
                 protocol: TCP

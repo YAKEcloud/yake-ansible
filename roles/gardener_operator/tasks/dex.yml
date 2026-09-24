@@ -14,7 +14,7 @@
     group: "{{ gardener_operator_gid }}"
     mode: 0644
 
-- name: Allow nginx egress to Dex
+- name: Allow ingress from the garden Istio ingressgateway to Dex
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     state: present
@@ -22,26 +22,29 @@
       apiVersion: networking.k8s.io/v1
       kind: NetworkPolicy
       metadata:
-        name: allow-nginx-egress-to-dex
+        name: ingress-to-identity-dex-tcp-5556-from-virtual-garden-istio-ingress
         namespace: garden
       spec:
         podSelector:
           matchLabels:
-            app: nginx-ingress
-            component: controller
+            app.kubernetes.io/name: dex
+            app.kubernetes.io/instance: identity
         policyTypes:
-          - Egress
-        egress:
-          - to:
-              - podSelector:
+          - Ingress
+        ingress:
+          - from:
+              - namespaceSelector:
                   matchLabels:
-                    app.kubernetes.io/name: dex
-                    app.kubernetes.io/instance: identity
+                    kubernetes.io/metadata.name: virtual-garden-istio-ingress
+                podSelector:
+                  matchLabels:
+                    istio: ingressgateway
+                    istio-role: garden
             ports:
               - port: 5556
                 protocol: TCP
 
-- name: Allow all egress for gardener dashboard
+- name: Allow egress from the garden Istio ingressgateway to Dex
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     state: present
@@ -49,38 +52,46 @@
       apiVersion: networking.k8s.io/v1
       kind: NetworkPolicy
       metadata:
-        name: allow-all-egress-for-dashboard
-        namespace: garden
+        name: egress-to-identity-dex-tcp-5556-from-virtual-garden-istio-ingress
+        namespace: virtual-garden-istio-ingress
       spec:
         podSelector:
           matchLabels:
-            app: gardener
-            role: dashboard
-        egress:
-          - {}
+            istio: ingressgateway
+            istio-role: garden
         policyTypes:
           - Egress
-  register: dashboard_netpol  # noqa: var-naming[no-role-prefix]
-  notify: Restart gardener dashboard
+        egress:
+          - to:
+            - namespaceSelector:
+                matchLabels:
+                  kubernetes.io/metadata.name: garden
+              podSelector:
+                matchLabels:
+                  app.kubernetes.io/name: dex
+                  app.kubernetes.io/instance: identity
+            ports:
+              - port: 5556
+                protocol: TCP
 
-- name: Allow kube-apiserver egress to Dex
-  kubernetes.core.k8s:
+- name: Install reflector
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-    state: present
-    definition:
-      apiVersion: networking.k8s.io/v1
-      kind: NetworkPolicy
-      metadata:
-        name: allow-all-egress-for-kube-apiserver
-        namespace: garden
-      spec:
-        podSelector:
-          matchLabels:
-            role: apiserver
-        egress:
-          - {}
-        policyTypes:
-          - Egress
+    chart_ref: oci://ghcr.io/emberstack/helm-charts/reflector
+    chart_version: "{{ gardener_operator_reflector_version }}"
+    release_name: reflector
+    release_namespace: kube-system
+    release_state: present
+    wait: true
+    values:
+      resources:
+        requests:
+          cpu: 10m
+          memory: 64Mi
+        limits:
+          memory: 256Mi
+  environment: "{{ gardener_operator_proxy_env }}"
 
 - name: Install dex
   kubernetes.core.helm:
@@ -97,3 +108,80 @@
     values_files:
       - /var/lib/yake/gardener-operator/dex-values.yaml
   environment: "{{ gardener_operator_proxy_env }}"
+
+- name: Allow reflector to mirror the garden wildcard TLS secret
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      metadata:
+        name: tls
+        namespace: garden
+        annotations:
+          reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+          reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: virtual-garden-istio-ingress
+
+- name: Mirror the wildcard TLS secret for the Dex Istio gateway
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition:
+      apiVersion: v1
+      kind: Secret
+      type: Opaque
+      metadata:
+        name: identity-dex-tls
+        namespace: virtual-garden-istio-ingress
+        annotations:
+          reflector.v1.k8s.emberstack.com/reflects: garden/tls
+
+- name: Expose Dex via the garden Istio ingressgateway
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition:
+      apiVersion: networking.istio.io/v1
+      kind: Gateway
+      metadata:
+        name: identity-dex
+        namespace: garden
+      spec:
+        selector:
+          istio: ingressgateway
+          istio-role: garden
+        servers:
+          - hosts:
+              - "identity.{{ gardener_operator_garden_url }}"
+            port:
+              name: tls
+              number: 443
+              protocol: HTTPS
+            tls:
+              mode: SIMPLE
+              credentialName: identity-dex-tls
+
+- name: Route the garden Istio ingressgateway to Dex
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition:
+      apiVersion: networking.istio.io/v1
+      kind: VirtualService
+      metadata:
+        name: identity-dex
+        namespace: garden
+      spec:
+        exportTo:
+          - virtual-garden-istio-ingress
+        gateways:
+          - identity-dex
+        hosts:
+          - "identity.{{ gardener_operator_garden_url }}"
+        http:
+          - route:
+              - destination:
+                  host: identity-dex.garden.svc.cluster.local
+                  port:
+                    number: 5556

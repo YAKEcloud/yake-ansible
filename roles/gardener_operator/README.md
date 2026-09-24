@@ -18,6 +18,13 @@ This role deploys the Gardener Operator on an existing Kubernetes cluster and co
 - OpenStack Designate (or another supported DNS provider) with a zone that matches `gardener_operator_garden_url`.
 - Machine images uploaded to Glance for all configured cloud profiles.
 
+> [!NOTE]
+> Since Gardener v1.142.0, nginx-ingress is no longer deployed into the garden runtime
+> cluster; Gardener's own components are exposed through the shared Istio ingressgateway
+> (`Gateway`/`VirtualService`/`DestinationRule` in the `garden` namespace) instead. Dex is
+> not a Gardener component and is therefore exposed the same way by this role (see
+> `roles/gardener_operator/tasks/dex.yml`), not via a Kubernetes `Ingress`.
+
 ## Variables
 
 ### Core

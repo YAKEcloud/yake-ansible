@@ -74,6 +74,35 @@
               - port: 5556
                 protocol: TCP
 
+- name: Allow kube-apiserver egress to the garden Istio ingressgateway
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition:
+      apiVersion: networking.k8s.io/v1
+      kind: NetworkPolicy
+      metadata:
+        name: egress-to-istio-ingressgateway-tcp-9443-from-kube-apiserver
+        namespace: garden
+      spec:
+        podSelector:
+          matchLabels:
+            role: apiserver
+        policyTypes:
+          - Egress
+        egress:
+          - to:
+              - namespaceSelector:
+                  matchLabels:
+                    kubernetes.io/metadata.name: virtual-garden-istio-ingress
+                podSelector:
+                  matchLabels:
+                    istio: ingressgateway
+                    istio-role: garden
+            ports:
+              - port: 9443
+                protocol: TCP
+
 - name: Install reflector
   kubernetes.core.helm:
     binary_path: "{{ playbook_dir }}/.local/yake-helm"

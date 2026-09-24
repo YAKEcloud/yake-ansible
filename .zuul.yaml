@@ -53,24 +53,6 @@
       - '^molecule\/delegated\/tests\/helm_install.*$'
 
 - job:
-    name: yake-ansible-molecule-molecule-kind-cluster
-    parent: abstract-yake-ansible-molecule
-    vars:
-      ansible_role: kind_cluster
-    files:
-      - '^roles\/kind_cluster\/.*$'
-      - '^molecule\/delegated\/tests\/kind_cluster.*$'
-
-- job:
-    name: yake-ansible-molecule-molecule-kind-install
-    parent: abstract-yake-ansible-molecule
-    vars:
-      ansible_role: kind_install
-    files:
-      - '^roles\/kind_install\/.*$'
-      - '^molecule\/delegated\/tests\/kind_install.*$'
-
-- job:
     name: yake-ansible-molecule-molecule-kubectl-install
     parent: abstract-yake-ansible-molecule
     vars:
@@ -91,8 +73,6 @@
         # - yake-ansible-molecule-molecule-clusterapi-install
         # - yake-ansible-molecule-molecule-clusterctl-install
         # - yake-ansible-molecule-molecule-helm-install
-        # - yake-ansible-molecule-molecule-kind-cluster
-        # - yake-ansible-molecule-molecule-kind-install
         # - yake-ansible-molecule-molecule-kubectl-install
         - yamllint
     periodic-daily:
@@ -104,7 +84,5 @@
         # - yake-ansible-molecule-molecule-clusterapi-install
         # - yake-ansible-molecule-molecule-clusterctl-install
         # - yake-ansible-molecule-molecule-helm-install
-        # - yake-ansible-molecule-molecule-kind-cluster
-        # - yake-ansible-molecule-molecule-kind-install
         # - yake-ansible-molecule-molecule-kubectl-install
         - yamllint

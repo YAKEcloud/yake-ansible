@@ -52,20 +52,7 @@ podLabels:
   networking.gardener.cloud/to-public-networks: allowed
 
 ingress:
-  enabled: true
-  className: nginx-ingress-gardener
-  annotations:
-    nginx.ingress.kubernetes.io/ssl-redirect: "true"
-    nginx.ingress.kubernetes.io/use-port-in-redirects: "true"
-  hosts:
-    - host: identity.{{ gardener_operator_garden_url }}
-      paths:
-        - path: /
-          pathType: Prefix
-  tls:
-    - secretName: tls
-      hosts:
-        - identity.{{ gardener_operator_garden_url }}
+  enabled: false
 
 resources:
   limits:

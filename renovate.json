@@ -50,7 +50,8 @@
         "/^group_vars\\/all\\.yml\\.example/",
         "/^roles\\/clusterapi_cluster\\/defaults\\/main.yml$/",
         "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/gardener_operator\\/defaults\\/main.yml$/"
+        "/^roles\\/gardener_operator\\/defaults\\/main.yml$/",
+        "/^roles\\/management_cluster\\/defaults\\/main.yml$/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)( extractVersion=(?<extractVersion>.*?))?\\n.*?(_tag|_version): '(?<currentValue>.*?)'"

@@ -11,6 +11,9 @@ CAPI images:
   (1.35); a bare minor is resolved to its current patch via the series'
   'last-X' pointer file before anything is named or uploaded, so the
   Glance image is always named after a concrete, stable patch version.
+  The Ubuntu base (e.g. 2404, 2604) also isn't fixed across series — it's
+  auto-detected per series from the same pointer file; use
+  --ubuntu-version to override it.
   Imported into Glance via the 'web-download' method by default, so
   OpenStack downloads the qcow2 directly — use --no-web-download to
   download it locally first instead.
@@ -115,10 +118,14 @@ def find_capi_image(conn, patch_version):
     return None, None
 
 
-def resolve_capi_patch_version(minor):
-    """Resolve a bare minor version (e.g. '1.36') to its current patch (e.g.
-    '1.36.4') via the series' 'last-X' pointer file, which osism updates on
-    every publish. Returns the patch version, e.g. '1.36.4'.
+def resolve_capi_series(minor):
+    """Resolve a Kubernetes minor version (e.g. '1.36') to the Ubuntu base
+    and current patch it's currently built on, via the series' 'last-X'
+    pointer file, which osism updates on every publish. The pointer file's
+    path also carries the Ubuntu version (e.g. series v1.37+ moved from
+    ubuntu-2404 to ubuntu-2604), so this is the only reliable way to learn
+    it — it isn't a function of the Kubernetes version alone.
+    Returns (ubuntu_version, patch), e.g. ('2604', '1.37.0').
     """
     url = f"{CAPI_BASE_URL}/last-{minor}"
     resp = requests.get(url, timeout=30)
@@ -127,10 +134,12 @@ def resolve_capi_patch_version(minor):
     line = resp.text.strip()
     try:
         path = line.split(maxsplit=1)[1]
+        dirname = path.split("/", 1)[0]  # e.g. "ubuntu-2604-kube-v1.37"
+        ubuntu_version = dirname.split("-")[1]
         patch = Path(path).stem.rsplit("-v", 1)[-1]
     except (IndexError, ValueError) as exc:
         raise RuntimeError(f"Could not parse pointer file '{url}': {line!r}") from exc
-    return patch
+    return ubuntu_version, patch
 
 
 def find_gardenlinux_image(conn, version):
@@ -349,28 +358,37 @@ def download_file(url, dest, label=""):
 def sync_capi_image(
     conn,
     k8s_version,
-    ubuntu_version="2404",
+    ubuntu_version=None,
     dry_run=False,
     web_download=True,
 ):
     print("\n=== CAPI Image ===")
 
     version = k8s_version.lstrip("v")
-    if version.count(".") < 2:
-        # Bare minor: resolve the current patch for naming/dedup, but still
-        # download the series file — it's rebuilt (and overwritten) on every
-        # publish, including image-only fixes that don't bump the patch, so
-        # it's the only URL that's guaranteed to be current. The create-once
-        # per-patch file can lag behind it.
-        minor = version
-        print(f"  Resolving current patch for series v{minor} ...")
-        patch = resolve_capi_patch_version(minor)
-        print(f"  Resolved: v{minor} → v{patch}")
+    bare_minor = version.count(".") < 2
+    minor = version if bare_minor else ".".join(version.split(".")[:2])
+
+    if ubuntu_version is None or bare_minor:
+        # The Ubuntu base isn't a function of the Kubernetes version alone
+        # (e.g. v1.37+ moved from ubuntu-2404 to ubuntu-2604) — the 'last-X'
+        # pointer file is the only reliable source for it. Also needed here
+        # to resolve a bare minor to its current patch, for naming/dedup.
+        print(f"  Resolving current build for series v{minor} ...")
+        resolved_ubuntu_version, resolved_patch = resolve_capi_series(minor)
+        if ubuntu_version is None:
+            ubuntu_version = resolved_ubuntu_version
+        print(f"  Resolved: v{minor} → ubuntu-{ubuntu_version}, v{resolved_patch}")
+
+    if bare_minor:
+        # Still download the series file — it's rebuilt (and overwritten) on
+        # every publish, including image-only fixes that don't bump the
+        # patch, so it's the only URL that's guaranteed to be current. The
+        # create-once per-patch file can lag behind it.
+        patch = resolved_patch
         filename = f"ubuntu-{ubuntu_version}-kube-v{minor}.qcow2"
     else:
         # Exact patch requested: fetch that immutable, create-once file.
         patch = version
-        minor = ".".join(patch.split(".")[:2])
         filename = f"ubuntu-{ubuntu_version}-kube-v{patch}.qcow2"
 
     canonical_name = f"ubuntu-capi-image-v{patch}"
@@ -590,9 +608,14 @@ def main():
     )
     parser.add_argument(
         "--ubuntu-version",
-        default="2404",
+        default=None,
         metavar="YYYYMM",
-        help="Ubuntu version for CAPI images (default: 2404)",
+        help=(
+            "Override the Ubuntu base for the CAPI image (e.g. 2604)."
+            " Default: auto-detected per series from the 'last-X' pointer"
+            " file, since it changes between series (e.g. v1.37+ moved"
+            " from 2404 to 2604)."
+        ),
     )
     parser.add_argument(
         "--gardenlinux-version",

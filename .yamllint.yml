@@ -6,8 +6,6 @@ rules:
   truthy: enable
 
 ignore: |
-  charts/*
-  roles/clusterapi_cluster/files/calico/calico.yaml
   roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin-rbac.yaml
   roles/clusterapi_cluster/files/cinder-csi/cinder-csi-controllerplugin.yaml
   roles/clusterapi_cluster/files/cinder-csi/cinder-csi-nodeplugin-rbac.yaml
@@ -16,5 +14,4 @@ ignore: |
   roles/clusterapi_cluster/files/cloud-controller-manager/cloud-controller-manager-role-bindings.yaml
   roles/clusterapi_cluster/files/cloud-controller-manager/cloud-controller-manager-roles.yaml
   roles/clusterapi_cluster/files/cloud-controller-manager/openstack-cloud-controller-manager-ds.yaml
-  roles/clusterapi_cluster/files/cluster-template.yaml
   roles/clusterapi_install/files/orc.yaml

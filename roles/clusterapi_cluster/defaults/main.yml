@@ -106,7 +106,7 @@ clusterapi_cluster_cilium_helm_values:
       clusterPoolIPv4PodCIDRList: "{{ clusterapi_cluster_pod_cidr_blocks }}"
 
 # renovate: datasource=helm registryUrl=https://projectcalico.docs.tigera.io/charts depName=tigera-operator
-clusterapi_cluster_calico_version: 'v3.32.0'
+clusterapi_cluster_calico_version: 'v3.32.2'
 clusterapi_cluster_calico_helm_values: {}
 
 # renovate: datasource=helm registryUrl=https://kubernetes-sigs.github.io/metrics-server depName=metrics-server

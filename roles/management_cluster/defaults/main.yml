@@ -20,7 +20,7 @@ management_cluster_kind_method: "{{ yake_install_method | d('docker') }}"
 management_cluster_kind_registry: ghcr.io
 management_cluster_kind_image: yakecloud/kind
 # renovate: datasource=docker depName=ghcr.io/yakecloud/kind
-management_cluster_kind_version: 'v0.31.0'
+management_cluster_kind_version: 'v0.33.0'
 
 management_cluster_kind_state: present
 management_cluster_kind_primary: clusterapi

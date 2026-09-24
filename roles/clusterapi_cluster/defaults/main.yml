@@ -49,6 +49,12 @@ clusterapi_cluster_openstack_cloud:
   identity_api_version: 3
   auth_type: "v3applicationcredential"
 clusterapi_cluster_openstack_loadbalancer_provider: ovn
+# Health monitor for the kube-apiserver load balancer pool. Lower values shrink the
+# window in which a control-plane join races an Octavia member that hasn't flipped
+# to ONLINE yet (seen as "connection refused" during kubeadm join --control-plane).
+clusterapi_cluster_openstack_loadbalancer_monitor_delay: 5
+clusterapi_cluster_openstack_loadbalancer_monitor_timeout: 5
+clusterapi_cluster_openstack_loadbalancer_monitor_max_retries: 1
 clusterapi_cluster_pod_cidr_blocks:
   - "10.244.0.0/16"
 
@@ -70,6 +76,24 @@ clusterapi_cluster_openstack_cloud_name: openstack
 
 clusterapi_cluster_control_plane_machine_count: 3
 clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4"
+# Spread control-plane (and worker) machines across hypervisors via an OpenStack
+# server group, so a single hypervisor failure can't take out multiple/all
+# control-plane nodes at once. "soft-anti-affinity" only prefers separate hosts
+# instead of hard-requiring them, so it won't leave a Machine stuck in ERROR on
+# small clouds that don't have enough distinct hypervisors (unlike "anti-affinity").
+clusterapi_cluster_control_plane_server_group_enabled: true
+clusterapi_cluster_control_plane_server_group_policy: soft-anti-affinity
+clusterapi_cluster_worker_server_group_enabled: true
+clusterapi_cluster_worker_server_group_policy: soft-anti-affinity
+# Auto-remediate control-plane Machines that never register a Node (e.g. a kubeadm
+# join that failed permanently) instead of leaving them stuck forever.
+clusterapi_cluster_control_plane_machine_health_check_enabled: true
+clusterapi_cluster_control_plane_machine_health_check_unhealthy_timeout: 300s
+# KubeadmControlPlane's own remediation retry budget for control-plane Machines
+# that keep failing to join (works together with the MachineHealthCheck above).
+clusterapi_cluster_control_plane_remediation_max_retry: 3
+clusterapi_cluster_control_plane_remediation_retry_period_seconds: 120
+clusterapi_cluster_control_plane_remediation_min_healthy_period_seconds: 3600
 clusterapi_cluster_worker_machine_deployments:
   - name: md-0
     replicas: 3

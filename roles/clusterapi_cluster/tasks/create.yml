@@ -59,6 +59,34 @@
   ansible.builtin.set_fact:
     _clusterapi_cluster_openstack_external_network_id: "{{ _clusterapi_cluster_openstack_external_network.id | d('') }}"
 
+- name: Create control plane server group
+  openstack.cloud.server_group:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
+    state: present
+    name: "{{ clusterapi_cluster_name }}-control-plane"
+    policy: "{{ clusterapi_cluster_control_plane_server_group_policy }}"
+  register: result_control_plane_server_group  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_control_plane_server_group_enabled | bool
+
+- name: Set _clusterapi_cluster_control_plane_server_group_id fact
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_control_plane_server_group_id: "{{ result_control_plane_server_group.server_group.id }}"
+  when: clusterapi_cluster_control_plane_server_group_enabled | bool
+
+- name: Create worker server group
+  openstack.cloud.server_group:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
+    state: present
+    name: "{{ clusterapi_cluster_name }}-worker"
+    policy: "{{ clusterapi_cluster_worker_server_group_policy }}"
+  register: result_worker_server_group  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_worker_server_group_enabled | bool
+
+- name: Set _clusterapi_cluster_worker_server_group_id fact
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_worker_server_group_id: "{{ result_worker_server_group.server_group.id }}"
+  when: clusterapi_cluster_worker_server_group_enabled | bool
+
 - name: Combine clusterapi_cluster_defaults and clusterapi_cluster_extra
   ansible.builtin.set_fact:
     _clusterapi_cluster: "{{ clusterapi_cluster_extra }}"  # noqa: var-naming[no-role-prefix]

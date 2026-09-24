@@ -38,6 +38,9 @@ Deletes the Cluster API `Cluster` resource, which triggers CAPO to remove all as
 | `clusterapi_cluster_openstack_cacert` | `""` | PEM-encoded CA certificate (optional). |
 | `clusterapi_cluster_openstack_external_network` | `public` | Name of the external network for floating IPs. |
 | `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Load balancer provider for the API server load balancer. |
+| `clusterapi_cluster_openstack_loadbalancer_monitor_delay` | `5` | Seconds between health probes against each API server LB member. |
+| `clusterapi_cluster_openstack_loadbalancer_monitor_timeout` | `5` | Seconds a health probe waits before timing out. |
+| `clusterapi_cluster_openstack_loadbalancer_monitor_max_retries` | `1` | Successful probes required before a member flips to `ONLINE`. Kept low to shrink the race window where a joining control-plane node hits an LB with zero healthy members ("connection refused" during `kubeadm join --control-plane`). |
 
 ### Cluster
 
@@ -59,6 +62,15 @@ Deletes the Cluster API `Cluster` resource, which triggers CAPO to remove all as
 | `clusterapi_cluster_root_volume_size` | `20` | Root volume size in GiB. |
 | `clusterapi_cluster_root_volume_type` | `__DEFAULT__` | Cinder volume type. |
 | `clusterapi_cluster_openstack_availability_zones` | `[nova]` | Availability zones for control plane nodes. |
+| `clusterapi_cluster_control_plane_machine_health_check_enabled` | `true` | Deploy a MachineHealthCheck for control-plane nodes so a Machine that never registers a Node (e.g. a permanently failed `kubeadm join`) is automatically replaced instead of hanging forever. |
+| `clusterapi_cluster_control_plane_machine_health_check_unhealthy_timeout` | `300s` | How long a control-plane Machine may report `Ready=Unknown/False` before the MachineHealthCheck marks it unhealthy. |
+| `clusterapi_cluster_control_plane_remediation_max_retry` | `3` | Max number of remediation retries KubeadmControlPlane performs for a control-plane Machine before giving up. |
+| `clusterapi_cluster_control_plane_remediation_retry_period_seconds` | `120` | Minimum time between two remediation retries. |
+| `clusterapi_cluster_control_plane_remediation_min_healthy_period_seconds` | `3600` | Time after which a new failure is treated as unrelated to a previous remediation (retry counter resets). |
+| `clusterapi_cluster_control_plane_server_group_enabled` | `true` | Place control-plane machines in an OpenStack server group so they're spread across hypervisors. |
+| `clusterapi_cluster_control_plane_server_group_policy` | `soft-anti-affinity` | Server group policy for control-plane machines. `soft-anti-affinity` prefers separate hosts without hard-failing scheduling on clouds with few hypervisors (unlike `anti-affinity`). |
+| `clusterapi_cluster_worker_server_group_enabled` | `true` | Place worker machines in an OpenStack server group so they're spread across hypervisors. |
+| `clusterapi_cluster_worker_server_group_policy` | `soft-anti-affinity` | Server group policy for worker machines. |
 
 Worker node deployments support multiple pools across failure domains:
 

@@ -6,3 +6,17 @@
     kind: cluster
     name: "{{ clusterapi_cluster_name }}"
     wait: true
+
+- name: Delete control plane server group
+  openstack.cloud.server_group:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
+    state: absent
+    name: "{{ clusterapi_cluster_name }}-control-plane"
+  when: clusterapi_cluster_control_plane_server_group_enabled | bool
+
+- name: Delete worker server group
+  openstack.cloud.server_group:
+    cloud: "{{ clusterapi_cluster_openstack_cloud }}"
+    state: absent
+    name: "{{ clusterapi_cluster_name }}-worker"
+  when: clusterapi_cluster_worker_server_group_enabled | bool

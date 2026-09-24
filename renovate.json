@@ -11,7 +11,14 @@
   "separateMinorPatch": true,
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
   "ignorePaths": ["charts/**"],
-  "packageRules": [{"matchFileNames": ["^.charts.yml"], "versioning": "loose"}],
+  "packageRules": [
+    {"matchFileNames": ["^.charts.yml"], "versioning": "loose"},
+    {
+      "groupName": "kind and kindest/node",
+      "description": "kind CLI and kindest/node must stay on compatible kubeadm config versions; bump together.",
+      "matchDepNames": ["kubernetes-sigs/kind", "kindest/node"]
+    }
+  ],
   "customManagers": [
     {
       "customType": "regex",

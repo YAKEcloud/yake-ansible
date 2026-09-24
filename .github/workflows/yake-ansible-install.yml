@@ -1,7 +1,10 @@
 ---
 name: Yake-Ansible install
 
-on:
+permissions:
+  contents: read
+
+"on":
   pull_request:
     types: [opened, reopened, synchronize]
     branches-ignore:
@@ -11,6 +14,7 @@ on:
       - 'group_vars/**'
       - 'roles/**'
       - 'site.yml'
+      - 'cleanup.yml'
       - 'Giltfile.yaml'
       - 'requirements.txt'
       - 'requirements.yml'

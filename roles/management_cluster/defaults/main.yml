@@ -25,6 +25,6 @@ management_cluster_kind_version: 'v0.31.0'
 management_cluster_kind_state: present
 management_cluster_kind_primary: clusterapi
 # renovate: datasource=docker depName=kindest/node
-management_cluster_kind_cluster_version: 'v1.35.1'
+management_cluster_kind_cluster_version: 'v1.35.8'
 management_cluster_kind_cluster_image: "kindest/node:{{ management_cluster_kind_cluster_version }}"
 management_cluster_kind_cluster_api_server_address: "127.0.0.1"

@@ -22,7 +22,7 @@ RUN apk update --no-cache \
     && addgroup -g ${DOCKER_GROUP_ID} ${DOCKER_GROUP_NAME} \
     && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
     && usermod -aG ${DOCKER_GROUP_NAME} ${USER_NAME} \
-    && mkdir //var/lib/yake \
+    && mkdir /var/lib/yake \
     && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake
 
 WORKDIR /var/lib/yake

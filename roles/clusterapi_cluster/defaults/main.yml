@@ -98,7 +98,7 @@ clusterapi_cluster_extra: {}
 clusterapi_cluster_network: cilium
 
 # renovate: datasource=docker depName=quay.io/cilium/charts/cilium
-clusterapi_cluster_cilium_version: "1.19.3"
+clusterapi_cluster_cilium_version: '1.19.3'
 clusterapi_cluster_cilium_helm_values:
   policyCIDRMatchMode: nodes
   ipam:
@@ -106,11 +106,11 @@ clusterapi_cluster_cilium_helm_values:
       clusterPoolIPv4PodCIDRList: "{{ clusterapi_cluster_pod_cidr_blocks }}"
 
 # renovate: datasource=helm registryUrl=https://projectcalico.docs.tigera.io/charts depName=tigera-operator
-clusterapi_cluster_calico_version: "v3.32.0"
+clusterapi_cluster_calico_version: 'v3.32.0'
 clusterapi_cluster_calico_helm_values: {}
 
 # renovate: datasource=helm registryUrl=https://kubernetes-sigs.github.io/metrics-server depName=metrics-server
-clusterapi_cluster_metrics_server_version: "3.14.0"
+clusterapi_cluster_metrics_server_version: '3.14.0'
 clusterapi_cluster_metrics_server_helm_values:
   # kubelet serving certificates are not signed by the cluster CA (serverTLSBootstrap is not
   # enabled in the kubeadm config), so metrics-server cannot verify them.

@@ -12,7 +12,7 @@ permissions:
 
 jobs:
   sync-manifests:
-    if: github.repository == 'yakecloud/yake-ansible'
+    if: github.repository == 'YAKEcloud/yake-ansible'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repo

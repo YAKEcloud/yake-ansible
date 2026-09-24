@@ -98,7 +98,7 @@ clusterapi_cluster_extra: {}
 clusterapi_cluster_network: cilium
 
 # renovate: datasource=docker depName=quay.io/cilium/charts/cilium
-clusterapi_cluster_cilium_version: '1.19.3'
+clusterapi_cluster_cilium_version: '1.20.2'
 clusterapi_cluster_cilium_helm_values:
   policyCIDRMatchMode: nodes
   ipam:

@@ -234,9 +234,31 @@ def _wait_for_import(conn, image_id, total_size=None, timeout=3600, poll_interva
             last_status = img.status
         elif img.status == "importing":
             print(f"      still importing ...  (elapsed: {elapsed}s){progress}")
-        if img.status == "active":
-            return img
-        if img.status in ("killed", "deleted"):
+        elif img.status == "active":
+            importing_to_stores = (
+                img.properties.get("os_glance_importing_to_stores", "")
+                .replace(",", " ")
+                .split()
+            )
+            failed_import = (
+                img.properties.get("os_glance_failed_import", "")
+                .replace(",", " ")
+                .split()
+            )
+            if len(importing_to_stores) > 0:
+                print(
+                    f"      still copying image into store(s):"
+                    f" {', '.join(importing_to_stores)}..."
+                    f"  (elapsed: {elapsed}s){progress}"
+                )
+            elif len(failed_import) > 0:
+                raise RuntimeError(
+                    f"Failed to copy image {image_id} into all stores. Failed store(s):"
+                    f" '{', '.join(failed_import)}'"
+                )
+            else:
+                return img
+        elif img.status in ("killed", "deleted"):
             raise RuntimeError(
                 f"Image {image_id} ended up in status '{img.status}' during import"
             )
@@ -244,7 +266,9 @@ def _wait_for_import(conn, image_id, total_size=None, timeout=3600, poll_interva
     raise TimeoutError(f"Image {image_id} did not become active within {timeout}s")
 
 
-def upload_via_web_download(conn, name, url, disk_format="qcow2", extra_props=None):
+def upload_via_web_download(
+    conn, name, url, disk_format="qcow2", extra_props=None, all_stores=False
+):
     """Create an image record and let OpenStack download the data itself.
 
     Requires the 'web-download' import method to be enabled on the cloud
@@ -263,7 +287,10 @@ def upload_via_web_download(conn, name, url, disk_format="qcow2", extra_props=No
     total_size = _get_content_length(url)
     print(f"    → requesting web-download import from {url}")
     print(f"    → source size: {_human_size(total_size)}")
-    conn.image.import_image(image, method="web-download", uri=url)
+    kwargs = {}
+    if all_stores:
+        kwargs.update({"all_stores": True, "all_stores_must_succeed": True})
+    conn.image.import_image(image, method="web-download", uri=url, **kwargs)
     return _wait_for_import(conn, image.id, total_size=total_size)
 
 
@@ -280,7 +307,9 @@ class _ProgressReader:
         return data
 
 
-def upload_from_file(conn, name, path, disk_format="qcow2", extra_props=None):
+def upload_from_file(
+    conn, name, path, disk_format="qcow2", extra_props=None, all_stores=False
+):
     file_size = path.stat().st_size
     with (
         tqdm(
@@ -301,9 +330,28 @@ def upload_from_file(conn, name, path, disk_format="qcow2", extra_props=None):
             min_disk=20,
             min_ram=512,
             **(extra_props or {}),
-            data=_ProgressReader(fh, pbar),
+            data=_ProgressReader(fh, pbar) if not all_stores else None,
         )
-    return _wait_for_active(conn, image.id)
+        if not all_stores:
+            return _wait_for_active(conn, image.id)
+        else:
+            try:
+                conn.image.stage_image(
+                    image,
+                    data=_ProgressReader(fh, pbar),
+                )
+            except Exception:
+                print(f"Failure staging image data for image {image.id}")
+                conn.image.delete_image(image, ignore_missing=True)
+                raise
+
+            conn.image.import_image(
+                image,
+                method="glance-direct",
+                all_stores=True,
+                all_stores_must_succeed=True,
+            )
+            return _wait_for_import(conn, image.id)
 
 
 def download_file(url, dest, label=""):
@@ -327,12 +375,45 @@ def download_file(url, dest, label=""):
                 pbar.update(len(chunk))
 
 
+def ensure_all_stores(conn, image, dry_run=False):
+    # NOTE: Split on whitespace so we get an empty list from an empty string instead of
+    #       a list with an empty string element. Store names do not contain whitespace.
+    image_stores = set(image.properties.get("stores", "").replace(",", " ").split())
+    stores = {store.id for store in conn.image.stores()}
+    if not stores <= image_stores:
+        if not dry_run:
+            print(f"  — copying existing image {image.id} into all stores")
+            try:
+                conn.image.import_image(
+                    image,
+                    method="copy-image",
+                    all_stores=True,
+                ).raise_for_status()
+            except requests.exceptions.HTTPError as exc:
+                print(f"  — failure copying image {image.id} into all stores.")
+                if exc.response.status_code == requests.codes.forbidden:
+                    print(
+                        "  — import method 'copy-image' into all stores forbidden. Try"
+                        " re-uploading into all stores directly or omit '--all-stores'"
+                        " to skip this step entirely."
+                    )
+                raise
+
+            return _wait_for_import(conn, image.id)
+        else:
+            print(
+                f"  [DRY-RUN] would copy existing image {image.id}" " into all stores"
+            )
+    return image
+
+
 def sync_capi_image(
     conn,
     k8s_version,
     ubuntu_version=None,
     dry_run=False,
     web_download=True,
+    all_stores=False,
 ):
     print("\n=== CAPI Image ===")
 
@@ -371,11 +452,22 @@ def sync_capi_image(
         print(
             f"  [SKIP]   {canonical_name}" f"  — found via {strategy}  ({existing.id})"
         )
+        if all_stores:
+            existing = ensure_all_stores(conn, existing, dry_run=dry_run)
         return canonical_name, existing.id
 
     if dry_run:
-        method = "web-download import" if web_download else "download and upload"
-        print(f"  [DRY-RUN] would {method} {canonical_name}" f"  from {url}")
+        if web_download:
+            method = "web-download import"
+        elif all_stores:
+            method = "download, upload and import"
+        else:
+            method = "download and upload"
+
+        stores = "all available image stores" if all_stores else "default image store"
+        print(
+            f"  [DRY-RUN] would {method} {canonical_name}" f"  from {url} into {stores}"
+        )
         return canonical_name, None
 
     extra_props = {
@@ -392,14 +484,22 @@ def sync_capi_image(
     try:
         if web_download:
             image = upload_via_web_download(
-                conn, canonical_name, url, extra_props=extra_props
+                conn,
+                canonical_name,
+                url,
+                extra_props=extra_props,
+                all_stores=all_stores,
             )
         else:
             with tempfile.TemporaryDirectory() as tmp:
                 local = Path(tmp) / f"{canonical_name}.qcow2"
                 download_file(url, local, canonical_name)
                 image = upload_from_file(
-                    conn, canonical_name, local, extra_props=extra_props
+                    conn,
+                    canonical_name,
+                    local,
+                    extra_props=extra_props,
+                    all_stores=all_stores,
                 )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
@@ -506,7 +606,7 @@ def extract_image(archive_path, dest_dir):
     raise RuntimeError(f"No .raw or .qcow2 image found inside {archive_path.name}")
 
 
-def sync_gardenlinux_image(conn, version=None, dry_run=False):
+def sync_gardenlinux_image(conn, version=None, dry_run=False, all_stores=False):
     print("\n=== GardenLinux Images ===")
 
     tag, asset_url, asset_name = fetch_gardenlinux_release(version)
@@ -520,13 +620,16 @@ def sync_gardenlinux_image(conn, version=None, dry_run=False):
             f"  [SKIP]   '{canonical_name}'"
             f"  — found via {strategy}  ({existing.id})"
         )
+        if all_stores:
+            existing = ensure_all_stores(conn, existing, dry_run=dry_run)
         return canonical_name, existing.id
 
     if dry_run:
-        print(
-            f"  [DRY-RUN] would download and upload '{canonical_name}'"
-            f"  from {asset_url}"
-        )
+        if all_stores:
+            method = "download, upload and import"
+        else:
+            method = "download and upload"
+        print(f"  [DRY-RUN] would {method} '{canonical_name}' from {asset_url}")
         return canonical_name, None
 
     print(f"  [UPLOAD] {canonical_name}")
@@ -550,6 +653,7 @@ def sync_gardenlinux_image(conn, version=None, dry_run=False):
                     "os_version": tag,
                     "architecture": "amd64",
                 },
+                all_stores=all_stores,
             )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
@@ -622,6 +726,16 @@ def main():
             " downloaded locally since they ship as tar.xz archives."
         ),
     )
+    parser.add_argument(
+        "--all-stores",
+        action="store_true",
+        help=(
+            "Import image into all available glance stores."
+            " This requires interoperable image import using either `glance-direct` or"
+            "`web-download` method, depending on the '--no-web-download' parameter."
+            " This requires the import into all stores to succeed."
+        ),
+    )
     args = parser.parse_args()
 
     if args.insecure:
@@ -643,6 +757,30 @@ def main():
     if args.dry_run:
         print("Dry-run mode — no images will be uploaded.")
 
+    try:
+        import_methods = conn.image.get_import_info().import_methods.get("value", [])
+    except Exception:
+        import_methods = []
+
+    if "web-download" not in import_methods:
+        if not args.skip_capi and not args.no_web_download:
+            raise RuntimeError(
+                "Requested import method 'web-download' is not supported by the cloud"
+            )
+    if "glance-direct" not in import_methods or "copy-image" not in import_methods:
+        if args.all_stores and (
+            not args.skip_capi and args.no_web_download or not args.skip_gardenlinux
+        ):
+            if not args.skip_capi and args.no_web_download:
+                without_webdownload = "together with '--no-web-download' "
+            else:
+                without_webdownload = ""
+            raise RuntimeError(
+                "'--all-stores' " + without_webdownload + "requires import"
+                " methods 'glance-direct' and 'copy-image', which are not supported by"
+                " the cloud"
+            )
+
     results = []
 
     if not args.skip_capi:
@@ -653,12 +791,18 @@ def main():
                 args.ubuntu_version,
                 args.dry_run,
                 web_download=not args.no_web_download,
+                all_stores=args.all_stores,
             )
         )
 
     if not args.skip_gardenlinux:
         results.append(
-            sync_gardenlinux_image(conn, args.gardenlinux_version, args.dry_run)
+            sync_gardenlinux_image(
+                conn,
+                args.gardenlinux_version,
+                args.dry_run,
+                all_stores=args.all_stores,
+            )
         )
 
     print("\n=== Summary ===")

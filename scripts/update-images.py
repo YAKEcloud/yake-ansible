@@ -251,7 +251,9 @@ def _wait_for_import(conn, image_id, total_size=None, timeout=3600, poll_interva
     raise TimeoutError(f"Image {image_id} did not become active within {timeout}s")
 
 
-def upload_via_web_download(conn, name, url, disk_format="qcow2", extra_props=None):
+def upload_via_web_download(
+    conn, name, url, disk_format="qcow2", extra_props=None, all_stores=False
+):
     """Create an image record and let OpenStack download the data itself.
 
     Requires the 'web-download' import method to be enabled on the cloud
@@ -270,7 +272,10 @@ def upload_via_web_download(conn, name, url, disk_format="qcow2", extra_props=No
     total_size = _get_content_length(url)
     print(f"    → requesting web-download import from {url}")
     print(f"    → source size: {_human_size(total_size)}")
-    conn.image.import_image(image, method="web-download", uri=url)
+    kwargs = {}
+    if all_stores:
+        kwargs.update({"all_stores": True, "all_stores_must_succeed": True})
+    conn.image.import_image(image, method="web-download", uri=url, **kwargs)
     return _wait_for_import(conn, image.id, total_size=total_size)
 
 
@@ -287,7 +292,9 @@ class _ProgressReader:
         return data
 
 
-def upload_from_file(conn, name, path, disk_format="qcow2", extra_props=None):
+def upload_from_file(
+    conn, name, path, disk_format="qcow2", extra_props=None, all_stores=False
+):
     file_size = path.stat().st_size
     with (
         tqdm(
@@ -315,7 +322,10 @@ def upload_from_file(conn, name, path, disk_format="qcow2", extra_props=None):
         ):
             raise RuntimeError(f"Failure staging image data for image {image.id}")
 
-        conn.image.import_image(image, method="glance-direct")
+        kwargs = {}
+        if all_stores:
+            kwargs.update({"all_stores": True, "all_stores_must_succeed": True})
+        conn.image.import_image(image, method="glance-direct", **kwargs)
     return _wait_for_import(conn, image.id)
 
 
@@ -346,6 +356,7 @@ def sync_capi_image(
     ubuntu_version="2404",
     dry_run=False,
     web_download=True,
+    all_stores=False,
 ):
     print("\n=== CAPI Image ===")
 
@@ -381,7 +392,10 @@ def sync_capi_image(
         method = (
             "web-download import" if web_download else "download, upload and import"
         )
-        print(f"  [DRY-RUN] would {method} {canonical_name}" f"  from {url}")
+        stores = "all available image stores" if all_stores else "default image store"
+        print(
+            f"  [DRY-RUN] would {method} {canonical_name}" f"  from {url} into {stores}"
+        )
         return canonical_name, None
 
     extra_props = {
@@ -398,14 +412,22 @@ def sync_capi_image(
     try:
         if web_download:
             image = upload_via_web_download(
-                conn, canonical_name, url, extra_props=extra_props
+                conn,
+                canonical_name,
+                url,
+                extra_props=extra_props,
+                all_stores=all_stores,
             )
         else:
             with tempfile.TemporaryDirectory() as tmp:
                 local = Path(tmp) / f"{canonical_name}.qcow2"
                 download_file(url, local, canonical_name)
                 image = upload_from_file(
-                    conn, canonical_name, local, extra_props=extra_props
+                    conn,
+                    canonical_name,
+                    local,
+                    extra_props=extra_props,
+                    all_stores=all_stores,
                 )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
@@ -623,6 +645,11 @@ def main():
             " downloaded locally since they ship as tar.xz archives."
         ),
     )
+    parser.add_argument(
+        "--all-stores",
+        action="store_true",
+        help=("Import image into all available glance stores"),
+    )
     args = parser.parse_args()
 
     if args.insecure:
@@ -654,6 +681,7 @@ def main():
                 args.ubuntu_version,
                 args.dry_run,
                 web_download=not args.no_web_download,
+                all_stores=args.all_stores,
             )
         )
 

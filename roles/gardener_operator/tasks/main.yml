@@ -203,5 +203,8 @@
 - name: Include vgarden tasks
   ansible.builtin.include_tasks: vgarden.yml
 
+- name: Include project tasks
+  ansible.builtin.include_tasks: projects.yml
+
 - name: Include managed-seed tasks
   ansible.builtin.include_tasks: managed-seed.yml

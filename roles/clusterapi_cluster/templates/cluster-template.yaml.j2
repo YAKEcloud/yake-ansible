@@ -106,6 +106,17 @@ spec:
             value: "true"
             effect: "NoSchedule"
 ---
+{% set _cp_machine_template_content = {
+  'flavor': clusterapi_cluster_control_plane_machine_flavor,
+  'image_id': clusterapi_cluster_openstack_image_id,
+  'ssh_key_name': clusterapi_cluster_openstack_ssh_key_name,
+  'root_volume_enabled': clusterapi_cluster_root_volume_enabled,
+  'root_volume_size': clusterapi_cluster_control_plane_root_volume_size,
+  'root_volume_type': clusterapi_cluster_root_volume_type,
+  'root_volume_az': clusterapi_cluster_root_volume_availability_zone,
+  'server_group_id': _clusterapi_cluster_control_plane_server_group_id | d(''),
+} %}
+{% set cp_machine_template_name = clusterapi_cluster_name ~ '-control-plane-' ~ (_cp_machine_template_content | to_json | hash('sha1'))[:8] %}
 apiVersion: cluster.x-k8s.io/v1beta2
 kind: Cluster
 metadata:
@@ -124,6 +135,17 @@ spec:
     kind: OpenStackCluster
     name: {{ clusterapi_cluster_name }}
 {% for md in clusterapi_cluster_worker_machine_deployments %}
+{% set _md_machine_template_content = {
+  'flavor': clusterapi_cluster_worker_machine_flavor,
+  'image_id': md.image_id,
+  'ssh_key_name': clusterapi_cluster_openstack_ssh_key_name,
+  'root_volume_enabled': clusterapi_cluster_root_volume_enabled,
+  'root_volume_size': clusterapi_cluster_worker_root_volume_size,
+  'root_volume_type': clusterapi_cluster_root_volume_type,
+  'root_volume_az': md.root_volume_failure_domain | d(md.failure_domain),
+  'server_group_id': _clusterapi_cluster_worker_server_group_id | d(''),
+} %}
+{% set md_machine_template_name = clusterapi_cluster_name ~ '-' ~ md.name ~ '-' ~ (_md_machine_template_content | to_json | hash('sha1'))[:8] %}
 ---
 apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineDeployment
@@ -146,7 +168,7 @@ spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: OpenStackMachineTemplate
-        name: {{ clusterapi_cluster_name }}-{{ md.name }}
+        name: {{ md_machine_template_name }}
       version: {{ clusterapi_cluster_kubernetes_version }}
 {% endfor %}
 ---
@@ -280,7 +302,7 @@ spec:
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: OpenStackMachineTemplate
-        name: {{ clusterapi_cluster_name }}-control-plane
+        name: {{ cp_machine_template_name }}
   replicas: {{ clusterapi_cluster_control_plane_machine_count }}
   remediation:
     maxRetry: {{ clusterapi_cluster_control_plane_remediation_max_retry }}
@@ -351,7 +373,7 @@ spec:
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate
 metadata:
-  name: {{ clusterapi_cluster_name }}-control-plane
+  name: {{ cp_machine_template_name }}
 spec:
   template:
     spec:
@@ -365,17 +387,28 @@ spec:
 {% endif %}
 {% if clusterapi_cluster_root_volume_enabled | bool %}
       rootVolume:
-        sizeGiB: {{ clusterapi_cluster_root_volume_size }}
+        sizeGiB: {{ clusterapi_cluster_control_plane_root_volume_size }}
         type: {{ clusterapi_cluster_root_volume_type }}
         availabilityZone:
           name: {{ clusterapi_cluster_root_volume_availability_zone }}
 {% endif %}
 {% for md in clusterapi_cluster_worker_machine_deployments %}
+{% set _md_machine_template_content = {
+  'flavor': clusterapi_cluster_worker_machine_flavor,
+  'image_id': md.image_id,
+  'ssh_key_name': clusterapi_cluster_openstack_ssh_key_name,
+  'root_volume_enabled': clusterapi_cluster_root_volume_enabled,
+  'root_volume_size': clusterapi_cluster_worker_root_volume_size,
+  'root_volume_type': clusterapi_cluster_root_volume_type,
+  'root_volume_az': md.root_volume_failure_domain | d(md.failure_domain),
+  'server_group_id': _clusterapi_cluster_worker_server_group_id | d(''),
+} %}
+{% set md_machine_template_name = clusterapi_cluster_name ~ '-' ~ md.name ~ '-' ~ (_md_machine_template_content | to_json | hash('sha1'))[:8] %}
 ---
 apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
 kind: OpenStackMachineTemplate
 metadata:
-  name: {{ clusterapi_cluster_name }}-{{ md.name }}
+  name: {{ md_machine_template_name }}
 spec:
   template:
     spec:
@@ -389,7 +422,7 @@ spec:
 {% endif %}
 {% if clusterapi_cluster_root_volume_enabled | bool %}
       rootVolume:
-        sizeGiB: {{ clusterapi_cluster_root_volume_size }}
+        sizeGiB: {{ clusterapi_cluster_worker_root_volume_size }}
         type: {{ clusterapi_cluster_root_volume_type }}
         availabilityZone:
           name: {{ md.root_volume_failure_domain | d(md.failure_domain) }}

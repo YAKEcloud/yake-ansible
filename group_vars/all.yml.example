@@ -112,8 +112,6 @@ gardener_operator_cloudprofiles:
         zones:
           - nova
 
-gardener_operator_managed_seeds_project_name: seeds
-
 gardener_operator_managed_seeds:
   - name: managed-seed-a
     cloudprofile_name: cloudprofile

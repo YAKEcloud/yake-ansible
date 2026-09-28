@@ -18,6 +18,25 @@ This role creates or deletes a Kubernetes cluster on OpenStack using Cluster API
 
 Deletes the Cluster API `Cluster` resource, which triggers CAPO to remove all associated OpenStack resources.
 
+## Rolling out flavor/image changes
+
+Cluster API only triggers a rollout of a `MachineDeployment`/`KubeadmControlPlane` when the *name* of the
+referenced `OpenStackMachineTemplate` changes — not when the template's content changes, and labels/annotations
+on the template are explicitly ignored for this comparison. To make in-place edits (e.g. bumping
+`clusterapi_cluster_worker_machine_flavor` or a worker's `image_id`) actually roll the machines, this role derives
+the `OpenStackMachineTemplate` name from a hash of its meaningful content (flavor, image, ssh key, root volume,
+server group). Changing any of those values on a re-run produces a new template name, which CAPI picks up as a
+required rollout automatically.
+
+`clusterapi_cluster_kubernetes_version` does not need this trick — it's compared directly on
+`KubeadmControlPlane`/`MachineDeployment` and already triggers a rollout on change.
+
+Old, no-longer-referenced `OpenStackMachineTemplate` objects left behind after such a rollout (Cluster API doesn't
+garbage-collect them outside of ClusterClass-managed clusters) are deleted automatically on every run: the role
+compares what's currently in the cluster against the freshly generated manifest and removes anything under this
+cluster's name that isn't referenced anymore, so the cluster always matches what `group_vars` describes. Disable
+via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd rather clean these up manually.
+
 ## Requirements
 
 - A management cluster with Cluster API and the CAPO provider initialized.
@@ -59,7 +78,8 @@ Deletes the Cluster API `Cluster` resource, which triggers CAPO to remove all as
 | `clusterapi_cluster_control_plane_machine_count` | `3` | Number of control plane nodes. |
 | `clusterapi_cluster_control_plane_machine_flavor` | `SCS-2V-4` | OpenStack flavor for control plane nodes. |
 | `clusterapi_cluster_worker_machine_flavor` | `SCS-4V-8` | OpenStack flavor for worker nodes. |
-| `clusterapi_cluster_root_volume_size` | `20` | Root volume size in GiB. |
+| `clusterapi_cluster_control_plane_root_volume_size` | `20` | Control-plane root volume size in GiB. Holds this cluster's own kubeadm/etcd data, so keep some headroom for etcd growth as the fleet grows. |
+| `clusterapi_cluster_worker_root_volume_size` | `20` | Worker root volume size in GiB. Workload data lives on Cinder-backed PVCs, not here - workers mainly just need room for container images. |
 | `clusterapi_cluster_root_volume_type` | `__DEFAULT__` | Cinder volume type. |
 | `clusterapi_cluster_openstack_availability_zones` | `[nova]` | Availability zones for control plane nodes. |
 | `clusterapi_cluster_control_plane_machine_health_check_enabled` | `true` | Deploy a MachineHealthCheck for control-plane nodes so a Machine that never registers a Node (e.g. a permanently failed `kubeadm join`) is automatically replaced instead of hanging forever. |
@@ -71,6 +91,7 @@ Deletes the Cluster API `Cluster` resource, which triggers CAPO to remove all as
 | `clusterapi_cluster_control_plane_server_group_policy` | `soft-anti-affinity` | Server group policy for control-plane machines. `soft-anti-affinity` prefers separate hosts without hard-failing scheduling on clouds with few hypervisors (unlike `anti-affinity`). |
 | `clusterapi_cluster_worker_server_group_enabled` | `true` | Place worker machines in an OpenStack server group so they're spread across hypervisors. |
 | `clusterapi_cluster_worker_server_group_policy` | `soft-anti-affinity` | Server group policy for worker machines. |
+| `clusterapi_cluster_stale_machine_template_cleanup_enabled` | `true` | Delete `OpenStackMachineTemplate` objects no longer referenced after a flavor/image-triggered rollout (see "Rolling out flavor/image changes" below). |
 
 Worker node deployments support multiple pools across failure domains:
 

@@ -40,6 +40,10 @@ config:
 {{ gardener_operator_dex.connectors | to_nice_yaml(indent=2) | indent(4, true) }}
 {% endif %}
 
+service:
+  annotations:
+    networking.istio.io/exportTo: virtual-garden-istio-ingress
+
 replicaCount: 2
 
 podDisruptionBudget:

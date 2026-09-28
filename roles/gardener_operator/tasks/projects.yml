@@ -1,0 +1,17 @@
+---
+- name: Render projects.yaml
+  ansible.builtin.template:
+    src: projects.yaml.j2
+    dest: /var/lib/yake/gardener-operator/projects.yaml
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: 0644
+  when: gardener_operator_projects | d([]) | length > 0
+
+- name: Apply projects.yaml
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: present
+    wait: true
+    src: /var/lib/yake/gardener-operator/projects.yaml
+  when: gardener_operator_projects | d([]) | length > 0

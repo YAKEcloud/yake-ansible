@@ -179,7 +179,7 @@ spec:
           - "*.{{ gardener_operator_garden_url }}"
           - "*.ingress.{{ gardener_operator_garden_url }}"
 {% for seed in gardener_operator_managed_seeds | d([]) %}
-          - "*.ingress.{{ seed.name }}.{{ gardener_operator_managed_seeds_project_name }}.{{ gardener_operator_garden_url }}"
+          - "*.ingress.{{ seed.name }}.{{ gardener_operator_managed_seeds_project.name }}.{{ gardener_operator_garden_url }}"
 {% endfor %}
           container:
             image: {{ gardener_operator_image_registry }}/gardener-project/releases/gardener/ops-toolbelt:latest

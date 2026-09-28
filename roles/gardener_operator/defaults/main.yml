@@ -181,6 +181,16 @@ gardener_operator_internal_seed_excess_capacity_reservation: "false"
 
 gardener_operator_garden_cluster_admin_email: admin@example.com
 
+gardener_operator_managed_seeds_project:
+  name: seeds
+  members:
+    - email: "{{ gardener_operator_garden_cluster_admin_email }}"
+      role: admin
+      roles:
+        - serviceaccountmanager
+
+gardener_operator_projects: []
+
 gardener_operator_cloudprofiles:
   - name: openstack-a
     storageclasses:
@@ -227,8 +237,6 @@ gardener_operator_cloudprofiles:
 # CIDRs blocked in all shoot clusters via NetworkPolicy (e.g. cloud metadata service).
 gardener_operator_seed_block_cidrs:
   - 169.254.169.254/32
-
-gardener_operator_managed_seeds_project_name: seeds
 
 gardener_operator_managed_seeds_registry_mirrors_ca: ""
 gardener_operator_managed_seeds_registry_mirrors: []

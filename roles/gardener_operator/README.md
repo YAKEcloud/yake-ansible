@@ -35,7 +35,9 @@ This role deploys the Gardener Operator on an existing Kubernetes cluster and co
 | `gardener_operator_garden_url` | `example.com` | Base domain. Wildcard DNS for this domain must point to the garden ingress. |
 | `gardener_operator_kubernetes_version` | `1.36.1` | Kubernetes version for the internal seed shoot. |
 | `gardener_operator_networking_type` | `cilium` | Default CNI for shoots: `cilium` or `calico`. |
-| `gardener_operator_garden_cluster_admin_email` | `admin@example.com` | Admin email for the Gardener dashboard. |
+| `gardener_operator_garden_cluster_admin_email` | `admin@example.com` | Cluster-admin email for the Gardener dashboard; also the default sole member of `gardener_operator_managed_seeds_project`. |
+| `gardener_operator_managed_seeds_project` | `{name: seeds, members: [{email: gardener_operator_garden_cluster_admin_email, role: admin, roles: [serviceaccountmanager]}]}` | The `name`/`members` of the `garden` namespace Project used internally for `gardener_operator_managed_seeds` (its namespace is always `garden`, not configurable). Same member entry format as `gardener_operator_projects` below. Adding someone to `gardener_operator_dex.static_passwords` does **not** put them here - the two are independent, so a new Dex user gets no project access unless you explicitly add them to a project's member list. |
+| `gardener_operator_projects` | `[]` | Additional, independent Gardener Projects for regular tenants (unrelated to managed seeds). See below. |
 
 ### OpenStack Credentials
 
@@ -86,6 +88,25 @@ Key fields per profile:
 | `kubernetes_versions` | Available Kubernetes versions with classification (`preview`, `supported`, `deprecated`). |
 | `machinetypes` | Machine type definitions with CPU, GPU, and memory. |
 | `regions` | Regions with availability zones. |
+
+### Projects
+
+`gardener_operator_projects` is a list of independent Gardener Projects, each getting its own namespace and member list. Use this to give someone access without touching the managed-seeds Project at all, or to separate multiple tenants:
+
+```yaml
+gardener_operator_projects:
+  - name: team-a
+    members:
+      - email: "focis@notreal.org"
+        role: admin
+  - name: team-b
+    namespace: garden-team-b  # optional, Gardener auto-generates one if omitted
+    members:
+      - email: "someone-else@notreal.org"
+        role: viewer
+```
+
+Each member also needs a matching entry in `gardener_operator_dex.static_passwords` to actually be able to log in.
 
 ### Managed Seeds
 

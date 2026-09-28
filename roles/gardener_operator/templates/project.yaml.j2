@@ -5,20 +5,26 @@ metadata:
   name: garden
   labels:
     gardener.cloud/role: project
-    project.gardener.cloud/name: {{ gardener_operator_managed_seeds_project_name }}
+    project.gardener.cloud/name: {{ gardener_operator_managed_seeds_project.name }}
   annotations:
     namespace.gardener.cloud/keep-after-project-deletion: "true"
 ---
 apiVersion: core.gardener.cloud/v1beta1
 kind: Project
 metadata:
-  name: {{ gardener_operator_managed_seeds_project_name }}
+  name: {{ gardener_operator_managed_seeds_project.name }}
 spec:
   namespace: garden
   members:
+{% for member in gardener_operator_managed_seeds_project.members %}
     - apiGroup: rbac.authorization.k8s.io
       kind: User
-      name: {{ gardener_operator_garden_cluster_admin_email }}
-      role: admin
+      name: {{ member.email }}
+      role: {{ member.role }}
+{% if member.roles | d([]) | length > 0 %}
       roles:
-        - serviceaccountmanager
+{% for extra_role in member.roles %}
+        - {{ extra_role }}
+{% endfor %}
+{% endif %}
+{% endfor %}

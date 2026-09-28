@@ -156,6 +156,52 @@
     wait: true
     src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
 
+- name: Slurp generated cluster manifest
+  ansible.builtin.slurp:
+    src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
+  register: result_cluster_manifest  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: Determine currently desired OpenStackMachineTemplate names
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_current_machine_template_names: >-
+      {{
+        result_cluster_manifest.content | b64decode | from_yaml_all | list
+        | select('defined')
+        | selectattr('kind', 'defined')
+        | selectattr('kind', 'equalto', 'OpenStackMachineTemplate')
+        | map(attribute='metadata.name')
+        | list
+      }}
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: List existing OpenStackMachineTemplates
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    api_version: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: OpenStackMachineTemplate
+    namespace: default
+  register: result_existing_machine_templates  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: Delete stale OpenStackMachineTemplates no longer referenced
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    state: absent
+    api_version: infrastructure.cluster.x-k8s.io/v1beta1
+    kind: OpenStackMachineTemplate
+    namespace: default
+    name: "{{ item }}"
+  loop: >-
+    {{
+      result_existing_machine_templates.resources
+      | map(attribute='metadata.name')
+      | select('match', '^' ~ (clusterapi_cluster_name | regex_escape) ~ '-')
+      | reject('in', _clusterapi_cluster_current_machine_template_names)
+      | list
+    }}
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
 - name: Get kubeconfig
   ansible.builtin.command: "{{ playbook_dir }}/.local/yake-clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
   register: result_kubeconfig  # noqa: var-naming[no-role-prefix]

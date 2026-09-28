@@ -1,0 +1,24 @@
+{% for project in gardener_operator_projects %}
+---
+apiVersion: core.gardener.cloud/v1beta1
+kind: Project
+metadata:
+  name: {{ project.name }}
+spec:
+{% if project.namespace | d('') | length > 0 %}
+  namespace: {{ project.namespace }}
+{% endif %}
+  members:
+{% for member in project.members %}
+    - apiGroup: rbac.authorization.k8s.io
+      kind: User
+      name: {{ member.email }}
+      role: {{ member.role }}
+{% if member.roles | d([]) | length > 0 %}
+      roles:
+{% for extra_role in member.roles %}
+        - {{ extra_role }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endfor %}

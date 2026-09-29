@@ -1,0 +1,60 @@
+---
+name: Release
+
+permissions:
+  contents: write
+
+"on":
+  push:
+    branches: [main]
+    paths:
+      - 'roles/gardener_operator/defaults/main.yml'
+  workflow_dispatch:
+    inputs:
+      hotfix:
+        description: 'Release a new -N revision of the current Gardener version'
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Determine release tag
+        id: tag
+        run: |
+          version=$(sed -nE "s/^gardener_operator_version: '([^']+)'.*/\1/p" roles/gardener_operator/defaults/main.yml)
+          [ -n "$version" ] || { echo "gardener_operator_version not found" >&2; exit 1; }
+          last=$(git tag --list "v${version}-*" | sed -E 's/.*-//' | sort -n | tail -1)
+          if [ -z "$last" ]; then
+            revision=0
+          elif [ "${{ inputs.hotfix }}" = "true" ]; then
+            revision=$((last + 1))
+          else
+            echo "v${version}-${last} already exists, nothing to release"
+            echo "release=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          echo "release=true" >> "$GITHUB_OUTPUT"
+          echo "name=v${version}-${revision}" >> "$GITHUB_OUTPUT"
+          echo "previous=$(git tag --list 'v*-*' --sort=-v:refname | head -1)" >> "$GITHUB_OUTPUT"
+
+      - name: Create release
+        if: steps.tag.outputs.release == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          .github/scripts/build-release-notes.sh \
+            "${{ steps.tag.outputs.name }}" "${{ steps.tag.outputs.previous }}" "$GITHUB_SHA" > notes.md
+          [ "$(stat -c %s notes.md)" -le 120000 ] || truncate -s 120000 notes.md
+          gh release create "${{ steps.tag.outputs.name }}" \
+            --target "$GITHUB_SHA" --title "${{ steps.tag.outputs.name }}" --notes-file notes.md

@@ -14,7 +14,7 @@ gardener_operator_kyverno_version: '3.9.1'
 gardener_operator_helm_values: {}
 
 # renovate: datasource=github-releases depName=dexidp/helm-charts extractVersion=^dex-(?<version>.+)$
-gardener_operator_dex_version: '0.25.1'
+gardener_operator_dex_version: '0.25.2'
 # renovate: datasource=docker depName=ghcr.io/emberstack/helm-charts/reflector
 gardener_operator_reflector_version: '10.0.65'
 gardener_operator_dex:

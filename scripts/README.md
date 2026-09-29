@@ -141,3 +141,36 @@ GARDENLINUX_FLAVOR = "openstack-gardener-metal_prod"
 
 Available flavors follow the pattern `openstack-<flavor>-<arch>-<version>-<commit>.tar.xz`
 and can be browsed on the [GardenLinux releases page](https://github.com/gardenlinux/gardenlinux/releases).
+
+---
+
+## cleanup-openstack.py
+
+Deletes the OpenStack resources built by a yake-ansible cluster/seed — and only those,
+matched by name. Never deletes "everything except a preserved list": a shared OpenStack
+project can hold unrelated infrastructure that must never be touched. Used by `cleanup.yml`.
+
+### Requirements
+
+```bash
+pip install openstacksdk
+```
+
+### Usage
+
+```bash
+export OS_CLOUD=mycloud   # or use --cloud
+
+# Clean up the clusterapi_cluster (default name: garden) and its DNS zone
+python3 scripts/cleanup-openstack.py --garden-url botany.example.com
+
+# Also clean up one or more managed seeds
+python3 scripts/cleanup-openstack.py --seed-names managed-seed-a,managed-seed-b --garden-url botany.example.com
+
+# Check what would be deleted without deleting anything
+python3 scripts/cleanup-openstack.py --seed-names managed-seed-a --dry-run
+```
+
+`--cluster-name` (default `garden`) and `--seeds-project` (default `seeds`) only need to be
+passed if `clusterapi_cluster_name` / `gardener_operator_managed_seeds_project.name` were
+changed from their defaults.

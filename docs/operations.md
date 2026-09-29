@@ -199,21 +199,31 @@ the controller mid-reconciliation and leaves those OpenStack resources behind.
 
 ### OpenStack Resource Cleanup
 
-The `cleanup.yml` playbook removes OpenStack resources that may remain after a teardown. It targets servers, volumes, floating IPs, load balancers, routers, networks, subnets, security groups, DNS record sets, and SSH key pairs.
-
-Review the variables in the playbook before running it, as some resources may be shared with other projects:
+The `cleanup.yml` playbook removes OpenStack resources left behind after a teardown: servers,
+volumes, floating IPs, load balancers, routers, networks, subnets, security groups, DNS record
+sets, and SSH key pairs. It only ever touches resources it can positively identify as belonging
+to this run's `clusterapi_cluster_name` and `gardener_operator_managed_seeds`, matched by name
+(see `scripts/README.md` for details) — safe to run against a project that also holds unrelated
+infrastructure.
 
 ```bash
-ansible-playbook -i localhost, -c local cleanup.yml
+ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/all.yml"
 ```
 
-This is a project-wide sweep, not scoped to a specific Shoot or Cluster — it removes matching
-resources regardless of what created them (garden cluster, a managed seed's own worker nodes, or
-anything else in the project). It's the practical fallback if the graceful teardown above was
-skipped, interrupted, or left something behind (e.g. a stuck finalizer): rather than tracking down
-every orphaned resource by hand, re-running `cleanup.yml` reclaims it. Only skip the graceful
-`Garden`/`ManagedSeed` teardown steps entirely and rely on this instead when the OpenStack project
-is dedicated to this environment (e.g. ephemeral CI runs) and nothing else in it needs to survive.
+It's the practical fallback if the graceful teardown above was skipped, interrupted, or left
+something behind (e.g. a stuck finalizer): rather than tracking down every orphaned resource by
+hand, re-running `cleanup.yml` reclaims it.
+
+The OpenStack part can also be run standalone, outside Ansible: `scripts/cleanup-openstack.py`
+(pass `--dry-run` to preview first).
+
+**Full local reset** — for a manual test run where you also want the local docker containers,
+images, and `/var/lib/yake/` gone afterwards (not something CI needs, since its runner is
+thrown away anyway):
+
+```bash
+ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/all.yml" -e cleanup_full_local_reset=true --ask-become-pass
+```
 
 ## Troubleshooting
 

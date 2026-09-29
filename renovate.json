@@ -15,6 +15,10 @@
       "groupName": "kind and kindest/node",
       "description": "kind CLI and kindest/node must stay on compatible kubeadm config versions; bump together.",
       "matchDepNames": ["kubernetes-sigs/kind", "kindest/node"]
+    },
+    {
+      "matchDepNames": ["kubernetes/kubernetes"],
+      "allowedVersions": "<1.37.0"
     }
   ],
   "customManagers": [

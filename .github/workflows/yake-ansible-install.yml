@@ -7,8 +7,6 @@ permissions:
 "on":
   pull_request:
     types: [opened, reopened, synchronize]
-    branches-ignore:
-      - 'release-please--**'
     paths:
       - '.github/workflows/yake-ansible-install.yml'
       - 'group_vars/**'
@@ -27,7 +25,7 @@ concurrency:
 jobs:
   yake-ansible-install:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 150
     steps:
       - name: Checkout repository
         uses: actions/checkout@v7
@@ -52,7 +50,7 @@ jobs:
       - name: Run ansible-playbook site.yml
         uses: nick-fields/retry@v4
         with:
-          timeout_minutes: 20
+          timeout_minutes: 45
           max_attempts: 3
           command: ansible-playbook -i localhost, -c local site.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt
         env:
@@ -61,7 +59,7 @@ jobs:
       - name: Wait for shoot readiness
         uses: nick-fields/retry@v4
         with:
-          timeout_minutes: 10
+          timeout_minutes: 20
           max_attempts: 3
           retry_wait_seconds: 30
           command: |
@@ -79,6 +77,21 @@ jobs:
         if: always()
         uses: nick-fields/retry@v4
         with:
-          timeout_minutes: 20
+          timeout_minutes: 30
           max_attempts: 3
           command: ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt
+
+      - name: Dump Gardener/shoot status on failure
+        if: failure()
+        run: |
+          echo "::group::Shoot status"
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden -n garden get shoot -o wide || true
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden -n garden get shoot managed-seed-bb -o jsonpath='{range .status.conditions[*]}{.type}={.status} ({.reason}): {.message}{"\n"}{end}' || true
+          echo "::endgroup::"
+          echo "::group::Garden status"
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden get garden -o wide || true
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden -n garden get pods || true
+          echo "::endgroup::"
+          echo "::group::Extension rollout status"
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden get extensions.operator.gardener.cloud -o wide || true
+          echo "::endgroup::"

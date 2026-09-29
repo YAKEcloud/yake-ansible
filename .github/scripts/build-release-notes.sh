@@ -37,9 +37,12 @@ if [ -n "$versions" ]; then
     echo "### [Gardener v${v}](https://github.com/gardener/gardener/releases/tag/v${v})"
     echo
     # Drop the title and everything from "Helm Charts" on (chart and image
-    # references), demote the remaining headings below our own.
+    # references), demote the remaining headings below our own and remove
+    # @mentions: GitHub would list the Gardener authors as contributors
+    # of this repository.
     gh api "repos/gardener/gardener/releases/tags/v${v}" --jq .body |
-      sed -E '/^## Helm Charts/,$d; /^# /d; s/^## /#### /' | cat -s
+      sed -E '/^## Helm Charts/,$d; /^# /d; s/^## /#### /' |
+      sed -E 's/ by @[A-Za-z0-9_-]+(\[bot\])?//g; s/(^|[^A-Za-z0-9`])@([A-Za-z0-9_-]+)/\1\2/g' | cat -s
     echo
   done
 fi

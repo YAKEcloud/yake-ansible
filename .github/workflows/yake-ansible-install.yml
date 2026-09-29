@@ -23,7 +23,33 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  check-relevance:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    outputs:
+      relevant: ${{ steps.check.outputs.relevant }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Check whether this PR touches anything CI-relevant
+        id: check
+        run: |
+          .github/scripts/check-relevant-changes.sh \
+            "${{ github.event.pull_request.base.sha }}" \
+            "${{ github.event.pull_request.head.sha }}" \
+            >> "$GITHUB_OUTPUT"
+
   yake-ansible-install:
+    needs: [check-relevance]
+    # Fail open: only skip when the check job actually ran and explicitly
+    # said "false" (e.g. a version bump for something group_vars/ci.yml never
+    # exercises - see .github/scripts/check-relevant-changes.sh for the full,
+    # verified list). Any other trigger (workflow_dispatch) or an
+    # inconclusive check still runs.
+    if: needs.check-relevance.outputs.relevant != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 150
     steps:

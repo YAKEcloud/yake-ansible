@@ -50,7 +50,9 @@ def gather(conn, prefixes, name_re):
     """Read-only: identify every resource this run owns. Never deletes anything."""
     print("Gathering resources ...")
 
-    servers = [s for s in conn.compute.servers(details=True) if name_re.match(s.name or "")]
+    servers = [
+        s for s in conn.compute.servers(details=True) if name_re.match(s.name or "")
+    ]
 
     all_volumes = list(conn.block_storage.volumes())
     attached_to_own = {vol["id"] for s in servers for vol in (s.attached_volumes or [])}
@@ -64,9 +66,13 @@ def gather(conn, prefixes, name_re):
 
     keypairs = [k for k in conn.compute.keypairs() if k.name in prefixes]
 
-    server_groups = [g for g in conn.compute.server_groups() if name_re.match(g.name or "")]
+    server_groups = [
+        g for g in conn.compute.server_groups() if name_re.match(g.name or "")
+    ]
 
-    security_groups = [g for g in conn.network.security_groups() if name_re.match(g.name or "")]
+    security_groups = [
+        g for g in conn.network.security_groups() if name_re.match(g.name or "")
+    ]
 
     networks = [n for n in conn.network.networks() if name_re.match(n.name or "")]
     network_ids = {n.id for n in networks}
@@ -82,13 +88,16 @@ def gather(conn, prefixes, name_re):
     loadbalancers = [
         lb
         for lb in conn.load_balancer.load_balancers()
-        if matches_any_substring(lb.name, prefixes) or (lb.name or "").startswith("kube_service_kubernetes_")
+        if matches_any_substring(lb.name, prefixes)
+        or (lb.name or "").startswith("kube_service_kubernetes_")
     ]
 
     all_ports = list(conn.network.ports())
     own_ports = [p for p in all_ports if p.network_id in network_ids]
     router_interface_ports = [
-        p for p in all_ports if p.device_owner == "network:router_interface" and p.device_id in router_ids
+        p
+        for p in all_ports
+        if p.device_owner == "network:router_interface" and p.device_id in router_ids
     ]
     own_port_ids = {p.id for p in own_ports} | {p.id for p in router_interface_ports}
 
@@ -118,7 +127,12 @@ def cleanup(conn, owned, dry_run):
         for s in owned["servers"]:
             conn.compute.wait_for_delete(s)
 
-    report(dry_run, "floating-ip", owned["floating_ips"], label=lambda i: i.floating_ip_address)
+    report(
+        dry_run,
+        "floating-ip",
+        owned["floating_ips"],
+        label=lambda i: i.floating_ip_address,
+    )
     if not dry_run:
         for f in owned["floating_ips"]:
             conn.network.delete_ip(f, ignore_missing=True)
@@ -126,7 +140,9 @@ def cleanup(conn, owned, dry_run):
     report(dry_run, "loadbalancer", owned["loadbalancers"])
     if not dry_run:
         for lb in owned["loadbalancers"]:
-            conn.load_balancer.delete_load_balancer(lb, ignore_missing=True, cascade=True)
+            conn.load_balancer.delete_load_balancer(
+                lb, ignore_missing=True, cascade=True
+            )
         for lb in owned["loadbalancers"]:
             conn.load_balancer.wait_for_delete(lb)
 
@@ -135,14 +151,21 @@ def cleanup(conn, owned, dry_run):
         for v in owned["volumes"]:
             conn.block_storage.delete_volume(v, ignore_missing=True)
 
-    report(dry_run, "router-interface", owned["router_interface_ports"], label=lambda i: i.device_id)
+    report(
+        dry_run,
+        "router-interface",
+        owned["router_interface_ports"],
+        label=lambda i: i.device_id,
+    )
     if not dry_run:
         for p in owned["router_interface_ports"]:
             try:
                 conn.network.remove_interface_from_router(
                     p.device_id, subnet_id=p.fixed_ips[0]["subnet_id"]
                 )
-            except Exception as exc:  # noqa: BLE001 — best-effort, router delete below still runs
+            except (
+                Exception
+            ) as exc:  # noqa: BLE001 — best-effort, router delete below still runs
                 print(f"  [router-interface] Warning: {exc}")
 
     report(dry_run, "router", owned["routers"])
@@ -201,8 +224,16 @@ def main():
         description=__doc__,
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
-    parser.add_argument("--cloud", default=None, help="Cloud name from clouds.yaml (default: OS_CLOUD env var)")
-    parser.add_argument("--cluster-name", default="garden", help="clusterapi_cluster_name (default: garden)")
+    parser.add_argument(
+        "--cloud",
+        default=None,
+        help="Cloud name from clouds.yaml (default: OS_CLOUD env var)",
+    )
+    parser.add_argument(
+        "--cluster-name",
+        default="garden",
+        help="clusterapi_cluster_name (default: garden)",
+    )
     parser.add_argument(
         "--seed-names",
         default="",
@@ -214,7 +245,11 @@ def main():
         default="seeds",
         help="gardener_operator_managed_seeds_project.name (default: seeds)",
     )
-    parser.add_argument("--garden-url", default=None, help="gardener_operator_garden_url, to clean up its DNS zone")
+    parser.add_argument(
+        "--garden-url",
+        default=None,
+        help="gardener_operator_garden_url, to clean up its DNS zone",
+    )
     parser.add_argument(
         "--preserve-dns-type",
         action="append",
@@ -222,8 +257,14 @@ def main():
         metavar="TYPE",
         help="DNS record type to keep (default: SOA, NS); repeat for multiple",
     )
-    parser.add_argument("--dry-run", action="store_true", help="Report what would be deleted without deleting anything")
-    parser.add_argument("--insecure", action="store_true", help="Disable TLS certificate verification")
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Report what would be deleted without deleting anything",
+    )
+    parser.add_argument(
+        "--insecure", action="store_true", help="Disable TLS certificate verification"
+    )
     args = parser.parse_args()
 
     print("Connecting to OpenStack ...")
@@ -238,7 +279,9 @@ def main():
         print("Dry-run mode — nothing will be deleted.")
 
     seed_names = [s for s in args.seed_names.split(",") if s]
-    prefixes = [args.cluster_name] + [f"shoot--{args.seeds_project}--{s}" for s in seed_names]
+    prefixes = [args.cluster_name] + [
+        f"shoot--{args.seeds_project}--{s}" for s in seed_names
+    ]
     name_re = own_name_regex(prefixes)
     print(f"Matching resources owned by: {', '.join(prefixes)}")
 
@@ -246,7 +289,9 @@ def main():
     cleanup(conn, owned, args.dry_run)
 
     if args.garden_url:
-        cleanup_dns(conn, args.garden_url, args.preserve_dns_type or ["SOA", "NS"], args.dry_run)
+        cleanup_dns(
+            conn, args.garden_url, args.preserve_dns_type or ["SOA", "NS"], args.dry_run
+        )
 
 
 if __name__ == "__main__":

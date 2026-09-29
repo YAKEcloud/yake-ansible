@@ -44,11 +44,6 @@ jobs:
 
   yake-ansible-install:
     needs: [check-relevance]
-    # Fail open: only skip when the check job actually ran and explicitly
-    # said "false" (e.g. a version bump for something group_vars/ci.yml never
-    # exercises - see .github/scripts/check-relevant-changes.sh for the full,
-    # verified list). Any other trigger (workflow_dispatch) or an
-    # inconclusive check still runs.
     if: needs.check-relevance.outputs.relevant != 'false'
     runs-on: ubuntu-latest
     timeout-minutes: 150
@@ -82,7 +77,7 @@ jobs:
         env:
           ANSIBLE_HOST_KEY_CHECKING: "False"
 
-      - name: Wait for shoot readiness
+      - name: Wait for Garden readiness
         uses: nick-fields/retry@v4
         with:
           timeout_minutes: 20
@@ -90,14 +85,25 @@ jobs:
           retry_wait_seconds: 30
           command: |
             ./.local/yake-kubectl \
-              --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden \
-              -n garden wait shoot managed-seed-bb \
-              --for=condition=APIServerAvailable=True \
-              --for=condition=ControlPlaneHealthy=True \
-              --for=condition=EveryNodeReady=True \
-              --for=condition=SystemComponentsHealthy=True \
-              --for=condition=ExtensionsReady=True \
+              --kubeconfig /var/lib/yake/kubeconfig.garden \
+              wait garden gardener \
+              --for=condition=VirtualGardenAPIServerAvailable=True \
+              --for=condition=RuntimeComponentsHealthy=True \
+              --for=condition=VirtualComponentsHealthy=True \
+              --for=condition=ObservabilityComponentsHealthy=True \
               --timeout=-1s
+
+      - name: Dump Gardener status on failure
+        if: failure()
+        run: |
+          echo "::group::Garden status"
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden get garden -o wide || true
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden get garden gardener -o jsonpath='{range .status.conditions[*]}{.type}={.status} ({.reason}): {.message}{"\n"}{end}' || true
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden -n garden get pods || true
+          echo "::endgroup::"
+          echo "::group::Extension rollout status"
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden get extensions.operator.gardener.cloud -o wide || true
+          echo "::endgroup::"
 
       - name: Run cleanup
         if: always()
@@ -106,18 +112,3 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           command: ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt
-
-      - name: Dump Gardener/shoot status on failure
-        if: failure()
-        run: |
-          echo "::group::Shoot status"
-          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden -n garden get shoot -o wide || true
-          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden -n garden get shoot managed-seed-bb -o jsonpath='{range .status.conditions[*]}{.type}={.status} ({.reason}): {.message}{"\n"}{end}' || true
-          echo "::endgroup::"
-          echo "::group::Garden status"
-          ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden get garden -o wide || true
-          ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden -n garden get pods || true
-          echo "::endgroup::"
-          echo "::group::Extension rollout status"
-          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden get extensions.operator.gardener.cloud -o wide || true
-          echo "::endgroup::"

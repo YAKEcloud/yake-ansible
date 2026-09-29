@@ -20,9 +20,13 @@ clusterapi_cluster_openstack_application_credential_secret: ""
 clusterapi_cluster_openstack_domain_name: "domain"
 clusterapi_cluster_openstack_region_name: "region"
 clusterapi_cluster_openstack_image_id: ""
+# Optional safety check: fails the run if the image_id above no longer
+# resolves to the image name you expect (e.g. after a stale/renamed reference).
+clusterapi_cluster_openstack_image_name: ""
 clusterapi_cluster_openstack_cacert: ""
 
 clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4-20s"
+clusterapi_cluster_control_plane_machine_count: 3
 clusterapi_cluster_worker_machine_flavor: "SCS-4V-8-50s"
 clusterapi_cluster_worker_machine_deployments:
   - name: md-0

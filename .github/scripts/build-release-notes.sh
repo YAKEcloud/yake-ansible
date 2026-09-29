@@ -39,10 +39,25 @@ if [ -n "$versions" ]; then
     # Drop the title and everything from "Helm Charts" on (chart and image
     # references), demote the remaining headings below our own and remove
     # @mentions: GitHub would list the Gardener authors as contributors
-    # of this repository.
+    # of this repository. Entries for developers and dependency bumps are
+    # of no use to someone installing Gardener, so they are dropped too,
+    # together with headings that end up empty. Noteworthy and breaking
+    # sections are kept as they are, their entries are rare and matter.
     gh api "repos/gardener/gardener/releases/tags/v${v}" --jq .body |
       sed -E '/^## Helm Charts/,$d; /^# /d; s/^## /#### /' |
-      sed -E 's/ by @[A-Za-z0-9_-]+(\[bot\])?//g; s/(^|[^A-Za-z0-9`])@([A-Za-z0-9_-]+)/\1\2/g' | cat -s
+      sed -E 's/ by @[A-Za-z0-9_-]+(\[bot\])?//g; s/(^|[^A-Za-z0-9`])@([A-Za-z0-9_-]+)/\1\2/g' |
+      awk '
+        /^#### / { heading = $0; important = ($0 ~ /Noteworthy|Breaking|Action/); next }
+        /^- / { skip = (!important && $0 ~ /^- `\[(DEVELOPER|DEPENDENCY)\]`/) }
+        /^[^- ]/ || /^$/ { skip = 0 }
+        skip { next }
+        /^$/ { blank = 1; next }
+        {
+          if (heading != "") { if (started) print ""; print heading; heading = ""; blank = 0 }
+          else if (blank) print ""
+          blank = 0; started = 1
+          print
+        }'
     echo
   done
 fi

@@ -3,7 +3,7 @@ changelog:
     labels:
       - skip-changelog
   categories:
-    - title: Gardener and component updates
+    - title: Dependency updates
       labels:
         - renovate
     - title: Changes

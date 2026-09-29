@@ -62,6 +62,24 @@ if [ -n "$versions" ]; then
   done
 fi
 
+# Generated notes of this repository: own changes first, dependency bumps
+# below, without the duplicate "What's Changed" heading and without bot
+# mentions (they would show up as contributors).
+reorder_own_notes() {
+  sed -E 's/ by @[A-Za-z0-9_-]+\[bot\]//' |
+    awk '
+      /^## What.s Changed/ { next }
+      /^### Changes$/ { cur = "changes"; next }
+      /^### Dependency updates$/ { cur = "updates"; next }
+      /^## / || /^\*\*Full Changelog/ { cur = "rest" }
+      { text[cur] = text[cur] $0 "\n" }
+      END {
+        if (text["changes"] ~ /[^[:space:]]/) printf "### Changes\n%s\n", text["changes"]
+        if (text["updates"] ~ /[^[:space:]]/) printf "### Dependency updates\n%s\n", text["updates"]
+        printf "%s", text["rest"]
+      }' | cat -s
+}
+
 echo "## Changes in this repository"
 echo
 if [ -z "$previous" ]; then
@@ -69,5 +87,5 @@ if [ -z "$previous" ]; then
 else
   gh api "repos/${GITHUB_REPOSITORY}/releases/generate-notes" \
     -f tag_name="$tag" -f target_commitish="$target" \
-    -f previous_tag_name="$previous" --jq .body
+    -f previous_tag_name="$previous" --jq .body | reorder_own_notes
 fi

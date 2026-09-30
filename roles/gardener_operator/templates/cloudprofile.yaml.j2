@@ -75,6 +75,16 @@ spec:
       cpu: {{ mt.cpu }}
       gpu: {{ mt.gpu }}
       memory: {{ mt.memory }}
+{% if mt.storage_size is defined and mt.storage_size %}
+      storage:
+        size: {{ mt.storage_size }}
+{% if mt.storage_type is defined and mt.storage_type %}
+        type: {{ mt.storage_type }}
+{% endif %}
+{% if mt.storage_class is defined and mt.storage_class %}
+        class: {{ mt.storage_class }}
+{% endif %}
+{% endif %}
 {% endfor %}
 {% if item.storageclasses | selectattr('type', 'defined') | selectattr('type') | list %}
   volumeTypes:

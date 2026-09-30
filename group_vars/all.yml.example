@@ -119,8 +119,9 @@ gardener_operator_cloudprofiles:
         # Optional, not set by default. Default root disk size (boot volume).
         # Needed for SCS / disk-0 flavors, otherwise Nova rejects the server create
         # unless worker.volume.size is set. Do not set for flavors with an ephemeral
-        # disk (an additional volume would be created). Optional: storage_type, storage_class
-        storage_size: 50Gi
+        # disk (an additional volume would be created). Optional: type, class
+        storage:
+          size: 50Gi
       - name: SCS-4V-16
         cpu: "4"
         gpu: "0"

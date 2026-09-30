@@ -75,14 +75,14 @@ spec:
       cpu: {{ mt.cpu }}
       gpu: {{ mt.gpu }}
       memory: {{ mt.memory }}
-{% if mt.storage_size is defined and mt.storage_size %}
+{% if mt.storage is defined and mt.storage.size is defined and mt.storage.size %}
       storage:
-        size: {{ mt.storage_size }}
-{% if mt.storage_type is defined and mt.storage_type %}
-        type: {{ mt.storage_type }}
+        size: {{ mt.storage.size }}
+{% if mt.storage.type is defined and mt.storage.type %}
+        type: {{ mt.storage.type }}
 {% endif %}
-{% if mt.storage_class is defined and mt.storage_class %}
-        class: {{ mt.storage_class }}
+{% if mt.storage.class is defined and mt.storage.class %}
+        class: {{ mt.storage.class }}
 {% endif %}
 {% endif %}
 {% endfor %}

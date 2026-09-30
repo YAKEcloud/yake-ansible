@@ -57,9 +57,12 @@
     name: seed-ingress
     namespace: garden
   register: seed_ingress_certificate  # noqa: var-naming[no-role-prefix]
+  vars:
+    _cert: "{{ seed_ingress_certificate.resources | first | default({}) }}"
+    _cert_status: "{{ _cert.status | default({}) }}"
   until:
     - seed_ingress_certificate.resources | length > 0
-    - (seed_ingress_certificate.resources[0].status | d({})).state | d('') == 'Ready'
+    - _cert_status.state | default('') == 'Ready'
   retries: 30
   delay: 10
 

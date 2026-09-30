@@ -296,7 +296,7 @@
 # the task stays idempotent and the final manifest is available on the host.
 - name: Write CCM DaemonSet manifest
   ansible.builtin.copy:
-    content: "{{ (ccm_other + (ccm_daemonsets | map('combine', ccm_patch, recursive=True) | list)) | map('to_nice_yaml') | join('---\n') }}"
+    content: "{{ (ccm_other + (ccm_daemonsets | map('combine', ccm_patch, recursive=True) | list)) | map('to_nice_yaml', indent=2, sort_keys=False) | join('---\n') }}"
     dest: /var/lib/yake/openstack-cloud-controller-manager-ds.yaml
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
@@ -358,7 +358,7 @@
 
 - name: Write CSI controller plugin manifest
   ansible.builtin.copy:
-    content: "{{ csi_controller | combine(csi_controller_patch, recursive=True) | to_nice_yaml }}"
+    content: "{{ csi_controller | combine(csi_controller_patch, recursive=True) | to_nice_yaml(indent=2, sort_keys=False) }}"
     dest: /var/lib/yake/cinder-csi-controllerplugin.yaml
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
@@ -377,7 +377,7 @@
 
 - name: Write CSI node plugin manifest
   ansible.builtin.copy:
-    content: "{{ csi_node | combine(csi_node_patch, recursive=True) | to_nice_yaml }}"
+    content: "{{ csi_node | combine(csi_node_patch, recursive=True) | to_nice_yaml(indent=2, sort_keys=False) }}"
     dest: /var/lib/yake/cinder-csi-nodeplugin.yaml
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"

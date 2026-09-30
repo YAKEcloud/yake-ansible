@@ -5,16 +5,19 @@
     dest: "/var/lib/yake/clouds.{{ clusterapi_cluster_name }}.yaml"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0600"
+  no_log: true
 
 - name: Slurp clouds.yaml file
   ansible.builtin.slurp:
     src: "/var/lib/yake/clouds.{{ clusterapi_cluster_name }}.yaml"
   register: result_clouds_yaml  # noqa: var-naming[no-role-prefix]
+  no_log: true
 
 - name: Set _clusterapi_cluster_cloud_yaml_b64 fact
   ansible.builtin.set_fact:
     _clusterapi_cluster_cloud_yaml_b64: "{{ result_clouds_yaml.content }}"
+  no_log: true
 
 - name: Copy secret template file
   ansible.builtin.template:
@@ -22,7 +25,8 @@
     dest: /var/lib/yake/cloud-secret.yaml
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0600"
+  no_log: true
 
 - name: Get image info
   openstack.cloud.image_info:
@@ -97,7 +101,7 @@
     dest: /var/lib/yake/cluster-template.yaml
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0644"
 
 - name: Create ssh keypair
   openstack.cloud.keypair:
@@ -112,8 +116,9 @@
     dest: "/var/lib/yake/id_rsa.{{ clusterapi_cluster_name }}"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0600"
   when: result_keypair.changed  # noqa no-handler
+  no_log: true
 
 - name: Write public ssh key
   ansible.builtin.copy:
@@ -121,7 +126,7 @@
     dest: "/var/lib/yake/id_rsa.{{ clusterapi_cluster_name }}.pub"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0644"
   when: result_keypair.changed  # noqa no-handler
 
 - name: Copy cluster configuration file
@@ -130,24 +135,39 @@
     dest: "/var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0644"
 
 - name: Generate manifest to create Kubernetes cluster
   become: "{{ clusterapi_cluster_become }}"
-  ansible.builtin.shell: |
-   {{ playbook_dir }}/.local/yake-clusterctl --config /var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml generate cluster --from /var/lib/yake/cluster-template.yaml {{ clusterapi_cluster_name }} > /var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml
-  args:
-    executable: /bin/bash
+  ansible.builtin.command:
+    argv:
+      - "{{ playbook_dir }}/.local/yake-clusterctl"
+      - --config
+      - "/var/lib/yake/config.{{ clusterapi_cluster_name }}.yaml"
+      - generate
+      - cluster
+      - --from
+      - /var/lib/yake/cluster-template.yaml
+      - "{{ clusterapi_cluster_name }}"
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+  register: result_cluster_manifest  # noqa: var-naming[no-role-prefix]
   changed_when: false
+
+- name: Write cluster manifest
+  ansible.builtin.copy:
+    content: "{{ result_cluster_manifest.stdout }}"
+    dest: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: "0644"
 
 - name: Create cloud secret
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
     state: present
     wait: true
-    src: "/var/lib/yake/cloud-secret.yaml"
+    src: /var/lib/yake/cloud-secret.yaml
 
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:
@@ -156,17 +176,11 @@
     wait: true
     src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
 
-- name: Slurp generated cluster manifest
-  ansible.builtin.slurp:
-    src: "/var/lib/yake/cluster.{{ clusterapi_cluster_name }}.yaml"
-  register: result_cluster_manifest  # noqa: var-naming[no-role-prefix]
-  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
-
 - name: Determine currently desired OpenStackMachineTemplate names
   ansible.builtin.set_fact:
     _clusterapi_cluster_current_machine_template_names: >-
       {{
-        result_cluster_manifest.content | b64decode | from_yaml_all | list
+        result_cluster_manifest.stdout | from_yaml_all | list
         | select('defined')
         | selectattr('kind', 'defined')
         | selectattr('kind', 'equalto', 'OpenStackMachineTemplate')
@@ -218,7 +232,8 @@
     dest: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0600"
+  no_log: true
 
 - name: Wait for Kubernetes API
   kubernetes.core.k8s_info:
@@ -238,12 +253,14 @@
     dest: "/var/lib/yake/cloud.{{ clusterapi_cluster_name }}.conf"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0600"
+  no_log: true
 
 - name: Slurp cloud.conf file
   ansible.builtin.slurp:
     src: "/var/lib/yake/cloud.{{ clusterapi_cluster_name }}.conf"
   register: register_cloud_conf  # noqa: var-naming[no-role-prefix]
+  no_log: true
 
 - name: Create cloud-config secret
   kubernetes.core.k8s:
@@ -262,6 +279,7 @@
            combine({'cacert.pem': clusterapi_cluster_openstack_cacert}
                    if clusterapi_cluster_openstack_cacert | d('') | length > 0
                    else {}) }}
+  no_log: true
 
 - name: Copy CCM manifests
   ansible.builtin.copy:
@@ -269,20 +287,29 @@
     dest: "/var/lib/yake/{{ item }}"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0644"
   loop:
     - cloud-controller-manager-role-bindings.yaml
     - cloud-controller-manager-roles.yaml
-    - openstack-cloud-controller-manager-ds.yaml
 
-- name: Add hosts entries to CCM DaemonSet manifest
-  ansible.builtin.shell:
-    cmd: |
-      yq -yi '.spec.template.spec.hostAliases += [{"ip": "{{ item.ip }}", "hostnames": ["{{ item.hostname }}"]}]' /var/lib/yake/openstack-cloud-controller-manager-ds.yaml
-    executable: /bin/bash
-  loop: "{{ clusterapi_cluster_hosts_entries }}"
-  when: clusterapi_cluster_hosts_entries | d([]) | length > 0
-  changed_when: false
+# Manifests that need changes are patched in memory and written as a whole, so
+# the task stays idempotent and the final manifest is available on the host.
+- name: Write CCM DaemonSet manifest
+  ansible.builtin.copy:
+    content: "{{ (ccm_other + (ccm_daemonsets | map('combine', ccm_patch, recursive=True) | list)) | map('to_nice_yaml') | join('---\n') }}"
+    dest: /var/lib/yake/openstack-cloud-controller-manager-ds.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: "0644"
+  vars:
+    ccm: "{{ lookup('ansible.builtin.file', 'cloud-controller-manager/openstack-cloud-controller-manager-ds.yaml') | from_yaml_all | select | list }}"
+    ccm_other: "{{ ccm | rejectattr('kind', 'equalto', 'DaemonSet') | list }}"
+    ccm_daemonsets: "{{ ccm | selectattr('kind', 'equalto', 'DaemonSet') | list }}"
+    ccm_patch:
+      spec:
+        template:
+          spec:
+            hostAliases: "{{ clusterapi_cluster_host_aliases }}"
 
 - name: Apply CCM manifests
   kubernetes.core.k8s:
@@ -294,29 +321,14 @@
     - cloud-controller-manager-roles.yaml
     - openstack-cloud-controller-manager-ds.yaml
 
-- name: Wait for coredns pods
+- name: Wait for coredns
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    kind: Pod
+    kind: Deployment
+    name: coredns
     namespace: kube-system
-  register: coredns_pods  # noqa: var-naming[no-role-prefix]
-  until: >
-    coredns_pods.resources is defined and
-    (
-      coredns_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'equalto', 'kube-dns')
-      | selectattr('status.phase', 'equalto', 'Running')
-      | list | length ==
-      coredns_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'equalto', 'kube-dns')
-      | list | length
-    )
-  retries: 30
-  delay: 10
+    wait: true
+    wait_timeout: 300
 
 - name: Deploy metrics-server
   kubernetes.core.helm:
@@ -338,39 +350,45 @@
     dest: "/var/lib/yake/{{ item }}"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0644
+    mode: "0644"
   loop:
     - cinder-csi-controllerplugin-rbac.yaml
-    - cinder-csi-controllerplugin.yaml
     - cinder-csi-nodeplugin-rbac.yaml
-    - cinder-csi-nodeplugin.yaml
     - csi-cinder-driver.yaml
 
-- name: Add hosts entries to CSI plugin manifests
-  ansible.builtin.shell:
-    cmd: |
-      yq -yi '.spec.template.spec.hostAliases += [{"ip": "{{ item.1.ip }}", "hostnames": ["{{ item.1.hostname }}"]}]' /var/lib/yake/{{ item.0 }}
-    executable: /bin/bash
-  loop: "{{ ['cinder-csi-controllerplugin.yaml', 'cinder-csi-nodeplugin.yaml'] | product(clusterapi_cluster_hosts_entries) | list }}"
-  when: clusterapi_cluster_hosts_entries | d([]) | length > 0
-  changed_when: false
+- name: Write CSI controller plugin manifest
+  ansible.builtin.copy:
+    content: "{{ csi_controller | combine(csi_controller_patch, recursive=True) | to_nice_yaml }}"
+    dest: /var/lib/yake/cinder-csi-controllerplugin.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: "0644"
+  vars:
+    csi_controller: "{{ lookup('ansible.builtin.file', 'cinder-csi/cinder-csi-controllerplugin.yaml') | from_yaml }}"
+    csi_disabled_containers: "{{ [] if clusterapi_cluster_csi_snapshotter_enabled | bool else ['csi-snapshotter'] }}"
+    csi_containers: "{{ csi_controller.spec.template.spec.containers | rejectattr('name', 'in', csi_disabled_containers) | list }}"
+    csi_controller_patch:
+      spec:
+        replicas: 2
+        template:
+          spec:
+            containers: "{{ csi_containers }}"
+            hostAliases: "{{ clusterapi_cluster_host_aliases }}"
 
-- name: Remove csi-snapshotter if disabled
-  ansible.builtin.shell:
-    cmd: |
-      set -o pipefail
-      yq -yi '.spec.template.spec.containers |= map(select(.name != "csi-snapshotter"))' /var/lib/yake/cinder-csi-controllerplugin.yaml
-    executable: /bin/bash
-  when: not clusterapi_cluster_csi_snapshotter_enabled | bool
-  changed_when: false
-
-- name: Configure CSI controller plugin HA
-  ansible.builtin.shell:
-    cmd: |
-      set -o pipefail
-      yq -yi '.spec.replicas = 2' /var/lib/yake/cinder-csi-controllerplugin.yaml
-    executable: /bin/bash
-  changed_when: false
+- name: Write CSI node plugin manifest
+  ansible.builtin.copy:
+    content: "{{ csi_node | combine(csi_node_patch, recursive=True) | to_nice_yaml }}"
+    dest: /var/lib/yake/cinder-csi-nodeplugin.yaml
+    owner: "{{ clusterapi_cluster_uid }}"
+    group: "{{ clusterapi_cluster_gid }}"
+    mode: "0644"
+  vars:
+    csi_node: "{{ lookup('ansible.builtin.file', 'cinder-csi/cinder-csi-nodeplugin.yaml') | from_yaml }}"
+    csi_node_patch:
+      spec:
+        template:
+          spec:
+            hostAliases: "{{ clusterapi_cluster_host_aliases }}"
 
 - name: Apply CSI manifests
   kubernetes.core.k8s:
@@ -384,46 +402,11 @@
     - cinder-csi-nodeplugin.yaml
     - csi-cinder-driver.yaml
 
-- name: Pause for 10 seconds
-  ansible.builtin.pause:
-    seconds: 10
-
-- name: Wait for CSI pods
+- name: Wait for CSI node plugin
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    kind: Pod
+    kind: DaemonSet
+    name: csi-cinder-nodeplugin
     namespace: kube-system
-  register: csi_pods  # noqa: var-naming[no-role-prefix]
-  until: >
-    csi_pods.resources is defined and
-    (
-      csi_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.app', 'defined')
-      | selectattr('metadata.labels.app', 'equalto', 'csi-cinder-nodeplugin')
-      | selectattr('status.phase', 'equalto', 'Running')
-      | list | length ==
-      csi_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.app', 'defined')
-      | selectattr('metadata.labels.app', 'equalto', 'csi-cinder-nodeplugin')
-      | list | length
-    )
-  retries: 30
-  delay: 10
-
-- name: Create PodDisruptionBudget for CSI controller plugin
-  kubernetes.core.k8s:
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    state: present
-    definition:
-      apiVersion: policy/v1
-      kind: PodDisruptionBudget
-      metadata:
-        name: csi-cinder-controllerplugin
-        namespace: kube-system
-      spec:
-        minAvailable: 1
-        selector:
-          matchLabels:
-            app: csi-cinder-controllerplugin
+    wait: true
+    wait_timeout: 300

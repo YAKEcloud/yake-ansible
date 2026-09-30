@@ -1,6 +1,5 @@
+.ansible
 .local
-.chart-vendor
-chart-vendor
 clouds.yaml
 group_vars/all.yml
 .venv

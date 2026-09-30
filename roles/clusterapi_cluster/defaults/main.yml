@@ -10,7 +10,6 @@ clusterapi_cluster_management_cluster_name: "{{ management_cluster_name | d('clu
 
 clusterapi_cluster_kubeconfig: kubeconfig
 clusterapi_cluster_name: garden
-clusterapi_cluster_state: present
 
 clusterapi_cluster_container_registry_cache_dockerhub: https://registry.osism.tech/v2/dockerhub
 clusterapi_cluster_container_registry_cache_pkg: https://registry.osism.tech/v2/pkg
@@ -23,6 +22,12 @@ clusterapi_cluster_hosts_entries: []
 # clusterapi_cluster_hosts_entries:
 #   - ip: "12.34.56.54"
 #     hostname: "harbor.example.com"
+clusterapi_cluster_host_aliases: |-
+  {%- set ns = namespace(aliases=[]) -%}
+  {%- for entry in clusterapi_cluster_hosts_entries -%}
+  {%- set ns.aliases = ns.aliases + [{'ip': entry.ip, 'hostnames': [entry.hostname]}] -%}
+  {%- endfor -%}
+  {{ ns.aliases }}
 
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 clusterapi_cluster_kubernetes_version: 'v1.36.5'

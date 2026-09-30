@@ -5,7 +5,7 @@
     dest: /var/lib/yake/gardener-operator/project.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
   when: gardener_operator_managed_seeds | d([]) | length > 0
 
 - name: Apply project.yaml
@@ -22,7 +22,7 @@
     dest: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
   loop: "{{ gardener_operator_cloudprofiles }}"
   when: gardener_operator_cloudprofiles | d([]) | length > 0 or gardener_operator_managed_seeds | d([]) | length > 0
 
@@ -41,7 +41,7 @@
     dest: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
   loop: "{{ gardener_operator_managed_seeds }}"
   when: gardener_operator_managed_seeds | d([]) | length > 0
 
@@ -52,4 +52,34 @@
     wait: true
     src: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
   loop: "{{ gardener_operator_managed_seeds }}"
+  when: gardener_operator_managed_seeds | d([]) | length > 0
+
+- name: Wait for ManagedSeed to be fully ready
+  kubernetes.core.k8s_info:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    api_version: core.gardener.cloud/v1beta1
+    kind: Shoot
+    name: "{{ item.name }}"
+    namespace: garden
+  register: managed_seed_shoot_status  # noqa: var-naming[no-role-prefix]
+  vars:
+    _ms_shoot: "{{ managed_seed_shoot_status.resources | first | default({}) }}"
+    _ms_status: "{{ _ms_shoot.status | default({}) }}"
+    _ms_last_op: "{{ _ms_status.lastOperation | default({}) }}"
+    _ms_conditions: "{{ _ms_status.conditions | default([]) | items2dict(key_name='type', value_name='status') }}"
+  until:
+    - managed_seed_shoot_status.resources | length > 0
+    - _ms_last_op.state | default('') == 'Succeeded'
+    - _ms_conditions.APIServerAvailable | default('') == 'True'
+    - _ms_conditions.ControlPlaneHealthy | default('') == 'True'
+    - _ms_conditions.SystemComponentsHealthy | default('') == 'True'
+    - _ms_conditions.EveryNodeReady | default('') == 'True'
+    - _ms_conditions.GardenletReady | default('') == 'True'
+    - _ms_conditions.ExtensionsReady | default('') == 'True'
+    - _ms_conditions.SeedSystemComponentsHealthy | default('') == 'True'
+  retries: 90
+  delay: 10
+  loop: "{{ gardener_operator_managed_seeds }}"
+  loop_control:
+    label: "{{ item.name }}"
   when: gardener_operator_managed_seeds | d([]) | length > 0

@@ -5,7 +5,7 @@
     path: "{{ item }}"
     owner: "{{ clusterctl_install_uid }}"
     group: "{{ clusterctl_install_gid }}"
-    mode: 0755
+    mode: "0755"
     state: directory
   loop:
     - /var/lib/yake
@@ -19,7 +19,7 @@
     image: "{{ clusterctl_install_container_registry }}/{{ clusterctl_install_container_image }}:{{ clusterctl_install_version }}"
     env: "{{ {'USER_ID': clusterctl_install_uid, 'GROUP_ID': clusterctl_install_gid} | combine(clusterctl_install_proxy_env) }}"
     volumes:
-      - /var/lib/yake://var/lib/yake
+      - /var/lib/yake:/var/lib/yake
     network_mode: host
     restart_policy: unless-stopped
     state: started
@@ -38,7 +38,7 @@
   ansible.builtin.copy:
     src: clusterctl
     dest: "{{ playbook_dir }}/.local/yake-clusterctl"
-    mode: 0755
+    mode: "0755"
     owner: root
     group: root
   when: clusterctl_install_method == "docker"

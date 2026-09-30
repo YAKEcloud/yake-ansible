@@ -13,26 +13,15 @@
     values: "{{ clusterapi_cluster_calico_helm_values }}"
   environment: "{{ clusterapi_cluster_proxy_env }}"
 
-- name: Wait for calico-node pods
+- name: Wait for calico-node daemonset
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    kind: Pod
+    kind: DaemonSet
+    name: calico-node
     namespace: calico-system
-  register: calico_pods  # noqa: var-naming[no-role-prefix]
-  until: >
-    calico_pods.resources is defined and
-    (
-      calico_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'equalto', 'calico-node')
-      | selectattr('status.phase', 'equalto', 'Running')
-      | list | length ==
-      calico_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'equalto', 'calico-node')
-      | list | length
-    )
+    wait: true
+    wait_timeout: 300
+  register: result_network_daemonset  # noqa: var-naming[no-role-prefix]
+  until: result_network_daemonset.resources | length > 0
   retries: 30
   delay: 10

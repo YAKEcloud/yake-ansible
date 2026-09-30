@@ -5,7 +5,7 @@
     path: "{{ item }}"
     owner: "{{ clusterapi_install_uid }}"
     group: "{{ clusterapi_install_gid }}"
-    mode: 0755
+    mode: "0755"
     state: directory
   loop:
     - /var/lib/yake
@@ -17,7 +17,7 @@
     dest: /var/lib/yake/install-orc.yaml
     owner: "{{ clusterapi_install_uid }}"
     group: "{{ clusterapi_install_gid }}"
-    mode: 0644
+    mode: "0644"
 
 - name: Initialize Cluster API
   become: "{{ clusterapi_install_become }}"
@@ -61,19 +61,9 @@
       name: orc-controller-manager
   when: clusterapi_install_hosts_entries | d([]) | length > 0
 
-- name: Wait for all pods to be ready
-  become: "{{ clusterapi_install_become }}"
-  ansible.builtin.shell:
-    cmd: |
-      set -o pipefail
-      {{ playbook_dir }}/.local/yake-kubectl \
-        --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }} \
-        get pods --all-namespaces --no-headers | \
-        grep -v -E 'Completed|Succeeded' | \
-        grep -v '1/1\|2/2\|3/3\|4/4' || true
-    executable: /bin/bash
-  register: _not_ready_pods  # noqa: var-naming[no-role-prefix]
-  until: _not_ready_pods.stdout == ""
-  retries: 30
-  delay: 10
-  changed_when: false
+- name: Wait for all deployments to be available
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}"
+    kind: Deployment
+    wait: true
+    wait_timeout: 300

@@ -5,7 +5,7 @@
     path: /var/lib/yake
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0755
+    mode: "0755"
     state: directory
 
 - name: Write OpenStack CA certificate
@@ -14,7 +14,7 @@
     dest: "/var/lib/yake/cacert-{{ clusterapi_cluster_name }}.pem"
     owner: "{{ clusterapi_cluster_uid }}"
     group: "{{ clusterapi_cluster_gid }}"
-    mode: 0600
+    mode: "0600"
   when: clusterapi_cluster_openstack_cacert | d('') | length > 0
 
 - name: Add cacert to OpenStack cloud configuration
@@ -25,8 +25,3 @@
 
 - name: Include create tasks
   ansible.builtin.include_tasks: create.yml
-  when: clusterapi_cluster_state == "present"
-
-- name: Include delete tasks
-  ansible.builtin.include_tasks: delete.yml
-  when: clusterapi_cluster_state == "absent"

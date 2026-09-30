@@ -1,22 +1,27 @@
 ---
-- name: Download k3s install script
-  ansible.builtin.get_url:
-    url: https://get.k3s.io
-    dest: /tmp/k3s-install.sh
-    mode: "0755"
-  environment: "{{ management_cluster_proxy_env }}"
-
 - name: Check installed k3s version
   ansible.builtin.command: k3s --version
   register: _k3s_version  # noqa: var-naming[no-role-prefix]
   changed_when: false
   failed_when: false
 
+- name: Set k3s install required fact
+  ansible.builtin.set_fact:
+    _management_cluster_k3s_install: "{{ (_k3s_version.stdout | d('')) is not search('v' ~ management_cluster_k3s_version ~ '[+ ]') }}"
+
+- name: Download k3s install script
+  ansible.builtin.get_url:
+    url: https://get.k3s.io
+    dest: /tmp/k3s-install.sh
+    mode: "0755"
+  environment: "{{ management_cluster_proxy_env }}"
+  when: _management_cluster_k3s_install | bool
+
 - name: Install or upgrade k3s
   become: true
   ansible.builtin.command: sh /tmp/k3s-install.sh
   environment: "{{ management_cluster_k3s_env | combine(management_cluster_proxy_env) }}"
-  when: management_cluster_k3s_version not in (_k3s_version.stdout | d(''))  # noqa: var-naming[no-role-prefix]
+  when: _management_cluster_k3s_install | bool
   changed_when: true
 
 - name: Remove install script
@@ -32,4 +37,5 @@
     remote_src: true
     owner: "{{ management_cluster_uid }}"
     group: "{{ management_cluster_gid }}"
-    mode: "0644"
+    mode: "0600"
+  no_log: true

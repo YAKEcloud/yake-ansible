@@ -12,7 +12,7 @@
     dest: /var/lib/yake/gardener-operator/dex-values.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
 
 - name: Allow ingress from the garden Istio ingressgateway to Dex
   kubernetes.core.k8s:

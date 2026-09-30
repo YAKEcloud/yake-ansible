@@ -19,7 +19,7 @@
   ansible.builtin.copy:
     src: kind
     dest: "{{ playbook_dir }}/.local/yake-kind"
-    mode: 0755
+    mode: "0755"
     owner: root
     group: root
   when: management_cluster_kind_method == "docker"
@@ -37,7 +37,7 @@
   ansible.builtin.template:
     src: config.yml.j2
     dest: "/var/lib/yake/config.{{ management_cluster_name }}.yml"
-    mode: 0644
+    mode: "0644"
     owner: "{{ management_cluster_uid }}"
     group: "{{ management_cluster_gid }}"
 
@@ -85,7 +85,7 @@
   become: true
   ansible.builtin.file:
     path: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
-    mode: 0640
+    mode: "0640"
     owner: "{{ management_cluster_uid }}"
     group: "{{ management_cluster_gid }}"
 
@@ -94,7 +94,7 @@
   ansible.builtin.copy:
     src: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
     dest: "/var/lib/yake/kubeconfig"
-    mode: 0640
+    mode: "0640"
     owner: "{{ management_cluster_uid }}"
     group: "{{ management_cluster_gid }}"
   when: management_cluster_kind_primary == management_cluster_name

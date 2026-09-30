@@ -5,7 +5,7 @@
     path: /var/lib/yake/gardener-operator
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0755
+    mode: "0755"
     state: directory
 
 - name: Create garden namespace
@@ -115,7 +115,7 @@
     dest: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
   when: gardener_operator_proxy_env | d({}) | length > 0
 
 - name: Apply Kyverno proxy injection policy
@@ -131,7 +131,7 @@
     dest: "/var/lib/yake/gardener-operator/{{ item }}"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
   loop:
     - extensions.yaml
     - garden.yaml
@@ -162,13 +162,11 @@
   ansible.builtin.copy:
     content: "{{ gardener_secret.resources[0].data.kubeconfig | b64decode }}"
     dest: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-    mode: 0644
+    owner: "{{ gardener_operator_uid }}"
+    group: "{{ gardener_operator_gid }}"
+    mode: "0600"
+  no_log: true
   when: gardener_secret.resources | length > 0
-
-- name: Pause for 4 minutes
-  ansible.builtin.pause:
-    minutes: 4
-  changed_when: false
 
 - name: Wait for DNS extension namespace
   kubernetes.core.k8s_info:
@@ -187,7 +185,7 @@
     dest: /var/lib/yake/gardener-operator/proxy-network-policy.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
   when: gardener_operator_proxy_host | d('') | length > 0
 
 - name: Apply proxy NetworkPolicy to DNS extension namespace
@@ -196,6 +194,29 @@
     state: present
     src: /var/lib/yake/gardener-operator/proxy-network-policy.yaml
   when: gardener_operator_proxy_host | d('') | length > 0
+
+- name: Wait for Garden to be fully reconciled
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    api_version: operator.gardener.cloud/v1alpha1
+    kind: Garden
+    name: gardener
+  register: garden_status  # noqa: var-naming[no-role-prefix]
+  vars:
+    _garden: "{{ garden_status.resources | first | default({}) }}"
+    _garden_meta: "{{ _garden.metadata | default({}) }}"
+    _garden_status: "{{ _garden.status | default({}) }}"
+    _garden_last_op: "{{ _garden_status.lastOperation | default({}) }}"
+    _garden_conditions: "{{ _garden_status.conditions | default([]) | items2dict(key_name='type', value_name='status') }}"
+  until:
+    - garden_status.resources | length > 0
+    - _garden_status.observedGeneration | default(-1) >= _garden_meta.generation | default(999999)
+    - _garden_last_op.state | default('') == 'Succeeded'
+    - _garden_conditions.VirtualGardenAPIServerAvailable | default('') == 'True'
+    - _garden_conditions.RuntimeComponentsHealthy | default('') == 'True'
+    - _garden_conditions.VirtualComponentsHealthy | default('') == 'True'
+  retries: 60
+  delay: 10
 
 - name: Include dex tasks
   ansible.builtin.include_tasks: dex.yml

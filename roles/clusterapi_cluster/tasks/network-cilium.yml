@@ -12,26 +12,11 @@
     values: "{{ clusterapi_cluster_cilium_helm_values }}"
   environment: "{{ clusterapi_cluster_proxy_env }}"
 
-- name: Wait for cilium pods
+- name: Wait for cilium daemonset
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
-    kind: Pod
+    kind: DaemonSet
+    name: cilium
     namespace: kube-system
-  register: cilium_pods  # noqa: var-naming[no-role-prefix]
-  until: >
-    cilium_pods.resources is defined and
-    (
-      cilium_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'equalto', 'cilium')
-      | selectattr('status.phase', 'equalto', 'Running')
-      | list | length ==
-      cilium_pods.resources
-      | selectattr('metadata.labels', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'defined')
-      | selectattr('metadata.labels.k8s-app', 'equalto', 'cilium')
-      | list | length
-    )
-  retries: 30
-  delay: 10
+    wait: true
+    wait_timeout: 300

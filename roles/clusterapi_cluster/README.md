@@ -1,10 +1,8 @@
 # clusterapi_cluster
 
-This role creates or deletes a Kubernetes cluster on OpenStack using Cluster API (CAPO). It is used to provision the garden cluster that hosts the Gardener Operator.
+This role creates a Kubernetes cluster on OpenStack using Cluster API (CAPO). It is used to provision the garden cluster that hosts the Gardener Operator.
 
 ## What this role does
-
-**On create (`clusterapi_cluster_state: present`):**
 
 1. Generates OpenStack credentials (`clouds.yaml`) and creates the corresponding Kubernetes secret.
 2. Looks up the external network ID from OpenStack.
@@ -13,10 +11,6 @@ This role creates or deletes a Kubernetes cluster on OpenStack using Cluster API
 5. Waits for the Kubernetes API to become available and saves the kubeconfig.
 6. Installs the selected CNI (Cilium or Calico).
 7. Deploys the OpenStack Cloud Controller Manager (CCM) and Cinder CSI driver.
-
-**On delete (`clusterapi_cluster_state: absent`):**
-
-Deletes the Cluster API `Cluster` resource, which triggers CAPO to remove all associated OpenStack resources.
 
 ## Rolling out flavor/image changes
 
@@ -67,7 +61,6 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 |----------|---------|-------------|
 | `clusterapi_cluster_name` | `garden` | Cluster name and prefix for all created resources. |
 | `clusterapi_cluster_kubernetes_version` | `v1.36.1` | Kubernetes version. |
-| `clusterapi_cluster_state` | `present` | `present` creates the cluster, `absent` deletes it. |
 
 ### Machines
 

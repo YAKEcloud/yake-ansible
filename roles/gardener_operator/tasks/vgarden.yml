@@ -5,7 +5,7 @@
     dest: "/var/lib/yake/gardener-operator/{{ item }}"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
   loop:
     - rbac.yaml
     - gardenlet.yaml
@@ -34,18 +34,13 @@
     merge_type:
       - merge
 
-- name: Wait 100 seconds for internal seed
-  ansible.builtin.pause:
-    seconds: 100
-  changed_when: false
-
 - name: Template ingress-cert file
   ansible.builtin.template:
     src: seed-ingress-certificate.yaml.j2
     dest: "/var/lib/yake/gardener-operator/seed-ingress-certificate.yaml"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: 0644
+    mode: "0644"
 
 - name: Create the certificate and secret
   kubernetes.core.k8s:
@@ -53,6 +48,41 @@
     state: present
     wait: true
     src: /var/lib/yake/gardener-operator/seed-ingress-certificate.yaml
+
+- name: Wait for the seed ingress certificate to be ready
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    api_version: cert.gardener.cloud/v1alpha1
+    kind: Certificate
+    name: seed-ingress
+    namespace: garden
+  register: seed_ingress_certificate  # noqa: var-naming[no-role-prefix]
+  until:
+    - seed_ingress_certificate.resources | length > 0
+    - (seed_ingress_certificate.resources[0].status | d({})).state | d('') == 'Ready'
+  retries: 30
+  delay: 10
+
+- name: Wait for internal-seed to be ready
+  kubernetes.core.k8s_info:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    api_version: core.gardener.cloud/v1beta1
+    kind: Seed
+    name: internal-seed
+  register: seed_status  # noqa: var-naming[no-role-prefix]
+  vars:
+    _seed: "{{ seed_status.resources | first | default({}) }}"
+    _seed_status: "{{ _seed.status | default({}) }}"
+    _seed_last_op: "{{ _seed_status.lastOperation | default({}) }}"
+    _seed_conditions: "{{ _seed_status.conditions | default([]) | items2dict(key_name='type', value_name='status') }}"
+  until:
+    - seed_status.resources | length > 0
+    - _seed_last_op.state | default('') == 'Succeeded'
+    - _seed_conditions.GardenletReady | default('') == 'True'
+    - _seed_conditions.ExtensionsReady | default('') == 'True'
+    - _seed_conditions.SeedSystemComponentsHealthy | default('') == 'True'
+  retries: 30
+  delay: 10
 
 - name: Allow all egress for terminal controller manager
   kubernetes.core.k8s:

@@ -5,7 +5,7 @@
     path: "{{ item }}"
     owner: "{{ helm_install_uid }}"
     group: "{{ helm_install_gid }}"
-    mode: 0755
+    mode: "0755"
     state: directory
   loop:
     - /var/lib/yake
@@ -30,7 +30,7 @@
   ansible.builtin.copy:
     src: helm
     dest: "{{ playbook_dir }}/.local/yake-helm"
-    mode: 0755
+    mode: "0755"
     owner: root
     group: root
   when: helm_install_method == "docker"

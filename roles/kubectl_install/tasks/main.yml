@@ -5,7 +5,7 @@
     path: "{{ item }}"
     owner: "{{ kubectl_install_uid }}"
     group: "{{ kubectl_install_gid }}"
-    mode: 0755
+    mode: "0755"
     state: directory
   loop:
     - /var/lib/yake
@@ -38,7 +38,7 @@
   ansible.builtin.copy:
     src: kubectl
     dest: "{{ playbook_dir }}/.local/yake-kubectl"
-    mode: 0755
+    mode: "0755"
     owner: root
     group: root
   when: kubectl_install_method == "docker"

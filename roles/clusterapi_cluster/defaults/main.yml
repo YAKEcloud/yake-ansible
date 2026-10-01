@@ -93,11 +93,11 @@ clusterapi_cluster_worker_machine_deployments:
     replicas: 3
     failure_domain: nova
     image_id: "{{ clusterapi_cluster_openstack_image_id }}"
-  # - name: md-1
-  #   replicas: 2
-  #   failure_domain: nova2
-  #   root_volume_failure_domain: cinder1
-  #   image_id: "{{ clusterapi_cluster_openstack_image_id }}"
+# - name: md-1
+#   replicas: 2
+#   failure_domain: nova2
+#   root_volume_failure_domain: cinder1
+#   image_id: "{{ clusterapi_cluster_openstack_image_id }}"
 clusterapi_cluster_worker_machine_flavor: "SCS-4V-8"
 
 # Set to false for flavors that include local storage (e.g. local NVMe).

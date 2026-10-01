@@ -105,3 +105,13 @@
           - {}
         policyTypes:
           - Egress
+
+- name: Redirect legacy internal-seed Plutono host to its garden host
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'seed-plutono-redirect.yaml.j2') | from_yaml_all | list }}"
+  vars:
+    _plutono_redirect_ingress_domain: "ingress.{{ gardener_operator_garden_url }}"
+    _plutono_redirect_target: "plutono-garden.{{ gardener_operator_garden_url }}"
+    _plutono_redirect_credential: seed-ingress-certificate

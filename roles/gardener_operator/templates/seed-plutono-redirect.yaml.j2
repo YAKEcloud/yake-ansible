@@ -1,0 +1,37 @@
+---
+apiVersion: networking.istio.io/v1
+kind: Gateway
+metadata:
+  name: plutono-garden-redirect
+  namespace: garden
+spec:
+  selector:
+    app: istio-ingressgateway
+    istio: ingressgateway
+    istio-role: seed
+  servers:
+  - hosts:
+    - plutono-garden.{{ _plutono_redirect_ingress_domain }}
+    port:
+      name: tls
+      number: 443
+      protocol: HTTPS
+    tls:
+      credentialName: {{ _plutono_redirect_credential }}
+      mode: SIMPLE
+---
+apiVersion: networking.istio.io/v1
+kind: VirtualService
+metadata:
+  name: plutono-garden-redirect
+  namespace: garden
+spec:
+  exportTo:
+  - istio-ingress
+  gateways:
+  - plutono-garden-redirect
+  hosts:
+  - plutono-garden.{{ _plutono_redirect_ingress_domain }}
+  http:
+  - redirect:
+      authority: {{ _plutono_redirect_target }}

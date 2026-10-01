@@ -83,3 +83,39 @@
   loop_control:
     label: "{{ item.name }}"
   when: gardener_operator_managed_seeds | d([]) | length > 0
+
+- name: Request admin kubeconfig for managed seed
+  ansible.builtin.command:
+    argv:
+      - "{{ playbook_dir }}/.local/yake-kubectl"
+      - create
+      - --raw
+      - "/apis/core.gardener.cloud/v1beta1/namespaces/garden/shoots/{{ item.name }}/adminkubeconfig"
+      - -f
+      - "-"
+    stdin: '{"apiVersion":"authentication.gardener.cloud/v1alpha1","kind":"AdminKubeconfigRequest","spec":{"expirationSeconds":600}}'
+  environment:
+    KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+  register: managed_seed_admin_kubeconfig  # noqa: var-naming[no-role-prefix]
+  changed_when: false
+  no_log: true
+  loop: "{{ gardener_operator_managed_seeds }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when: gardener_operator_managed_seeds | d([]) | length > 0
+
+- name: Redirect legacy seed Plutono host to its Istio host
+  kubernetes.core.k8s:
+    kubeconfig: "{{ (result.stdout | from_json).status.kubeconfig | b64decode | from_yaml }}"
+    state: present
+    definition: "{{ lookup('ansible.builtin.template', 'seed-plutono-redirect.yaml.j2') | from_yaml_all | list }}"
+  vars:
+    _plutono_redirect_ingress_domain: "ingress.{{ result.item.name }}.{{ gardener_operator_managed_seeds_project.name }}.{{ gardener_operator_garden_url }}"
+    _plutono_redirect_target: "g-seed.{{ _plutono_redirect_ingress_domain }}"
+    _plutono_redirect_credential: seed-ingress-wildcard
+  loop: "{{ managed_seed_admin_kubeconfig.results }}"
+  loop_control:
+    loop_var: result
+    label: "{{ result.item.name }}"
+  no_log: true
+  when: gardener_operator_managed_seeds | d([]) | length > 0

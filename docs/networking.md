@@ -22,7 +22,7 @@ This document describes the network topology, required ports, and DNS configurat
   |  Nodes: 192.168.0.0/24  (default)             |                |
   |                                               |                |
   |  +------------------------+  +----------------v-------------+  |
-  |  |  Control Plane  x3     |  |  Nginx Ingress               |  |
+  |  |  Control Plane  x3     |  |  Istio Ingress Gateway       |  |
   |  |  kube-apiserver  :6443 |  |  dashboard.<domain>  :443    |  |
   |  |  etcd            :2379 |  |  identity.<domain>   :443    |  |
   |  +------------------------+  |  garden.<domain>     :443    |  |
@@ -103,7 +103,7 @@ The shoot's kube-apiserver is exposed via a dedicated LoadBalancer service on th
 | Port | Protocol | Endpoint | Purpose |
 |------|----------|---------|---------|
 | 443 | TCP | Garden cluster API LB | Kubernetes API (used by CAPO and Gardener Operator) |
-| 443 | TCP | Garden cluster Ingress LB | Gardener services via Nginx ingress |
+| 443 | TCP | Garden cluster Ingress LB | Gardener services via Istio ingress gateway |
 | 80 | TCP | Garden cluster Ingress LB | HTTP redirect to HTTPS |
 | 443 | TCP | Managed seed API LB | Seed Kubernetes API server |
 | 443 | TCP | Per shoot own LB on seed | Shoot kube-apiserver (user kubeconfig endpoint) |
@@ -117,7 +117,7 @@ The shoot's kube-apiserver is exposed via a dedicated LoadBalancer service on th
 | 2750 | Gardenlet webhook server | Seed | Called by seed kube-apiserver |
 | 2718 | Gardener controller manager | Garden | Metrics (Prometheus scrape) |
 | 2718 | Gardener scheduler | Garden | Metrics (Prometheus scrape) |
-| 5556 | Dex identity provider | Garden | Reachable only via Nginx ingress |
+| 5556 | Dex identity provider | Garden | Reachable only via Istio ingress gateway |
 
 ### Kubernetes Control Plane (in-cluster only)
 

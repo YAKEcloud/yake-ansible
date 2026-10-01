@@ -118,6 +118,8 @@ Each release is tested with its Gardener version, and that means the Gardener in
 
 Pin a release with `git checkout <tag>`. To run another Gardener version, set `gardener_operator_version` in your `all.yml`. This works, but is not tested. Only the newest Gardener version is maintained.
 
+The minimum Gardener version is `1.142.0`. Since then, nginx-ingress is no longer deployed and all Gardener endpoints are served via the Istio ingress gateway. Older versions are not supported.
+
 ## Documentation
 
 | Document | Description |

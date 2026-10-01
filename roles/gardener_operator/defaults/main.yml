@@ -240,19 +240,19 @@ gardener_operator_seed_block_cidrs:
 
 gardener_operator_managed_seeds_registry_mirrors_ca: ""
 gardener_operator_managed_seeds_registry_mirrors: []
-  # - upstream: docker.io
-  #   host: "https://harbor.example.com/docker.io"
-  #   ca: true
-  # - upstream: europe-docker.pkg.dev
-  #   host: "https://harbor.example.com/europe-docker.pkg.dev"
-  # - upstream: ghcr.io
-  #   host: "https://harbor.example.com/ghcr.io"
-  # - upstream: registry.k8s.io
-  #   host: "https://harbor.example.com/registry.k8s.io"
-  # - upstream: quay.io
-  #   host: "https://harbor.example.com/quay.io"
-  # - upstream: gcr.io
-  #   host: "https://harbor.example.com/gcr.io"
+# - upstream: docker.io
+#   host: "https://harbor.example.com/docker.io"
+#   ca: true
+# - upstream: europe-docker.pkg.dev
+#   host: "https://harbor.example.com/europe-docker.pkg.dev"
+# - upstream: ghcr.io
+#   host: "https://harbor.example.com/ghcr.io"
+# - upstream: registry.k8s.io
+#   host: "https://harbor.example.com/registry.k8s.io"
+# - upstream: quay.io
+#   host: "https://harbor.example.com/quay.io"
+# - upstream: gcr.io
+#   host: "https://harbor.example.com/gcr.io"
 
 gardener_operator_managed_seeds:
   - name: seed-a

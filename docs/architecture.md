@@ -73,7 +73,7 @@ The [Gardener Operator](https://github.com/gardener/gardener/tree/master/docs/op
 - The Gardener API server (`gardener-apiserver`)
 - The Gardener controller manager and scheduler
 
-Users and operators interact with Gardener through the virtual garden API. The kubeconfig for it is stored in the `gardener` secret in the `garden` namespace and can be extracted as described in the [README](../README.md).
+Users and operators interact with Gardener through the virtual garden API. The kubeconfig for it is stored in the `gardener` secret in the `garden` namespace and can be extracted as described in the [README](https://github.com/YAKEcloud/yake-ansible/blob/main/README.md).
 
 ### Internal Seed
 

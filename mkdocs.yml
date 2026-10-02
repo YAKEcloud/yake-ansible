@@ -1,0 +1,43 @@
+---
+site_name: yake-ansible
+site_description: Gardener-based Kubernetes platform on OpenStack
+site_url: https://yakecloud.github.io/yake-ansible/
+repo_url: https://github.com/YAKEcloud/yake-ansible
+repo_name: YAKEcloud/yake-ansible
+edit_uri: edit/main/docs/
+
+theme:
+  name: material
+  features:
+    - navigation.sections
+    - navigation.top
+    - content.code.copy
+    - content.action.edit
+    - search.suggest
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle:
+        icon: material/weather-night
+        name: Switch to dark mode
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle:
+        icon: material/weather-sunny
+        name: Switch to light mode
+
+markdown_extensions:
+  - admonition
+  - tables
+  - toc:
+      permalink: true
+  - pymdownx.highlight
+  - pymdownx.superfences
+
+nav:
+  - Home: index.md
+  - Getting Started: getting-started.md
+  - Architecture: architecture.md
+  - Networking: networking.md
+  - Configuration: configuration.md
+  - Operations: operations.md

@@ -201,7 +201,7 @@ clusterapi_cluster_openstack_image_id: "your-gardenlinux-image-uuid"
 
 ## Machine Images
 
-Machine images must be uploaded to your OpenStack Glance before running the playbook. GardenLinux is the recommended OS. See [scripts/README.md](../scripts/README.md) for tools that automate this step.
+Machine images must be uploaded to your OpenStack Glance before running the playbook. GardenLinux is the recommended OS. See [scripts/README.md](https://github.com/YAKEcloud/yake-ansible/blob/main/scripts/README.md) for tools that automate this step.
 
 ## Running the Playbook
 

@@ -86,7 +86,7 @@ Key fields per profile:
 | `keystone_urls` | Keystone URL per region. |
 | `machine_images` | Machine images with versions and per-region Glance IDs. |
 | `kubernetes_versions` | Available Kubernetes versions with classification (`preview`, `supported`, `deprecated`). |
-| `machinetypes` | Machine type definitions with CPU, GPU, and memory. Optional `storage.size` (plus `storage.type` and `storage.class`) renders `storage:` and sets the default root disk size. Not set by default; only set it for volume-backed / `disk: 0` flavors (e.g. SCS), otherwise no boot volume is created unless `worker.volume.size` is set in the Shoot. Do not set it for flavors with an ephemeral disk, as an additional volume would be created. |
+| `machinetypes` | Machine type definitions with CPU, GPU, and memory. Optional `storage.size` renders `storage:` in the CloudProfile. The OpenStack extension does not create a boot volume from it: for volume-backed / `disk: 0` flavors (e.g. SCS) `worker.volume.size` has to be set in the Shoot, otherwise Nova rejects the server create. Do not set `storage.type`, it makes the machine controller create the volume itself in the compute AZ, which Cinder rejects when the AZs differ. |
 | `regions` | Regions with availability zones. |
 
 ### Projects

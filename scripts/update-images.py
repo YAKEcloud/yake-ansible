@@ -234,7 +234,7 @@ def _wait_for_import(conn, image_id, total_size=None, timeout=3600, poll_interva
             last_status = img.status
         elif img.status == "importing":
             print(f"      still importing ...  (elapsed: {elapsed}s){progress}")
-        elif img.status == "active":
+        if img.status == "active":
             importing_to_stores = (
                 img.properties.get("os_glance_importing_to_stores", "")
                 .replace(",", " ")
@@ -340,17 +340,16 @@ def upload_from_file(
                     image,
                     data=_ProgressReader(fh, pbar),
                 )
+                conn.image.import_image(
+                    image,
+                    method="glance-direct",
+                    all_stores=True,
+                    all_stores_must_succeed=True,
+                ).raise_for_status()
             except Exception:
-                print(f"Failure staging image data for image {image.id}")
+                print(f"Failure staging or importing image data for image {image.id}")
                 conn.image.delete_image(image, ignore_missing=True)
                 raise
-
-            conn.image.import_image(
-                image,
-                method="glance-direct",
-                all_stores=True,
-                all_stores_must_succeed=True,
-            )
             return _wait_for_import(conn, image.id)
 
 
@@ -381,6 +380,13 @@ def ensure_all_stores(conn, image, dry_run=False):
     image_stores = set(image.properties.get("stores", "").replace(",", " ").split())
     stores = {store.id for store in conn.image.stores()}
     if not stores <= image_stores:
+        if image.owner != conn.current_project_id:
+            print(
+                f"  [WARN]   existing image {image.id} is owned by another project"
+                " and cannot be copied into all stores by us. Ask the owner to do"
+                " so or re-upload the image into our project."
+            )
+            return image
         if not dry_run:
             print(f"  — copying existing image {image.id} into all stores")
             try:
@@ -732,7 +738,9 @@ def main():
         help=(
             "Import image into all available glance stores."
             " This requires interoperable image import using either `glance-direct` or"
-            "`web-download` method, depending on the '--no-web-download' parameter."
+            " `web-download` method, depending on the '--no-web-download' parameter."
+            " Existing images are copied using the `copy-image` method, which is"
+            " only permitted for images owned by our project."
             " This requires the import into all stores to succeed."
         ),
     )
@@ -760,25 +768,24 @@ def main():
     try:
         import_methods = conn.image.get_import_info().import_methods.get("value", [])
     except Exception:
-        import_methods = []
+        import_methods = None
+        print("Could not query supported import methods, skipping pre-flight check.")
 
-    if "web-download" not in import_methods:
+    if import_methods is not None:
+        required_methods = set()
         if not args.skip_capi and not args.no_web_download:
+            required_methods.add("web-download")
+        if args.all_stores:
+            required_methods.add("copy-image")
+            if (not args.skip_capi and args.no_web_download) or (
+                not args.skip_gardenlinux
+            ):
+                required_methods.add("glance-direct")
+        missing_methods = required_methods - set(import_methods)
+        if missing_methods:
             raise RuntimeError(
-                "Requested import method 'web-download' is not supported by the cloud"
-            )
-    if "glance-direct" not in import_methods or "copy-image" not in import_methods:
-        if args.all_stores and (
-            not args.skip_capi and args.no_web_download or not args.skip_gardenlinux
-        ):
-            if not args.skip_capi and args.no_web_download:
-                without_webdownload = "together with '--no-web-download' "
-            else:
-                without_webdownload = ""
-            raise RuntimeError(
-                "'--all-stores' " + without_webdownload + "requires import"
-                " methods 'glance-direct' and 'copy-image', which are not supported by"
-                " the cloud"
+                "Required import method(s) not supported by the cloud:"
+                f" {', '.join(sorted(missing_methods))}"
             )
 
     results = []

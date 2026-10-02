@@ -44,7 +44,7 @@ See [docs/architecture.md](docs/architecture.md) for a detailed description of e
 ## Requirements
 
 - OpenStack tenant with sufficient quota (see [docs/getting-started.md](docs/getting-started.md#openstack-requirements))
-- Python 3.10 or later on the control host
+- Python 3.12 or later on the control host
 - Docker for the default install method
 
 ## Installation
@@ -121,6 +121,8 @@ Pin a release with `git checkout <tag>`. To run another Gardener version, set `g
 The minimum Gardener version is `1.142.0`. Since then, nginx-ingress is no longer deployed and all Gardener endpoints are served via the Istio ingress gateway. Older versions are not supported.
 
 ## Documentation
+
+The documentation is also published at <https://yakecloud.github.io/yake-ansible/>.
 
 | Document | Description |
 |----------|-------------|

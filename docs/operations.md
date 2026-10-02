@@ -24,6 +24,14 @@ Commit the resulting (still encrypted) diff normally. If you use `ansible-vault`
 
 If the vault password ever needs to be rotated, generate a new one, run `ansible-vault rekey group_vars/ci.yml`, update `.vault-pass.txt` locally, and update the `ANSIBLE_VAULT_PASSWORD` secret in the repository settings.
 
+## Releases
+
+Releases follow Gardener: `v1.152.0-0` is the first release for Gardener `1.152.0`; `-1`, `-2`, ... are fixes to this repository. A new release is published automatically for every new Gardener version. The release notes list the Gardener changes first, then the changes in this repository.
+
+Each release is tested with its Gardener version, and that means the Gardener installation only. Seeds, shoots and everything else you run on top are outside the test scope.
+
+Pin a release with `git checkout <tag>`. To run another Gardener version, set `gardener_operator_version` in your `all.yml`. This works, but is not tested. Only the newest Gardener version is maintained.
+
 ## Upgrading
 
 All playbooks are idempotent. Re-running a playbook with an updated version variable upgrades the corresponding component.
@@ -33,8 +41,10 @@ All playbooks are idempotent. Re-running a playbook with an updated version vari
 Update `gardener_operator_version` in `group_vars/all.yml` and re-run:
 
 ```bash
-ansible-playbook -i localhost, -c local gardener-operator.yml
+ansible-playbook -i localhost, -c local site.yml --tags gardener
 ```
+
+The minimum supported Gardener version is `1.142.0`. Older versions are not supported, because nginx-ingress is no longer deployed since then and all Gardener endpoints are served via the Istio ingress gateway.
 
 The Gardener Operator performs a rolling upgrade of all Gardener components. After the playbook completes, verify that all pods are running:
 
@@ -45,23 +55,21 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.garden
 
 ### Upgrading Provider Extensions
 
-Provider extension versions are separate variables (e.g., `gardener_operator_provider_openstack_version`). Update the relevant version and re-run the gardener-operator playbook. Renovate automatically opens pull requests for version updates.
-
-Note that the OpenStack provider v1.55.0 dropped support for Kubernetes versions 1.31 and earlier. All clusters must be on Kubernetes 1.32 or later before upgrading to this version.
+Provider extension versions are separate variables (e.g., `gardener_operator_provider_openstack_version`). Update the relevant version and re-run the playbook with `--tags gardener`. Renovate automatically opens pull requests for version updates.
 
 ### Upgrading the Garden Cluster
 
 Update `clusterapi_cluster_kubernetes_version` and re-run:
 
 ```bash
-ansible-playbook -i localhost, -c local clusterapi-cluster.yml
+ansible-playbook -i localhost, -c local site.yml --tags garden-cluster
 ```
 
 Cluster API performs a rolling upgrade of the control plane nodes followed by worker nodes.
 
 ### Upgrading Tool Versions
 
-kubectl, Helm, clusterctl, and kind versions are set by `kubectl_install_version`, `helm_install_version`, `clusterctl_install_version`, and `management_cluster_kind_version` respectively. After updating these variables, re-run the corresponding install playbooks.
+kubectl, Helm, clusterctl, and kind versions are set by `kubectl_install_version`, `helm_install_version`, `clusterctl_install_version`, and `management_cluster_kind_version` respectively. After updating these variables, re-run the playbook with the matching tags (`kubectl`, `helm`, `clusterctl`, `management-cluster`).
 
 ## Accessing Clusters
 
@@ -97,14 +105,14 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 
 ## Adding a Cloud Profile
 
-Add a new entry to `gardener_operator_cloudprofiles` in `group_vars/all.yml` and re-run the gardener-operator playbook. Cloud profiles are reconciled without downtime.
+Add a new entry to `gardener_operator_cloudprofiles` in `group_vars/all.yml` and re-run the playbook with `--tags gardener`. Cloud profiles are reconciled without downtime.
 
 ## Adding a Managed Seed
 
 Add a new entry to `gardener_operator_managed_seeds` and re-run:
 
 ```bash
-ansible-playbook -i localhost, -c local gardener-operator.yml
+ansible-playbook -i localhost, -c local site.yml --tags gardener
 ```
 
 The new seed shoot is created on the internal seed and then registered as a Gardener seed. This process takes several minutes. Monitor progress:
@@ -232,13 +240,13 @@ ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/all.yml" -e 
 Add `-vvv` to any Ansible command for detailed output:
 
 ```bash
-ansible-playbook -i localhost, -c local gardener-operator.yml -vvv
+ansible-playbook -i localhost, -c local site.yml --tags gardener -vvv
 ```
 
 Dry-run mode shows what would change without applying it:
 
 ```bash
-ansible-playbook -i localhost, -c local gardener-operator.yml --check
+ansible-playbook -i localhost, -c local site.yml --tags gardener --check
 ```
 
 ### Garden Cluster Not Coming Up

@@ -19,7 +19,7 @@ This document describes the network topology, required ports, and DNS configurat
                   |                               |
   +---------------|-------------------------------|----------------+
   |  Neutron Network -- Garden Cluster            |                |
-  |  Nodes: 192.168.0.0/24  (default)             |                |
+  |  Nodes: 172.28.0.0/24   (default)             |                |
   |                                               |                |
   |  +------------------------+  +----------------v-------------+  |
   |  |  Control Plane  x3     |  |  Istio Ingress Gateway       |  |
@@ -40,7 +40,7 @@ This document describes the network topology, required ports, and DNS configurat
        |
   +----+-----------------------------------------------------------+
   |  Neutron Network -- Managed Seed  (one network per seed)       |
-  |  Nodes:    10.120.0.0/16  (default)                            |
+  |  Nodes:    100.96.0.0/16  (default)                            |
   |  Pods:     100.72.0.0/16                                       |
   |  Services: 100.80.0.0/13                                       |
   |                                                                |
@@ -54,7 +54,7 @@ This document describes the network topology, required ports, and DNS configurat
                                     |  encrypted VPN tunnel (:8132)
   +---------------------------------|------------------------------+
   |  Neutron Network -- Shoot-A     v                              |
-  |  Nodes:    10.121.0.0/16                                       |
+  |  Nodes:    100.97.0.0/16                                       |
   |  Pods:     100.73.0.0/16                                       |
   |  Services: 100.88.0.0/13                                       |
   |                                                                |
@@ -70,10 +70,12 @@ All address ranges are configurable defaults. They must be non-overlapping acros
 
 | Layer | OpenStack Subnet | Pod CIDR | Service CIDR |
 |-------|-----------------|----------|-------------|
-| Garden cluster | `192.168.0.0/24` | `10.244.0.0/16` | from kube-apiserver |
+| Garden cluster | `172.28.0.0/24` | `10.244.0.0/16` | from kube-apiserver |
 | Virtual garden | - (in-cluster only) | - | `100.64.0.0/13` |
-| Managed seed | `10.120.0.0/16` | `100.72.0.0/16` | `100.80.0.0/13` |
-| Shoot (default) | `10.121.0.0/16` | `100.73.0.0/16` | `100.88.0.0/13` |
+| Managed seed | `100.96.0.0/16` | `100.72.0.0/16` | `100.80.0.0/13` |
+| Shoot (default) | `100.97.0.0/16` | `100.73.0.0/16` | `100.88.0.0/13` |
+
+The garden cluster subnet is set with `clusterapi_cluster_openstack_managed_subnets`, the pod network with `clusterapi_cluster_pod_cidr_blocks`, and the managed seed node range per seed with `workers_cidr` (or `subnet_pool`). The shoot defaults are set on the seed; the internal seed uses `100.100.0.0/16` (nodes), `100.101.0.0/16` (pods) and `100.102.0.0/16` (services) as shoot defaults.
 
 Each layer gets its own Neutron network and is isolated from the others by separate security groups. CAPO sets `allowAllInClusterTraffic: true`; node-to-node traffic within a cluster is unrestricted at the OpenStack level; isolation is handled by Kubernetes NetworkPolicies.
 

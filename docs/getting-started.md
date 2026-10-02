@@ -12,14 +12,14 @@ A productive Gardener installation with at least one managed seed and the abilit
 | Networks | 10 |
 | Security groups | 15 |
 | Floating IPs | 15 |
-| Volumes | 40 |
-| Volume storage | 1.5 TB |
+| Volumes | 50 |
+| Volume storage | 2 TB |
 | RAM | 150 GB |
 | vCPUs | 50 |
 
-At least two OpenStack projects are recommended:
+Separate OpenStack projects are recommended:
 
-- One project for the control plane
+- One project for the control plane (garden cluster).
 - One for the managed seed infrastructure.
 - One or more projects for shoot cluster workloads.
 
@@ -41,7 +41,7 @@ Each VM must support attaching a large number of Cinder volumes simultaneously. 
 
 The control host is the machine from which you run the Ansible playbooks.
 
-- Python 3.10 or later
+- Python 3.12 or later (required by the pinned `ansible-core`)
 - Docker (required for the default `docker` install method)
 - Network access to the OpenStack APIs
 - Network access to the internet (for pulling container images and Helm charts)
@@ -133,13 +133,13 @@ gardener_operator_cloudprofiles:
     machine_images:
       - name: gardenlinux
         versions:
-          - version: 2150.0.0
-            image: "Garden Linux 2150.0"
+          - version: 2150.11.0
+            image: "Garden Linux 2150.11"
             regions:
               - name: region-a
                 id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
     kubernetes_versions:
-      - version: 1.35.3
+      - version: 1.36.5
         classification: supported
     machinetypes:
       - name: SCS-4V-8
@@ -161,7 +161,7 @@ gardener_operator_managed_seeds:
   - name: seed-a
     cloudprofile_name: openstack-a
     networking_type: cilium
-    kubernetes_version: 1.35.3
+    kubernetes_version: 1.36.5
     floating_pool_name: "public"
     openstack:
       auth_url: "https://keystone.example.com:5000"
@@ -175,7 +175,7 @@ gardener_operator_managed_seeds:
       - name: worker-4v16
         machinetype: SCS-4V-16
         image_name: gardenlinux
-        image_version: 2150.0.0
+        image_version: 2150.11.0
         minimum: 3
         maximum: 15
         volume_type: ssd
@@ -196,7 +196,8 @@ clusterapi_cluster_openstack_application_credential_id: "..."
 clusterapi_cluster_openstack_application_credential_secret: "..."
 clusterapi_cluster_openstack_domain_name: "my-domain"
 clusterapi_cluster_openstack_region_name: "RegionOne"
-clusterapi_cluster_openstack_image_id: "your-gardenlinux-image-uuid"
+clusterapi_cluster_openstack_image_id: "your-image-uuid"
+clusterapi_cluster_openstack_image_name: "expected-image-name"  # recommended, verifies the image ID
 ```
 
 ## Machine Images
@@ -212,6 +213,8 @@ ansible-playbook -i localhost, -c local site.yml
 ```
 
 On hosts where `sudo` requires a password, add `--ask-become-pass`.
+
+Individual steps can be run with tags: `kubectl`, `helm`, `clusterctl`, `management-cluster`, `clusterapi`, `garden-cluster` and `gardener`.
 
 The playbook takes approximately 15 to 30 minutes to complete, depending on OpenStack provisioning speed.
 

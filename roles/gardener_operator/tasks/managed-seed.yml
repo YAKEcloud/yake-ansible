@@ -96,6 +96,7 @@
     stdin: '{"apiVersion":"authentication.gardener.cloud/v1alpha1","kind":"AdminKubeconfigRequest","spec":{"expirationSeconds":600}}'
   environment:
     KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    PARAMETERS: -i
   register: managed_seed_admin_kubeconfig  # noqa: var-naming[no-role-prefix]
   changed_when: false
   no_log: true

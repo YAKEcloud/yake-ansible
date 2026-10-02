@@ -3,7 +3,7 @@
 Sync CAPI and GardenLinux images to OpenStack Glance.
 
 Requirements:
-  pip install openstacksdk requests
+  pip install openstacksdk requests tqdm urllib3
 
 Usage:
   export OS_CLOUD=mycloud   # or use --cloud
@@ -13,7 +13,6 @@ Usage:
 """
 
 import argparse
-import os
 import sys
 import tarfile
 import tempfile
@@ -149,9 +148,7 @@ def find_gardenlinux_image(conn, version):
         if any(kw in name_lower for kw in gl_keywords) and (
             short in name_lower or version in name_lower
         ):
-            return img, (
-                f"fuzzy name match " f"(gardenlinux + version in '{img.name}')"
-            )
+            return img, f"fuzzy name match (gardenlinux + version in '{img.name}')"
 
     return None, None
 
@@ -182,15 +179,15 @@ def _get_image_resilient(conn, image_id, max_retries=5):
     raise RuntimeError(f"Unable to fetch image {image_id} after {max_retries} attempts")
 
 
-def _wait_for_active(conn, image_id, timeout=3600):
-    deadline = time.time() + timeout
-    while time.time() < deadline:
+def _wait_for_active(conn, image_id, timeout=3600, poll_interval=15):
+    deadline = time.monotonic() + timeout
+    while time.monotonic() < deadline:
         img = _get_image_resilient(conn, image_id)
         if img.status == "active":
             return img
         if img.status in ("killed", "deleted"):
             raise RuntimeError(f"Image {image_id} ended up in status '{img.status}'")
-        time.sleep(15)
+        time.sleep(poll_interval)
     raise TimeoutError(f"Image {image_id} did not become active within {timeout}s")
 
 
@@ -225,12 +222,12 @@ def _wait_for_import(
     all_stores=False,
 ):
     expected_stores = {s.id for s in conn.image.stores()} if all_stores else set()
-    start = time.time()
+    start = time.monotonic()
     deadline = start + timeout
     last_status = None
-    while time.time() < deadline:
+    while time.monotonic() < deadline:
         img = _get_image_resilient(conn, image_id)
-        elapsed = int(time.time() - start)
+        elapsed = int(time.monotonic() - start)
         progress = ""
         if total_size and img.size:
             pct = min(100, img.size * 100 // total_size)
@@ -412,7 +409,10 @@ def ensure_all_stores(conn, image, dry_run=False):
                 ).raise_for_status()
             except requests.exceptions.HTTPError as exc:
                 print(f"  — failure copying image {image.id} into all stores.")
-                if exc.response.status_code == requests.codes.forbidden:
+                if (
+                    exc.response is not None
+                    and exc.response.status_code == requests.codes.forbidden
+                ):
                     print(
                         "  — import method 'copy-image' into all stores forbidden. Try"
                         " re-uploading into all stores directly or omit '--all-stores'"
@@ -422,9 +422,7 @@ def ensure_all_stores(conn, image, dry_run=False):
 
             return _wait_for_import(conn, image.id, all_stores=True)
         else:
-            print(
-                f"  [DRY-RUN] would copy existing image {image.id}" " into all stores"
-            )
+            print(f"  [DRY-RUN] would copy existing image {image.id} into all stores")
     return image
 
 
@@ -442,6 +440,7 @@ def sync_capi_image(
     bare_minor = version.count(".") < 2
     minor = version if bare_minor else ".".join(version.split(".")[:2])
 
+    resolved_patch = ""
     if ubuntu_version is None or bare_minor:
         # The Ubuntu base isn't a function of the Kubernetes version alone
         # (e.g. v1.37+ moved from ubuntu-2404 to ubuntu-2604) — the 'last-X'
@@ -470,9 +469,7 @@ def sync_capi_image(
 
     existing, strategy = find_capi_image(conn, patch)
     if existing:
-        print(
-            f"  [SKIP]   {canonical_name}" f"  — found via {strategy}  ({existing.id})"
-        )
+        print(f"  [SKIP]   {canonical_name}  — found via {strategy}  ({existing.id})")
         if all_stores:
             existing = ensure_all_stores(conn, existing, dry_run=dry_run)
         return canonical_name, existing.id
@@ -486,16 +483,14 @@ def sync_capi_image(
             method = "download and upload"
 
         stores = "all available image stores" if all_stores else "default image store"
-        print(
-            f"  [DRY-RUN] would {method} {canonical_name}" f"  from {url} into {stores}"
-        )
+        print(f"  [DRY-RUN] would {method} {canonical_name}  from {url} into {stores}")
         return canonical_name, None
 
     extra_props = {
         "os_purpose": "k8snode",
         "os_distro": "ubuntu",
         "kube_version": f"v{patch}",
-        "image_description": ("https://github.com/osism/k8s-capi-images"),
+        "image_description": "https://github.com/osism/k8s-capi-images",
         "image_source": url,
     }
 
@@ -548,7 +543,7 @@ def _iter_gardenlinux_releases(max_pages=5, per_page=100):
     for page in range(1, max_pages + 1):
         resp = requests.get(
             f"https://api.github.com/repos/{GARDENLINUX_REPO}/releases",
-            headers={"Accept": "application/vnd.github.v3+json"},
+            headers={"Accept": "application/vnd.github+json"},
             params={"per_page": per_page, "page": page},
             timeout=30,
         )
@@ -569,7 +564,7 @@ def fetch_gardenlinux_release(version=None):
         )
         resp = requests.get(
             url,
-            headers={"Accept": "application/vnd.github.v3+json"},
+            headers={"Accept": "application/vnd.github+json"},
             timeout=30,
         )
         resp.raise_for_status()
@@ -621,8 +616,8 @@ def extract_image(archive_path, dest_dir):
     with tarfile.open(archive_path, "r:xz") as tar:
         for member in tar.getmembers():
             if member.name.endswith((".raw", ".qcow2")):
-                member.name = os.path.basename(member.name)
-                tar.extract(member, path=dest_dir)
+                member.name = Path(member.name).name
+                tar.extract(member, path=dest_dir, filter="data")
                 return Path(dest_dir) / member.name
     raise RuntimeError(f"No .raw or .qcow2 image found inside {archive_path.name}")
 
@@ -718,7 +713,7 @@ def main():
         "--gardenlinux-version",
         default=None,
         metavar="VERSION",
-        help=("Pin a specific GardenLinux version" " (default: latest release)"),
+        help="Pin a specific GardenLinux version (default: latest release)",
     )
     parser.add_argument("--skip-capi", action="store_true", help="Skip CAPI images")
     parser.add_argument(
@@ -729,7 +724,7 @@ def main():
     parser.add_argument(
         "--dry-run",
         action="store_true",
-        help=("Check what would be uploaded without actually uploading anything"),
+        help="Check what would be uploaded without actually uploading anything",
     )
     parser.add_argument(
         "--insecure",
@@ -768,9 +763,10 @@ def main():
     try:
         conn = openstack.connect(cloud=args.cloud, insecure=args.insecure)
         _ = conn.auth["auth_url"]
-    except Exception:  # noqa: BLE001 — turn any connect failure into a CLI error
+    except Exception as exc:  # noqa: BLE001 — turn any connect failure into a CLI error
         sys.exit(
-            "No OpenStack credentials found." " Set OS_CLOUD or pass --cloud <name>."
+            f"Could not connect to OpenStack ({exc})."
+            " Set OS_CLOUD or pass --cloud <name>."
         )
     print(f"Connected: {conn.auth['auth_url']}")
 
@@ -781,10 +777,11 @@ def main():
         print("Dry-run mode — no images will be uploaded.")
 
     try:
-        import_methods = conn.image.get_import_info().import_methods.get("value", [])
-    except Exception:
+        import_info = conn.image.get_import_info()  # type: ignore
+        import_methods = import_info.import_methods.get("value", [])
+    except Exception as exc:  # noqa: BLE001 — pre-flight check is best effort
         import_methods = None
-        print("Could not query supported import methods, skipping pre-flight check.")
+        print(f"Could not query supported import methods ({exc}), skipping check.")
 
     if import_methods is not None:
         required_methods = set()
@@ -832,6 +829,9 @@ def main():
     for name, image_id in results:
         label = image_id if image_id else "— not uploaded (error or dry-run)"
         print(f"  {name:<{name_width}}  {label}")
+
+    if not args.dry_run and any(image_id is None for _, image_id in results):
+        sys.exit(1)
 
 
 if __name__ == "__main__":

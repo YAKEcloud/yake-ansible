@@ -216,7 +216,15 @@ def _get_content_length(url):
         return None
 
 
-def _wait_for_import(conn, image_id, total_size=None, timeout=3600, poll_interval=10):
+def _wait_for_import(
+    conn,
+    image_id,
+    total_size=None,
+    timeout=3600,
+    poll_interval=10,
+    all_stores=False,
+):
+    expected_stores = {s.id for s in conn.image.stores()} if all_stores else set()
     start = time.time()
     deadline = start + timeout
     last_status = None
@@ -235,26 +243,31 @@ def _wait_for_import(conn, image_id, total_size=None, timeout=3600, poll_interva
         elif img.status == "importing":
             print(f"      still importing ...  (elapsed: {elapsed}s){progress}")
         if img.status == "active":
+            # NOTE: The importing property is not populated right away, so
+            #       also wait until the image is present in all stores.
+            image_stores = set(
+                img.properties.get("stores", "").replace(",", " ").split()
+            )
             importing_to_stores = (
                 img.properties.get("os_glance_importing_to_stores", "")
                 .replace(",", " ")
                 .split()
-            )
+            ) or sorted(expected_stores - image_stores)
             failed_import = (
                 img.properties.get("os_glance_failed_import", "")
                 .replace(",", " ")
                 .split()
             )
-            if len(importing_to_stores) > 0:
+            if len(failed_import) > 0:
+                raise RuntimeError(
+                    f"Failed to copy image {image_id} into all stores. Failed store(s):"
+                    f" '{', '.join(failed_import)}'"
+                )
+            elif len(importing_to_stores) > 0:
                 print(
                     f"      still copying image into store(s):"
                     f" {', '.join(importing_to_stores)}..."
                     f"  (elapsed: {elapsed}s){progress}"
-                )
-            elif len(failed_import) > 0:
-                raise RuntimeError(
-                    f"Failed to copy image {image_id} into all stores. Failed store(s):"
-                    f" '{', '.join(failed_import)}'"
                 )
             else:
                 return img
@@ -291,7 +304,9 @@ def upload_via_web_download(
     if all_stores:
         kwargs.update({"all_stores": True, "all_stores_must_succeed": True})
     conn.image.import_image(image, method="web-download", uri=url, **kwargs)
-    return _wait_for_import(conn, image.id, total_size=total_size)
+    return _wait_for_import(
+        conn, image.id, total_size=total_size, all_stores=all_stores
+    )
 
 
 class _ProgressReader:
@@ -350,7 +365,7 @@ def upload_from_file(
                 print(f"Failure staging or importing image data for image {image.id}")
                 conn.image.delete_image(image, ignore_missing=True)
                 raise
-            return _wait_for_import(conn, image.id)
+            return _wait_for_import(conn, image.id, all_stores=True)
 
 
 def download_file(url, dest, label=""):
@@ -405,7 +420,7 @@ def ensure_all_stores(conn, image, dry_run=False):
                     )
                 raise
 
-            return _wait_for_import(conn, image.id)
+            return _wait_for_import(conn, image.id, all_stores=True)
         else:
             print(
                 f"  [DRY-RUN] would copy existing image {image.id}" " into all stores"

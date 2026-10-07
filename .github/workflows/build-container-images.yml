@@ -30,7 +30,7 @@ jobs:
           - image: helm
             version: v4.3.0  # renovate: datasource=github-releases depName=helm/helm
           - image: clusterctl
-            version: v1.14.2  # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
+            version: v1.14.3  # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
           - image: kind
             version: v0.33.0  # renovate: datasource=github-releases depName=kubernetes-sigs/kind
     steps:

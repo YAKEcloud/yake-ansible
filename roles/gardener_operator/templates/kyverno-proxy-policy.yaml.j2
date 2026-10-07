@@ -92,7 +92,6 @@ spec:
       - "UPDATE"
   mutations:
 {% if gardener_operator_proxy_env | d({}) | length > 0 %}
-{% set proxy_unit_name = "containerd.service" %}
 {% set proxy_dropin_name = "http-proxy.conf" %}
 {% set proxy_dropin_content = '[Service]\\n'
                               + ['Environment']
@@ -105,6 +104,7 @@ spec:
                                 | join('\\"\\n')
                               + '\\"'
 %}
+{% for proxy_unit_name in ["containerd.service", "gardener-node-agent.service"] %}
   - patchType: JSONPatch
     jsonPatch:
       # This expression concatenates lists of JSONPatches ([...] + [...] + [...]), where each list contains a patch on mutually exclusive conditions, so that in the end a list with a single patch is applied
@@ -186,4 +186,5 @@ spec:
           )
         : []
         ).flatten()
+{% endfor %}
 {% endif %}

@@ -281,3 +281,11 @@ spec:
               visible: true
             excessCapacityReservation:
               enabled: {{ item.settings.excess_capacity_reservation | lower }}
+    deployment:
+{% if gardener_operator_proxy_env | d({}) | length > 0 %}
+      env:
+{% for key, value in gardener_operator_proxy_env.items() %}
+      - name: {{ key | upper }}
+        value: "{{ value }}"
+{% endfor %}
+{% endif %}

@@ -62,6 +62,10 @@ data:
     jwt:
     - issuer:
         url: https://identity.{{ gardener_operator_garden_url }}
+{% if gardener_operator_garden_dashboard_oidc_ca | d('') %}
+        certificateAuthority: |-
+          {{ gardener_operator_garden_dashboard_oidc_ca | indent(10) }}
+{% endif %}
         audiences:
           - dashboard
           - kube-kubectl
@@ -73,6 +77,18 @@ data:
         username:
           claim: email
           prefix: ""
+{% if gardener_operator_garden_dashboard_oidc_ca | d('') %}
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: gardener-dashboard-oidc-ca
+  namespace: garden
+type: Opaque
+stringData:
+  "ca.crt": |-
+    {{ gardener_operator_garden_dashboard_oidc_ca | indent(4) }}
+{% endif %}
 ---
 apiVersion: v1
 kind: Secret
@@ -171,6 +187,10 @@ spec:
         oidcConfig:
           clientIDPublic: "kube-kubectl"
           issuerURL: https://identity.{{ gardener_operator_garden_url }}
+{% if gardener_operator_garden_dashboard_oidc_ca | d('') %}
+          certificateAuthoritySecretRef:
+            name: gardener-dashboard-oidc-ca
+{% endif %}
           sessionLifetime: 12h
           additionalScopes: [ profile, offline_access ]
           secretRef:

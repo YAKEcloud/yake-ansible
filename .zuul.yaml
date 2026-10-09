@@ -5,10 +5,8 @@
     abstract: true
     nodeset:
       nodes:
-        - name: debian-bookworm
-          label: debian-bookworm
-        - name: ubuntu-noble
-          label: ubuntu-noble
+        - name: debian-trixie
+          label: debian-trixie
     vars:
       ansible_molecule_ansible_version: "10.7.0"
     files:

@@ -107,23 +107,26 @@
         forceFailurePolicyIgnore:
           enabled: true
   environment: "{{ gardener_operator_proxy_env }}"
-  when: gardener_operator_proxy_env | d({}) | length > 0
+  when: gardener_operator_proxy_env | d({}) | length > 0 or
+        gardener_operator_time_source | d('') == 'kvm_ptp'
 
-- name: Template Kyverno proxy injection policy
+- name: Template Kyverno injection policy
   ansible.builtin.template:
     src: kyverno-proxy-policy.yaml.j2
     dest: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
     mode: "0644"
-  when: gardener_operator_proxy_env | d({}) | length > 0
+  when: gardener_operator_proxy_env | d({}) | length > 0 or
+        gardener_operator_time_source | d('') == 'kvm_ptp'
 
-- name: Apply Kyverno proxy injection policy
+- name: Apply Kyverno injection policy
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     state: present
     src: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
-  when: gardener_operator_proxy_env | d({}) | length > 0
+  when: gardener_operator_proxy_env | d({}) | length > 0 or
+        gardener_operator_time_source | d('') == 'kvm_ptp'
 
 - name: Template garden files and dependencies
   ansible.builtin.template:

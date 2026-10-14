@@ -18,6 +18,10 @@ clusterapi_cluster_container_registry_cache_ghcr: https://registry.osism.tech/v2
 clusterapi_cluster_container_registry_cache_quay: https://registry.osism.tech/v2/quay
 clusterapi_cluster_container_registry_cache_k8s: https://registry.osism.tech/v2/k8s
 
+# Time source for the nodes. Empty keeps the image defaults, 'kvm_ptp' installs chrony (apt)
+# and syncs against the hypervisor clock via the KVM PTP device.
+clusterapi_cluster_time_source: ""
+
 clusterapi_cluster_hosts_entries: []
 # clusterapi_cluster_hosts_entries:
 #   - ip: "12.34.56.54"

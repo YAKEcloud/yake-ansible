@@ -309,6 +309,9 @@
       spec:
         template:
           spec:
+            # The CCM initializes the nodes and must start before CoreDNS can
+            # be scheduled, so it has to resolve names via the node resolver.
+            dnsPolicy: Default
             hostAliases: "{{ clusterapi_cluster_host_aliases }}"
 
 - name: Apply CCM manifests

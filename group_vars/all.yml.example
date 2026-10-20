@@ -126,6 +126,13 @@ gardener_operator_cloudprofiles:
         cpu: "4"
         gpu: "0"
         memory: 16Gi
+    # Optional: flavor and image for `gardenctl ssh` bastions. Must exist in
+    # machinetypes / machine_images of this profile. Use a small flavor WITH a root
+    # disk (not a disk-0 flavor), the bastion has no boot volume.
+    # bastion:
+    #   machine_type: SCS-4V-8
+    #   machine_image: gardenlinux
+    #   machine_image_version: "2150.0.0"  # optional
     regions:
       - name: "{{ clusterapi_cluster_openstack_region_name }}"
         zones:

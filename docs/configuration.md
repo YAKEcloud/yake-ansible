@@ -317,6 +317,11 @@ gardener_operator_cloudprofiles:
         cpu: "4"
         gpu: "0"
         memory: 8Gi
+    # Optional: flavor/image for `gardenctl ssh` bastions (must exist in this profile)
+    bastion:
+      machine_type: SCS-4V-8
+      machine_image: gardenlinux
+      machine_image_version: 2150.11.0  # optional
     regions:
       - name: region-a
         zones:

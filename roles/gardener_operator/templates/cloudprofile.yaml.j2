@@ -71,10 +71,16 @@ spec:
 {% endfor %}
 {% if item.bastion is defined %}
   bastion:
+{% if item.bastion.machine_type is defined %}
     machineType:
       name: {{ item.bastion.machine_type }}
+{% endif %}
+{% if item.bastion.machine_image is defined or item.bastion.machine_image_version is defined %}
     machineImage:
+{% endif %}
+{% if item.bastion.machine_image is defined  %}
       name: {{ item.bastion.machine_image }}
+{% endif %}
 {% if item.bastion.machine_image_version is defined %}
       version: "{{ item.bastion.machine_image_version }}"
 {% endif %}

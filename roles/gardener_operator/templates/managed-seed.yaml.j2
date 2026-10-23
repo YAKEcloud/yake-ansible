@@ -240,6 +240,14 @@ spec:
               namespace: garden
 {% endif %}
           dns:
+            defaults:
+              - credentialsRef:
+                  apiVersion: v1
+                  kind: Secret
+                  name: default-domain
+                  namespace: garden
+                domain: {{ gardener_operator_garden_url }}
+                type: {{ gardener_operator_dns_provider_type }}
             provider:
               type: {{ gardener_operator_dns_provider_type }}
               credentialsRef:

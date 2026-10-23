@@ -67,6 +67,9 @@ spec:
       versions:
 {% for v in mi.versions %}
         - version: {{ v.version }}
+{% if v.classification is defined and v.classification %}
+          classification: {{ v.classification }}
+{% endif %}
 {% endfor %}
 {% endfor %}
 {% if item.bastion is defined %}

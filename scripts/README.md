@@ -126,7 +126,7 @@ import method enabled; if it's disabled, uploads fail with an error mentioning t
 `web-download` method. In that case, pass `--no-web-download` to fall back to downloading
 the qcow2 to the local machine first and streaming the upload from there.
 
-All images are uploaded with `visibility=shared`. Temporary local files (downloads, extracted
+All images are uploaded with `visibility=community`, so they can be used from other projects by ID (they do not show up in image lists there unless `--community` is passed). Existing images keep their visibility; change one with `openstack image set --community <id>`. Temporary local files (downloads, extracted
 archives) are cleaned up automatically after each upload, even if an error occurs.
 
 ### Changing the GardenLinux flavor

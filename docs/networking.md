@@ -15,9 +15,10 @@ This document describes the network topology, required ports, and DNS configurat
   |  |  Floating IP              |  |  Floating IP              |  |
   |  |  API Server LB  :443      |  |  Ingress LB  :443 / :80   |  |
   |  +-------------+-------------+  +-------------+-------------+  |
-  +---------------|-------------------------------|----------------+
-                  |                               |
-  +---------------|-------------------------------|----------------+
+  +----------------+------------------------------+----------------+
+                   |                              |
+                   v                              v
+  +----------------+------------------------------+----------------+
   |  Neutron Network -- Garden Cluster            |                |
   |  Nodes: 172.28.0.0/24   (default)             |                |
   |                                               |                |
@@ -30,11 +31,11 @@ This document describes the network topology, required ports, and DNS configurat
   |  Pod CIDR:     10.244.0.0/16                                   |
   |  Service CIDR: extracted from kube-apiserver at deploy time    |
   |                                                                |
-  |  +-----------------------------------------------------------+ |
-  |  |  Virtual Garden  (in-cluster, no separate OS network)     | |
-  |  |  Services: 100.64.0.0/13                                  | |
-  |  |  gardener-apiserver  etcd  dex (:5556)  dashboard         | |
-  |  +-----------------------------------------------------------+ |
+  |  +----------------------------------------------------------+  |
+  |  |  Virtual Garden  (in-cluster, no separate OS network)    |  |
+  |  |  Services: 100.64.0.0/13                                 |  |
+  |  |  gardener-apiserver  etcd  dex (:5556)  dashboard        |  |
+  |  +----------------------------------------------------------+  |
   +----------------------------------------------------------------+
        ^  gardenlet TLS outbound :443 --> virtual garden API
        |
@@ -44,16 +45,17 @@ This document describes the network topology, required ports, and DNS configurat
   |  Pods:     100.72.0.0/16                                       |
   |  Services: 100.80.0.0/13                                       |
   |                                                                |
-  |  +-----------------------------------------------------------+ |
-  |  |  Shoot-A control plane  (pods in namespace on the seed)   | |
-  |  |  kube-apiserver  :443   <-- own Floating IP + LB          | |
-  |  |  etcd, kcm, scheduler   in-cluster only                   | |
-  |  |  vpn-seed-server  :8132 <-- reachable from shoot workers  | |
-  |  +------------------------------+----------------------------+ |
+  |  +----------------------------------------------------------+  |
+  |  |  Shoot-A control plane  (pods in namespace on the seed)  |  |
+  |  |  kube-apiserver  :443   <-- own Floating IP + LB         |  |
+  |  |  etcd, kcm, scheduler   in-cluster only                  |  |
+  |  |  vpn-seed-server  :8132 <-- reachable from shoot workers |  |
+  |  +------------------------------+---------------------------+  |
   +---------------------------------+------------------------------+
                                     |  encrypted VPN tunnel (:8132)
-  +---------------------------------|------------------------------+
-  |  Neutron Network -- Shoot-A     v                              |
+                                    v
+  +---------------------------------+------------------------------+
+  |  Neutron Network -- Shoot-A                                    |
   |  Nodes:    100.97.0.0/16                                       |
   |  Pods:     100.73.0.0/16                                       |
   |  Services: 100.88.0.0/13                                       |

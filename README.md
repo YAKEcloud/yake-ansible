@@ -7,36 +7,36 @@ The result is a fully operational Gardener installation that can manage Kubernet
 ## Architecture
 
 ```
-  +-------------------------------------------+
-  |  Control Host                             |
-  |  +--------------------------------------+ |
-  |  |  Management Cluster (kind/k3s)       | |
-  |  |  Cluster API + CAPO                  | |
-  |  +-------------------+------------------+ |
-  +--------------------+----------------------+
-                       |  provisions via OpenStack API
-                       v
-  +-------------------------------------------+
-  |  Garden Cluster (OpenStack)               |
-  |  Gardener Operator                        |
-  |  +- Virtual Garden                        |
-  |      +- gardener-apiserver, etcd          |
-  |      +- dashboard, dex (OIDC)             |
-  |      +- Internal Seed (this cluster)      |
-  |      +- Managed Seeds (registered shoots) |
-  +--------------------+----------------------+
-       ^               |
-       |  gardenlet connects back (TLS :443)
-  +----+--------------------------------------+
-  |  Managed Seed (OpenStack)                 |
-  |  +- Gardenlet                             |
-  |  +- Shoot control planes (per shoot)      |
-  |      kube-apiserver exposed via own LB    |
-  |      VPN tunnel to shoot workers          |
-  |                                           |
-  |  +- Shoot Clusters  (OpenStack)           |
-  |      worker nodes, own Neutron network    |
-  +-------------------------------------------+
+  +----------------------------------------------------------------+
+  |  Control Host                                                  |
+  |  +----------------------------------------------------------+  |
+  |  |  Management Cluster (kind/k3s)                           |  |
+  |  |  Cluster API + CAPO                                      |  |
+  |  +----------------------------------------------------------+  |
+  +-----------------------+----------------------------------------+
+                          |  provisions via OpenStack API
+                          v
+  +-----------------------+----------------------------------------+
+  |  Garden Cluster (OpenStack)                                    |
+  |  Gardener Operator                                             |
+  |  +- Virtual Garden                                             |
+  |      +- gardener-apiserver, etcd                               |
+  |      +- dashboard, dex (OIDC)                                  |
+  |      +- Internal Seed (this cluster)                           |
+  |      +- Managed Seeds (registered shoots)                      |
+  +-----------------------+----------------------------------------+
+         ^                |
+         |                |  gardenlet connects back (TLS :443)
+  +------+---------------------------------------------------------+
+  |  Managed Seed (OpenStack)                                      |
+  |  +- Gardenlet                                                  |
+  |  +- Shoot control planes (per shoot)                           |
+  |      kube-apiserver exposed via own LB                         |
+  |      VPN tunnel to shoot workers                               |
+  |                                                                |
+  |  +- Shoot Clusters  (OpenStack)                                |
+  |      worker nodes, own Neutron network                         |
+  +----------------------------------------------------------------+
 ```
 
 See [docs/architecture.md](docs/architecture.md) for a detailed description of each layer and [docs/networking.md](docs/networking.md) for ports, IP ranges, and traffic flows.

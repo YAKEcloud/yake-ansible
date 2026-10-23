@@ -71,6 +71,8 @@ Cluster API performs a rolling upgrade of the control plane nodes followed by wo
 
 kubectl, Helm, clusterctl, and kind versions are set by `kubectl_install_version`, `helm_install_version`, `clusterctl_install_version`, and `management_cluster_kind_version` respectively. After updating these variables, re-run the playbook with the matching tags (`kubectl`, `helm`, `clusterctl`, `management-cluster`).
 
+On the first run the `clusterapi` step initializes Cluster API with `clusterctl init`. On an existing management cluster it runs `clusterctl upgrade apply --contract <contract>` instead, which brings the Cluster API providers (core, kubeadm bootstrap, kubeadm control plane, OpenStack) to the latest versions available for that contract. The contract is set by `clusterapi_install_contract` (default `v1beta2`). A clusterctl release that supports a newer contract makes the step fail until the variable is raised.
+
 ## Accessing Clusters
 
 Kubeconfigs for all clusters are written to `/var/lib/yake/`.

@@ -1,6 +1,6 @@
 ---
 galaxy_info:
-  author: Christian Berendt
+  author: Marius Wernicke
   description: Role to install gardenctl
   company: 23 Technologies GmbH
   license: Apache License 2.0

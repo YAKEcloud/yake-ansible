@@ -86,7 +86,7 @@ Key fields per profile:
 | `floating_pools` | List of floating pool names available for shoot load balancers. |
 | `loadbalancer_providers` | List of available load balancer providers (e.g., `amphora`, `ovn`). |
 | `keystone_urls` | Keystone URL per region. |
-| `machine_images` | Machine images with versions and per-region Glance IDs. |
+| `machine_images` | Machine images with versions and per-region Glance IDs. Each version accepts an optional `classification` (`preview`, `supported`, `deprecated`). It is only rendered when set. Marking an old version `deprecated` lets shoots with auto-update enabled move to a newer image in their maintenance window. |
 | `kubernetes_versions` | Available Kubernetes versions with classification (`preview`, `supported`, `deprecated`). |
 | `machinetypes` | Machine type definitions with CPU, GPU, and memory. Optional `storage.size` renders `storage:` in the CloudProfile. The OpenStack extension does not create a boot volume from it: for volume-backed / `disk: 0` flavors (e.g. SCS) `worker.volume.size` has to be set in the Shoot, otherwise Nova rejects the server create. Do not set `storage.type`, it makes the machine controller create the volume itself in the compute AZ, which Cinder rejects when the AZs differ. |
 | `bastion` | Optional. Renders `spec.bastion` in the CloudProfile (used by `gardenctl ssh`). Keys: `machine_type` (must exist in `machinetypes`), `machine_image` (must exist in `machine_images`), optional `machine_image_version`. Pick a small flavor with a root disk, the bastion server gets no boot volume, so `disk: 0` flavors fail in Nova. Without it Gardener picks a default. |

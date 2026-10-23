@@ -104,6 +104,7 @@ gardener_operator_cloudprofiles:
       - name: gardenlinux
         versions:
           - version: "2150.0.0"
+            # classification: supported
             image: "Garden Linux 2150.0"
             regions:
               - name: "{{ clusterapi_cluster_openstack_region_name }}"

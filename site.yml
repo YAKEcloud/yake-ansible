@@ -38,7 +38,7 @@
         name: management_cluster
         tasks_from: kind-upgrade
       when:
-        - management_cluster_engine == 'kind'
+        - management_cluster_engine | d('kind') == 'kind'
         - management_cluster_kind_upgrade | d(false)
 
 - name: Create garden cluster

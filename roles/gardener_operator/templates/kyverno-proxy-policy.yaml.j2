@@ -3,6 +3,7 @@
 {%- set _ns.items = _ns.items + ['Object.spec.containers.env{name:"' + key + '",value:"' + value + '"}'] -%}
 {%- endfor -%}
 {%- set _cel_env = '[' + (_ns.items | join(', ')) + ']' -%}
+{% if gardener_operator_proxy_env | d({}) | length > 0 %}
 ---
 apiVersion: policies.kyverno.io/v1
 kind: MutatingPolicy
@@ -42,6 +43,7 @@ spec:
             })
           }
         } : Object{}
+{% endif %}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -187,4 +189,58 @@ spec:
         : []
         ).flatten()
 {% endfor %}
+{% endif %}
+{% if gardener_operator_time_source | d('') == 'kvm_ptp' %}
+{% set chrony_conf = 'keyfile /etc/chrony/chrony.keys\n'
+                     + 'driftfile /var/lib/chrony/chrony.drift\n'
+                     + 'ntsdumpdir /var/lib/chrony\n'
+                     + 'logdir /var/log/chrony\n'
+                     + 'maxupdateskew 100.0\n'
+                     + 'rtcsync\n'
+                     + 'makestep 1 3\n'
+                     + 'refclock PHC /dev/ptp_kvm poll 2 stratum 1\n' %}
+{% set kvm_ptp_files = [
+  {'path': '/etc/modules-load.d/ptp_kvm.conf', 'data': 'ptp_kvm\n'},
+  {'path': '/etc/udev/rules.d/60-kvm-ptp.rules', 'data': 'SUBSYSTEM=="ptp", ATTR{clock_name}=="kvm-ptp", SYMLINK+="ptp_kvm", TAG+="systemd"\n'},
+  {'path': '/etc/systemd/system/chrony.service.d/10-after-ptp-kvm.conf', 'data': '[Unit]\nWants=dev-ptp_kvm.device\nAfter=dev-ptp_kvm.device\n'},
+  {'path': '/etc/chrony/chrony.conf', 'data': chrony_conf},
+] %}
+{% set kvm_ptp_unit_content = '[Unit]\n'
+                              + 'Description=Install chrony for KVM PTP time sync\n'
+                              + 'Wants=network-online.target\n'
+                              + 'After=network-online.target\n'
+                              + '[Service]\n'
+                              + 'Type=oneshot\n'
+                              + 'RemainAfterExit=yes\n'
+                              + 'Restart=on-failure\n'
+                              + 'RestartSec=30\n'
+                              + 'Environment=DEBIAN_FRONTEND=noninteractive\n'
+                              + 'ExecStartPre=-/usr/sbin/modprobe ptp_kvm\n'
+                              + 'ExecStartPre=-/usr/bin/apt-get update -qq\n'
+                              + 'ExecStart=/usr/bin/apt-get install -y -o Dpkg::Options::=--force-confold chrony\n'
+                              + 'ExecStartPost=-/usr/bin/udevadm trigger --subsystem-match=ptp\n'
+                              + 'ExecStartPost=-/usr/bin/udevadm settle\n'
+                              + 'ExecStartPost=/usr/bin/systemctl restart chrony.service\n'
+                              + '[Install]\n'
+                              + 'WantedBy=multi-user.target\n' %}
+  # Installs chrony from the apt mirror and syncs it against the hypervisor clock (KVM PTP).
+  # The unit depends on the files via filePaths, so the gardener-node-agent re-runs it when they change.
+{% for f in kvm_ptp_files %}
+{% set file_json = {'path': f.path, 'permissions': 420, 'content': {'inline': {'encoding': '', 'data': f.data}}} | to_json %}
+  - patchType: JSONPatch
+    jsonPatch:
+      expression: |
+        !has(object.spec.files) ?
+          [JSONPatch{op: "add", path: "/spec/files", value: [dyn({{ file_json }})]}]
+        : !object.spec.files.exists(f, f.path == "{{ f.path }}") ?
+          [JSONPatch{op: "add", path: "/spec/files/-", value: dyn({{ file_json }})}]
+        : []
+{% endfor %}
+{% set unit_json = {'name': 'yake-chrony-ptp-kvm.service', 'command': 'start', 'enable': true, 'content': kvm_ptp_unit_content, 'filePaths': kvm_ptp_files | map(attribute='path') | list} | to_json %}
+  - patchType: JSONPatch
+    jsonPatch:
+      expression: |
+        !object.spec.units.exists(u, u.name == "yake-chrony-ptp-kvm.service") ?
+          [JSONPatch{op: "add", path: "/spec/units/-", value: dyn({{ unit_json }})}]
+        : []
 {% endif %}

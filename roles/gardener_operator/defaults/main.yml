@@ -7,6 +7,10 @@ gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
 gardener_operator_proxy_host: ""
 gardener_operator_proxy_port: 3128
 
+# Time source for shoot nodes. Empty keeps the OS defaults, 'kvm_ptp' installs chrony (apt)
+# and syncs against the hypervisor clock via the KVM PTP device (injected into OperatingSystemConfigs).
+gardener_operator_time_source: ""
+
 # renovate: datasource=github-releases depName=gardener/gardener
 gardener_operator_version: '1.154.0'
 # renovate: datasource=helm registryUrl=https://kyverno.github.io/kyverno/ depName=kyverno

@@ -13,6 +13,7 @@ management_cluster_engine: kind
 
 # === clusterapi_cluster ===
 clusterapi_cluster_kubernetes_version: "1.35.3"
+# clusterapi_cluster_time_source: kvm_ptp
 
 clusterapi_cluster_openstack_auth_url: "https://keystone.example.com/v3"
 clusterapi_cluster_openstack_application_credential_id: ""
@@ -38,6 +39,8 @@ clusterapi_cluster_root_volume_type: "default"
 clusterapi_cluster_control_plane_root_volume_size: "20"
 clusterapi_cluster_worker_root_volume_size: "20"
 clusterapi_cluster_root_volume_availability_zone: nova
+
+# gardener_operator_time_source: kvm_ptp
 
 # === gardener_operator: OpenStack credentials ===
 gardener_operator_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"

@@ -67,6 +67,7 @@ The garden cluster is provisioned by the `clusterapi_cluster` role on OpenStack.
 | `clusterapi_cluster_kubernetes_version` | `v1.36.5` | Kubernetes version for the garden cluster. |
 | `clusterapi_cluster_openstack_image_id` | `""` | Glance image UUID for cluster nodes. |
 | `clusterapi_cluster_openstack_image_name` | `""` | Expected name of the image. Strongly recommended: it is used to verify that the image ID is correct. |
+| `clusterapi_cluster_time_source` | `""` | Time source for the cluster nodes. Empty keeps the image defaults. `kvm_ptp` installs chrony via apt (cloud-init) and syncs against the hypervisor clock through the KVM PTP device. |
 | `clusterapi_cluster_control_plane_machine_count` | `3` | Number of control plane nodes. |
 | `clusterapi_cluster_control_plane_machine_flavor` | `SCS-2V-4` | OpenStack flavor for control plane nodes. |
 | `clusterapi_cluster_worker_machine_flavor` | `SCS-4V-8` | OpenStack flavor for worker nodes. |
@@ -170,6 +171,7 @@ The `gardener_operator` role deploys the Gardener Operator and configures the en
 | `gardener_operator_gardenlet_feature_gates` | `{}` | Feature gates for all gardenlets (internal seed and managed seeds). |
 | `gardener_operator_seed_block_cidrs` | `[169.254.169.254/32]` | CIDRs blocked in all shoot clusters via NetworkPolicy. |
 | `gardener_operator_proxy_host` / `gardener_operator_proxy_port` | `""` / `3128` | HTTP proxy for the managed seeds; also allowed through a NetworkPolicy. |
+| `gardener_operator_time_source` | `""` | Time source for all shoot nodes. Empty keeps the OS defaults. `kvm_ptp` installs chrony from the apt mirror (via Kyverno in the OperatingSystemConfigs) and syncs against the hypervisor clock through the KVM PTP device. Needs an apt mirror reachable from the nodes, a Debian-based OS (Garden Linux) and a KVM hypervisor that exposes `ptp_kvm`. |
 
 ### Dex, Kyverno and Reflector
 

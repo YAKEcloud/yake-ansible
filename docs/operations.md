@@ -73,6 +73,28 @@ kubectl, Helm, clusterctl, and kind versions are set by `kubectl_install_version
 
 On the first run the `clusterapi` step initializes Cluster API with `clusterctl init`. On an existing management cluster it runs `clusterctl upgrade apply --contract <contract>` instead, which brings the Cluster API providers (core, kubeadm bootstrap, kubeadm control plane, OpenStack) to the latest versions available for that contract. The contract is set by `clusterapi_install_contract` (default `v1beta2`). A clusterctl release that supports a newer contract makes the step fail until the variable is raised.
 
+### Upgrading the kind Management Cluster
+
+kind clusters cannot be upgraded in place and an existing cluster is never touched by a changed `management_cluster_kind_cluster_version` (also not when Renovate bumps it). To replace it, set `management_cluster_kind_upgrade: true` and run the playbook, or only the step with `--tags management-cluster-upgrade`. The step does nothing if the running Kubernetes version is not older than the configured one.
+
+It runs after the `clusterapi` step so that the Cluster API providers are current, then:
+
+1. Checks that all clusters in `management_cluster_kind_upgrade_namespace` are provisioned and not paused.
+2. Writes the Cluster API objects with `clusterctl move --to-directory` to `/var/lib/yake/backup/<timestamp>`. The source is not modified. If this fails, the clusters are resumed and the kind cluster is left alone.
+3. Deletes the kind cluster and creates it again with the same name, so kubeconfig paths stay valid. Cluster API and ORC are installed on it.
+4. Restores the objects with `clusterctl move --from-directory` and waits until all clusters are provisioned and not paused.
+
+The OpenStack resources keep running throughout, only reconciliation pauses for a few minutes. Back up and restore are limited to `management_cluster_kind_upgrade_namespace` (all objects of this repo live in `default`). The cloud secret is carried over because it has the `clusterctl.cluster.x-k8s.io/move` label.
+
+The backup is kept. If the step fails after the old cluster was deleted, the playbook does not restore on a re-run, because the new cluster already has the desired version. Restore manually once Cluster API is installed on the new cluster:
+
+```bash
+./.local/yake-clusterctl move --from-directory /var/lib/yake/backup/<timestamp> \
+  --to-kubeconfig /var/lib/yake/kubeconfig.clusterapi
+```
+
+`clusterctl move` was designed for the bootstrap case and is not a verified backup and restore tool. Run the upgrade on a test setup first.
+
 ## Accessing Clusters
 
 Kubeconfigs for all clusters are written to `/var/lib/yake/`.

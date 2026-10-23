@@ -29,6 +29,18 @@
   roles:
     - role: clusterapi_install
 
+- name: Upgrade management cluster
+  hosts: "{{ hosts_management_cluster_upgrade | d('all') }}"
+  tags: [management-cluster-upgrade]
+  tasks:
+    - name: Upgrade kind management cluster
+      ansible.builtin.include_role:
+        name: management_cluster
+        tasks_from: kind-upgrade
+      when:
+        - management_cluster_engine == 'kind'
+        - management_cluster_kind_upgrade | d(false)
+
 - name: Create garden cluster
   hosts: "{{ hosts_clusterapi_cluster | d('all') }}"
   tags: [garden-cluster]

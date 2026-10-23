@@ -28,3 +28,10 @@ management_cluster_kind_primary: clusterapi
 management_cluster_kind_cluster_version: 'v1.37.0'
 management_cluster_kind_cluster_image: "kindest/node:{{ management_cluster_kind_cluster_version }}"
 management_cluster_kind_cluster_api_server_address: "127.0.0.1"
+
+# Opt-in: replace a kind cluster running an older Kubernetes version than
+# management_cluster_kind_cluster_version by a new one and restore the
+# Cluster API objects of management_cluster_kind_upgrade_namespace into it
+management_cluster_kind_upgrade: false
+management_cluster_kind_upgrade_namespace: default
+management_cluster_kind_upgrade_backup_dir: /var/lib/yake/backup

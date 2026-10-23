@@ -46,6 +46,9 @@ Configured via the `management_cluster` role.
 | `management_cluster_name` | `clusterapi` | Name of the management cluster and prefix for its kubeconfig. |
 | `management_cluster_kind_version` | `v0.33.0` | Version of the kind tool (`ghcr.io/yakecloud/kind`). |
 | `management_cluster_kind_cluster_version` | `v1.37.0` | Kubernetes version for the kind node image (`kindest/node`). |
+| `management_cluster_kind_upgrade` | `false` | Opt-in: replace a kind cluster running an older Kubernetes version than `management_cluster_kind_cluster_version` (see [Upgrading the kind Management Cluster](operations.md#upgrading-the-kind-management-cluster)). |
+| `management_cluster_kind_upgrade_namespace` | `default` | Namespace of the Cluster API objects that are backed up and restored. |
+| `management_cluster_kind_upgrade_backup_dir` | `/var/lib/yake/backup` | Directory for the backups. |
 | `management_cluster_kind_cluster_api_server_address` | `127.0.0.1` | Address the kind API server listens on. |
 | `management_cluster_k3s_version` | `1.37.0` | k3s version when using the k3s engine. |
 | `management_cluster_kubeconfig` | `/var/lib/yake/kubeconfig.<name>` | Path of the kubeconfig file. |

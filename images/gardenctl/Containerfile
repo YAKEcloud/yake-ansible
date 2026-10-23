@@ -1,0 +1,32 @@
+ARG ALPINE_VERSION=3.24@sha256:71e9b7bae160ba167fa17414401b94cbcdaf3c32feeab9298bd794a2a0614c35
+FROM alpine:${ALPINE_VERSION}
+
+COPY --chmod=0755 entrypoint.sh /entrypoint.sh
+ARG VERSION=v2.17.0  # renovate: datasource=github-releases depName=gardener/gardenctl-v2
+ARG GARDENLOGIN_VERSION=v0.10.0  # renovate: datasource=github-releases depName=gardener/gardenlogin
+ARG KUBECTL_VERSION=v1.37.1  # renovate: datasource=github-releases depName=kubernetes/kubernetes
+ADD --chmod=0755 https://github.com/gardener/gardenctl-v2/releases/download/${VERSION}/gardenctl_v2_linux_amd64 /usr/local/bin/gardenctl
+ADD --chmod=0755 https://github.com/gardener/gardenlogin/releases/download/${GARDENLOGIN_VERSION}/gardenlogin_linux_amd64 /usr/local/bin/gardenlogin
+ADD --chmod=0755 https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl /usr/local/bin/kubectl
+
+ENV USER_NAME=gardenctl
+ENV USER_ID=1000
+ENV GROUP_ID=1000
+
+RUN apk update --no-cache \
+    && apk upgrade --no-cache --available \
+    && apk add --no-cache \
+      bash \
+      dumb-init \
+      openssh-client \
+      shadow \
+    && addgroup -g ${GROUP_ID} ${USER_NAME} \
+    && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
+    && mkdir /var/lib/yake \
+    && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake
+
+WORKDIR /var/lib/yake
+
+VOLUME ["/var/lib/yake"]
+
+ENTRYPOINT ["/entrypoint.sh"]

@@ -25,6 +25,17 @@ Each role also exposes `<role>_container_registry` (default `ghcr.io`) and `<rol
 
 `clusterapi_install_contract` (default `v1beta2`) is the Cluster API contract that `clusterctl upgrade apply` uses to upgrade the providers of an existing management cluster.
 
+The optional `gardenctl_install` role (tag `gardenctl`) is disabled by default. Set `gardenctl_install_enabled: true` to install [gardenctl](https://github.com/gardener/gardenctl-v2). The container image `ghcr.io/yakecloud/gardenctl` contains gardenctl, gardenlogin, and kubectl; with `binary` gardenctl and gardenlogin are downloaded to `.local/`.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `gardenctl_install_enabled` | `false` | Install gardenctl. |
+| `gardenctl_install_version` | `v2.17.0` | gardenctl version (container image tag). |
+| `gardenctl_install_garden_name` | `garden` | Identity of the garden in `gardenctl-v2.yaml`. |
+| `gardenctl_install_garden_kubeconfig` | `/var/lib/yake/gardener-operator/kubeconfig.vgarden` | Kubeconfig of the virtual garden. It grants admin access. |
+
+The default `gardenctl-v2.yaml` is only written if it does not exist yet, so manual changes are kept.
+
 ## Management Cluster
 
 Configured via the `management_cluster` role.

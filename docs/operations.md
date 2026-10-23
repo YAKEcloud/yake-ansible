@@ -105,6 +105,19 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ./.local/yake-kubectl get shoots -A
 ```
 
+### gardenctl
+
+If `gardenctl_install_enabled` is set, `.local/yake-gardenctl` passes its arguments to gardenctl. Without arguments it opens a shell in the container, where `kubectl` works for the targeted cluster:
+
+```bash
+./.local/yake-gardenctl target --garden garden shoot <shoot> --project <project>
+./.local/yake-gardenctl
+eval "$(gardenctl kubectl-env bash)"
+kubectl get nodes
+```
+
+The configuration and target sessions are kept in `/var/lib/yake/gardenctl/.garden`.
+
 ## Adding a Cloud Profile
 
 Add a new entry to `gardener_operator_cloudprofiles` in `group_vars/all.yml` and re-run the playbook with `--tags gardener`. Cloud profiles are reconciled without downtime.

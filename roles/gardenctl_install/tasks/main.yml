@@ -1,0 +1,58 @@
+---
+- name: Create directories
+  become: true
+  ansible.builtin.file:
+    path: "{{ item }}"
+    owner: "{{ gardenctl_install_uid }}"
+    group: "{{ gardenctl_install_gid }}"
+    mode: "0755"
+    state: directory
+  loop:
+    - "{{ playbook_dir }}/.local"
+    - "{{ gardenctl_install_home }}/.garden"
+
+- name: Run gardenctl container
+  become: "{{ gardenctl_install_become }}"
+  community.docker.docker_container:
+    name: gardenctl
+    command: sleep infinity
+    image: "{{ gardenctl_install_container_registry }}/{{ gardenctl_install_container_image }}:{{ gardenctl_install_version }}"
+    env: "{{ {'USER_ID': gardenctl_install_uid, 'GROUP_ID': gardenctl_install_gid} | combine(gardenctl_install_proxy_env) }}"
+    volumes:
+      - /var/lib/yake:/var/lib/yake
+    network_mode: host
+    restart_policy: unless-stopped
+    state: started
+  when: gardenctl_install_method == "docker"
+
+- name: Copy gardenctl script
+  become: true
+  ansible.builtin.copy:
+    src: gardenctl
+    dest: "{{ playbook_dir }}/.local/yake-gardenctl"
+    mode: "0755"
+    owner: root
+    group: root
+  when: gardenctl_install_method == "docker"
+
+- name: Download gardenctl binaries
+  ansible.builtin.get_url:
+    url: "{{ item.url }}"
+    dest: "{{ playbook_dir }}/.local/{{ item.dest }}"
+    mode: "0755"
+  environment: "{{ gardenctl_install_proxy_env }}"
+  loop:
+    - dest: yake-gardenctl
+      url: "https://github.com/gardener/gardenctl-v2/releases/download/{{ gardenctl_install_version }}/gardenctl_v2_linux_amd64"
+    - dest: gardenlogin
+      url: "https://github.com/gardener/gardenlogin/releases/download/{{ gardenctl_install_gardenlogin_version }}/gardenlogin_linux_amd64"
+  loop_control:
+    label: "{{ item.dest }}"
+  when: gardenctl_install_method == "binary"
+
+- name: Create default gardenctl configuration
+  ansible.builtin.template:
+    src: gardenctl-v2.yaml.j2
+    dest: "{{ gardenctl_install_home }}/.garden/gardenctl-v2.yaml"
+    mode: "0600"
+    force: false

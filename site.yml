@@ -40,3 +40,10 @@
   tags: [gardener]
   roles:
     - role: gardener_operator
+
+- name: Install gardenctl
+  hosts: "{{ hosts_gardenctl_install | d('all') }}"
+  tags: [gardenctl]
+  roles:
+    - role: gardenctl_install
+      when: gardenctl_install_enabled | d(false)

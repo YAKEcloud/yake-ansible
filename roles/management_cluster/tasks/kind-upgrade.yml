@@ -1,0 +1,104 @@
+---
+- name: Get Kubernetes version of the kind cluster
+  ansible.builtin.command: >
+    {{ playbook_dir }}/.local/yake-kubectl --kubeconfig {{ management_cluster_kubeconfig }}
+    get nodes -o jsonpath={.items[0].status.nodeInfo.kubeletVersion}
+  register: management_cluster_kind_current_version
+  changed_when: false
+
+- name: Replace kind cluster with a newer version
+  when: management_cluster_kind_current_version.stdout.lstrip('v') is version(management_cluster_kind_cluster_version.lstrip('v'), '<')
+  vars:
+    _kubectl: "{{ playbook_dir }}/.local/yake-kubectl --kubeconfig {{ management_cluster_kubeconfig }}"
+    _clusterctl: "{{ playbook_dir }}/.local/yake-clusterctl"
+    _namespace: "{{ management_cluster_kind_upgrade_namespace }}"
+    _backup_dir: "{{ management_cluster_kind_upgrade_backup_dir }}/{{ ansible_facts.date_time.iso8601_basic_short }}"
+  block:
+    - name: Get Cluster API clusters
+      ansible.builtin.command: "{{ _kubectl }} get clusters.cluster.x-k8s.io -n {{ _namespace }} -o json"
+      register: management_cluster_kind_clusters
+      changed_when: false
+
+    - name: Check that all clusters are provisioned and not paused
+      ansible.builtin.assert:
+        that:
+          - item.status.phase | d('') == 'Provisioned'
+          - not (item.spec.paused | d(false))
+        fail_msg: "Cluster {{ item.metadata.name }} is not provisioned or paused, not replacing the kind cluster"
+        quiet: true
+      loop: "{{ (management_cluster_kind_clusters.stdout | from_json)['items'] }}"
+      loop_control:
+        label: "{{ item.metadata.name }}"
+
+    - name: Back up Cluster API objects
+      when: (management_cluster_kind_clusters.stdout | from_json)['items'] | length > 0
+      block:
+        - name: Create backup directory
+          become: true
+          ansible.builtin.file:
+            path: "{{ _backup_dir }}"
+            owner: "{{ management_cluster_uid }}"
+            group: "{{ management_cluster_gid }}"
+            mode: "0700"
+            state: directory
+
+        - name: Write Cluster API objects to the backup directory
+          ansible.builtin.command: >
+            {{ _clusterctl }} move --to-directory {{ _backup_dir }}
+            --namespace {{ _namespace }} --kubeconfig {{ management_cluster_kubeconfig }}
+          changed_when: true
+
+        - name: Find backup files
+          ansible.builtin.find:
+            paths: "{{ _backup_dir }}"
+          register: management_cluster_kind_backup
+
+        - name: Check that the backup is not empty
+          ansible.builtin.assert:
+            that: management_cluster_kind_backup.matched > 0
+            quiet: true
+      rescue:
+        # clusterctl leaves the clusters paused if the backup fails
+        - name: Resume clusters
+          ansible.builtin.command: >
+            {{ _kubectl }} patch clusters.cluster.x-k8s.io {{ item.metadata.name }}
+            -n {{ _namespace }} --type merge -p '{"spec":{"paused":null}}'
+          loop: "{{ (management_cluster_kind_clusters.stdout | from_json)['items'] }}"
+          loop_control:
+            label: "{{ item.metadata.name }}"
+          changed_when: true
+
+        - name: Abort
+          ansible.builtin.fail:
+            msg: "Backup failed, the kind cluster was not touched"
+
+    - name: Delete old kind cluster
+      become: "{{ management_cluster_become }}"
+      ansible.builtin.command: "{{ playbook_dir }}/.local/yake-kind delete cluster --name {{ management_cluster_name }}"
+      changed_when: true
+
+    - name: Create new kind cluster
+      ansible.builtin.include_tasks: kind.yml
+
+    - name: Install Cluster API
+      ansible.builtin.include_role:
+        name: clusterapi_install
+
+    - name: Restore Cluster API objects
+      ansible.builtin.command: >
+        {{ _clusterctl }} move --from-directory {{ _backup_dir }}
+        --to-kubeconfig {{ management_cluster_kubeconfig }}
+      changed_when: true
+      when: (management_cluster_kind_clusters.stdout | from_json)['items'] | length > 0
+
+    - name: Wait until all clusters are reconciled again
+      ansible.builtin.command: "{{ _kubectl }} get clusters.cluster.x-k8s.io -n {{ _namespace }} -o json"
+      register: management_cluster_kind_restored
+      until: >-
+        (management_cluster_kind_restored.stdout | from_json)['items']
+        | rejectattr('spec.paused', 'equalto', true) | selectattr('status.phase', 'defined')
+        | selectattr('status.phase', 'equalto', 'Provisioned') | list | length
+        == (management_cluster_kind_clusters.stdout | from_json)['items'] | length
+      retries: 30
+      delay: 10
+      changed_when: false

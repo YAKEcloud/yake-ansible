@@ -26,6 +26,7 @@
       "customType": "regex",
       "managerFilePatterns": [
         "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
+        "/^roles\\/gardenctl_install\\/defaults\\/main.yml$/",
         "/^roles\\/helm_install\\/defaults\\/main.yml$/",
         "/^roles\\/kubectl_install\\/defaults\\/main.yml$/",
         "/^group_vars\\/all\\.yml\\.example/",
@@ -55,12 +56,13 @@
       "customType": "regex",
       "managerFilePatterns": [
         "/^images\\/clusterctl\\/Containerfile$/",
+        "/^images\\/gardenctl\\/Containerfile$/",
         "/^images\\/helm\\/Containerfile$/",
         "/^images\\/kind\\/Containerfile$/",
         "/^images\\/kubectl\\/Containerfile$/"
       ],
       "matchStrings": [
-        "ARG VERSION=(?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
+        "ARG \\w*VERSION=(?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
       ]
     }
   ]

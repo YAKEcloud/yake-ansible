@@ -19,6 +19,13 @@
     group: "{{ clusterapi_install_gid }}"
     mode: "0644"
 
+- name: Check for existing Cluster API installation
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}"
+    kind: CustomResourceDefinition
+    name: providers.clusterctl.cluster.x-k8s.io
+  register: clusterapi_install_crd
+
 - name: Initialize Cluster API
   become: "{{ clusterapi_install_become }}"
   ansible.builtin.shell: |
@@ -29,6 +36,19 @@
     executable: /bin/bash
   register: result  # noqa: var-naming[no-role-prefix]
   changed_when: "'Your management cluster has been initialized successfully' in result.stdout"
+  when: clusterapi_install_crd.resources | length == 0
+
+- name: Upgrade Cluster API providers
+  become: "{{ clusterapi_install_become }}"
+  ansible.builtin.shell: |
+    export CLUSTER_TOPOLOGY={{ clusterapi_install_cluster_topology | lower }}
+    {{ playbook_dir }}/.local/yake-clusterctl upgrade apply --contract {{ clusterapi_install_contract }} --wait-providers --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}
+  environment: "{{ clusterapi_install_proxy_env }}"
+  args:
+    executable: /bin/bash
+  register: clusterapi_install_upgrade
+  changed_when: "'Scaling down' in clusterapi_install_upgrade.stdout"
+  when: clusterapi_install_crd.resources | length > 0
 
 - name: Apply orc controller manifest
   kubernetes.core.k8s:

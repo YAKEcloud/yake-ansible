@@ -19,9 +19,11 @@ The `kubectl_install`, `helm_install`, and `clusterctl_install` roles provide th
 |----------|---------|-------------|
 | `kubectl_install_version` | `v1.37.1` | kubectl version. |
 | `helm_install_version` | `v4.3.0` | Helm version. |
-| `clusterctl_install_version` | `v1.14.2` | clusterctl version. |
+| `clusterctl_install_version` | `v1.14.3` | clusterctl version. |
 
 Each role also exposes `<role>_container_registry` (default `ghcr.io`) and `<role>_container_image` (`yakecloud/kubectl`, `yakecloud/helm`, `yakecloud/clusterctl`) to pull the images from a different registry.
+
+`clusterapi_install_contract` (default `v1beta2`) is the Cluster API contract that `clusterctl upgrade apply` uses to upgrade the providers of an existing management cluster.
 
 ## Management Cluster
 

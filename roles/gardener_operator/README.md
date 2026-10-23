@@ -68,6 +68,8 @@ gardener_operator_provider_openstack_helm_values:
 
 `gardener_operator_dns_provider_type` selects the DNS provider. Supported values: `openstack-designate`, `aws-route53`, `azure-dns`, `google-clouddns`.
 
+The `default-domain` secret for `gardener_operator_garden_url` is also referenced explicitly in `spec.dns.defaults` of the internal seed and of managed seeds. Gardener 1.153 and later no longer fill this in automatically.
+
 For `openstack-designate`, set `gardener_operator_dns_credentials: {}` to reuse the OpenStack credentials above. For other providers, set the corresponding key/value credentials in `gardener_operator_dns_credentials`.
 
 ### Cloud Profiles

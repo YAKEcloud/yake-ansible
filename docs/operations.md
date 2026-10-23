@@ -280,6 +280,29 @@ The Garden resource describes the overall reconciliation status:
 ./.local/yake-kubectl get garden -o yaml
 ```
 
+### Gardenlet in CrashLoopBackOff After Upgrading to 1.153
+
+Since Gardener 1.153 the gardenlet no longer derives `spec.dns.defaults` of its Seed from the `default-domain` secret. It overwrites the Seed with the `seedConfig` it is given, and removing already set defaults is rejected. The gardenlet then exits at startup:
+
+```
+panic: could not register seed "internal-seed": Seed.core.gardener.cloud "internal-seed" is invalid: spec.dns.defaults: Forbidden: removing defaults DNS configuration is not allowed
+```
+
+The templates for the internal seed and for managed seeds now set `dns.defaults` explicitly. Running the playbook with a release that contains this change at the same time as the Gardener upgrade is enough.
+
+If the gardenlet is already crash-looping, it cannot apply the new configuration itself, and the Gardener Operator does not redeploy a Gardenlet whose Seed already exists. Re-run the playbook with `--tags gardener` first, then force the redeploy:
+
+```bash
+export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
+./.local/yake-kubectl -n garden annotate gardenlets.seedmanagement.gardener.cloud internal-seed \
+  gardener.cloud/operation=force-redeploy
+
+export KUBECONFIG=/var/lib/yake/kubeconfig.garden
+./.local/yake-kubectl -n garden rollout restart deploy/gardener-operator
+```
+
+The annotation is only evaluated when the operator starts, hence the restart. The operator removes it after the redeploy.
+
 ### Managed Seed Shoot Stuck
 
 Check the shoot status and Gardenlet logs:

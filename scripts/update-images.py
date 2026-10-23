@@ -46,6 +46,7 @@ CAPI_BASE_URL = "https://nbg1.your-objectstorage.com/osism/openstack-k8s-capi-im
 GARDENLINUX_REPO = "gardenlinux/gardenlinux"
 # adjust if you need metal_prod or _usi variant
 GARDENLINUX_FLAVOR = "openstack-gardener_prod"
+IMAGE_VISIBILITY = "community"
 
 
 def _short_gl_version(version):
@@ -289,7 +290,7 @@ def upload_via_web_download(
         name=name,
         disk_format=disk_format,
         container_format="bare",
-        visibility="shared",
+        visibility=IMAGE_VISIBILITY,
         min_disk=20,
         min_ram=512,
         **(extra_props or {}),
@@ -338,7 +339,7 @@ def upload_from_file(
             name=name,
             disk_format=disk_format,
             container_format="bare",
-            visibility="shared",
+            visibility=IMAGE_VISIBILITY,
             min_disk=20,
             min_ram=512,
             **(extra_props or {}),
@@ -778,7 +779,7 @@ def main():
 
     try:
         import_info = conn.image.get_import_info()  # type: ignore
-        import_methods = import_info.import_methods.get("value", [])
+        import_methods = import_info.import_methods.get("value", [])  # type: ignore
     except Exception as exc:  # noqa: BLE001 — pre-flight check is best effort
         import_methods = None
         print(f"Could not query supported import methods ({exc}), skipping check.")

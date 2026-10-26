@@ -12,6 +12,7 @@ ADD --chmod=0755 https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/ku
 ENV USER_NAME=gardenctl
 ENV USER_ID=1000
 ENV GROUP_ID=1000
+ENV GCTL_SESSION_ID=yake
 
 RUN apk update --no-cache \
     && apk upgrade --no-cache --available \
@@ -20,6 +21,8 @@ RUN apk update --no-cache \
       dumb-init \
       openssh-client \
       shadow \
+    && ln -s gardenlogin /usr/local/bin/kubectl-gardenlogin \
+    && echo 'source <(gardenctl rc bash)' >> /etc/bash/bashrc \
     && addgroup -g ${GROUP_ID} ${USER_NAME} \
     && adduser -u ${USER_ID} -D -G ${USER_NAME} ${USER_NAME} \
     && mkdir /var/lib/yake \

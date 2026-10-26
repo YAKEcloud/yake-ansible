@@ -129,12 +129,11 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 
 ### gardenctl
 
-If `gardenctl_install_enabled` is set, `.local/yake-gardenctl` passes its arguments to gardenctl. Without arguments it opens a shell in the container, where `kubectl` works for the targeted cluster:
+If `gardenctl_install_enabled` is set, `.local/yake-gardenctl` passes its arguments to gardenctl. Without arguments it opens a shell in the container, where `kubectl` works for the targeted cluster (`KUBECONFIG` is set automatically via `gardenctl rc`):
 
 ```bash
 ./.local/yake-gardenctl target --garden garden shoot <shoot> --project <project>
 ./.local/yake-gardenctl
-eval "$(gardenctl kubectl-env bash)"
 kubectl get nodes
 ```
 

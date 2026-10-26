@@ -28,11 +28,23 @@
     mode: "0600"
   no_log: true
 
+# Glance lists hidden and community images only when asked for them, and image_info never asks.
 - name: Get image info
-  openstack.cloud.image_info:
+  openstack.cloud.resources:  # noqa osism-fqcn
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"
-    image: "{{ clusterapi_cluster_openstack_image_id }}"
-  register: _clusterapi_cluster_image_info  # noqa: var-naming[no-role-prefix]
+    service: image
+    type: image
+    parameters:
+      id: "{{ clusterapi_cluster_openstack_image_id }}"
+      visibility: all
+      is_hidden: "{{ item }}"
+  loop: [false, true]
+  register: _clusterapi_cluster_image_lookup  # noqa: var-naming[no-role-prefix]
+
+- name: Set image info fact
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_image_info:  # noqa: var-naming[no-role-prefix]
+      images: "{{ _clusterapi_cluster_image_lookup.results | map(attribute='resources') | flatten }}"
 
 - name: Fail if image not found
   ansible.builtin.fail:

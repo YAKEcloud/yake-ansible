@@ -32,7 +32,7 @@ jobs:
           - image: clusterctl
             version: v1.14.3  # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
           - image: gardenctl
-            version: v2.17.0  # renovate: datasource=github-releases depName=gardener/gardenctl-v2
+            version: v2.18.0  # renovate: datasource=github-releases depName=gardener/gardenctl-v2
           - image: kind
             version: v0.33.0  # renovate: datasource=github-releases depName=kubernetes-sigs/kind
     steps:

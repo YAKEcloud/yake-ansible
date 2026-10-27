@@ -65,6 +65,8 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
           persist-credentials: false
+          # Intended: fork code runs here only after the environment approval.
+          allow-unsafe-pr-checkout: true
 
       - name: Set up Python
         uses: actions/setup-python@v7

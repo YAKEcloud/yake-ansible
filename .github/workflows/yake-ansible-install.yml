@@ -38,8 +38,11 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
+      # By SHA, as refs/pull/<n>/head can lag behind the pushed head.
       - name: Fetch PR head (script and checkout stay on the base branch)
-        run: git fetch --no-tags origin "refs/pull/${{ github.event.pull_request.number }}/head"
+        env:
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: git fetch --no-tags origin "${HEAD_SHA}"
 
       - name: Check whether this PR touches anything CI-relevant
         id: check

@@ -9,7 +9,7 @@ gardenctl_install_container_image: yakecloud/gardenctl
 gardenctl_install_version: 'v2.17.0'
 # only used by the binary method, the container image pins its own version
 # renovate: datasource=github-releases depName=gardener/gardenlogin
-gardenctl_install_gardenlogin_version: 'v0.10.0'
+gardenctl_install_gardenlogin_version: 'v0.11.0'
 gardenctl_install_garden_name: garden
 gardenctl_install_garden_kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
 gardenctl_install_home: "{{ '/var/lib/yake/gardenctl' if gardenctl_install_method == 'docker' else ansible_facts.user_dir }}"

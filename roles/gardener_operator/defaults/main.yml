@@ -62,6 +62,17 @@ gardener_operator_gardenlet_image_vector_overwrite: ""
 #     repository: "{{ gardener_operator_image_registry }}/gardener-project/releases/gardener/node-agent"
 #     tag: "v{{ gardener_operator_version }}"
 
+# Frontend configuration of the Gardener dashboard, rendered into the ConfigMap the
+# Garden references as gardenerDashboard.frontendConfigMapRef; the operator uses it
+# as the whole frontend block instead of merging it.
+# https://github.com/gardener/dashboard/blob/master/charts/gardener-dashboard/values.yaml
+gardener_operator_garden_dashboard_frontend_config: {}
+# gardener_operator_garden_dashboard_frontend_config:
+#   externalTools:
+#   - title: Headlamp
+#     icon: mdi-kubernetes
+#     url: "https://headlamp.{domain}"
+
 # Feature gates for all gardenlets (internal seed and managed seeds).
 gardener_operator_gardenlet_feature_gates: {}
 

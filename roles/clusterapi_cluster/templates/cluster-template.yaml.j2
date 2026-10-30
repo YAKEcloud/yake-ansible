@@ -1,3 +1,14 @@
+{% set kvm_ptp = clusterapi_cluster_time_source | d('') == 'kvm_ptp' %}
+{% set chrony_conf %}
+keyfile /etc/chrony/chrony.keys
+driftfile /var/lib/chrony/chrony.drift
+ntsdumpdir /var/lib/chrony
+logdir /var/log/chrony
+maxupdateskew 100.0
+rtcsync
+makestep 1 3
+refclock PHC /dev/ptp_kvm poll 2 stratum 1
+{% endset %}
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
@@ -83,7 +94,30 @@ spec:
             Environment="{{ key | upper }}={{ value }}"
 {% endfor %}
 {% endif %}
-{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 %}
+{% if kvm_ptp %}
+        - path: /etc/modules-load.d/ptp_kvm.conf
+          owner: root:root
+          permissions: "0644"
+          content: |
+            ptp_kvm
+        - path: /etc/udev/rules.d/60-kvm-ptp.rules
+          owner: root:root
+          permissions: "0644"
+          content: |
+            SUBSYSTEM=="ptp", ATTR{clock_name}=="kvm-ptp", SYMLINK+="ptp_kvm", TAG+="systemd"
+        - path: /etc/systemd/system/chrony.service.d/10-after-ptp-kvm.conf
+          owner: root:root
+          permissions: "0644"
+          content: |
+            [Unit]
+            Wants=dev-ptp_kvm.device
+            After=dev-ptp_kvm.device
+        - path: /etc/chrony/chrony.conf
+          owner: root:root
+          permissions: "0644"
+          content: |
+{{ chrony_conf | indent(12, true) }}{% endif %}
+{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 or kvm_ptp %}
       preKubeadmCommands:
 {% for entry in clusterapi_cluster_hosts_entries | d([]) %}
         - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
@@ -91,6 +125,15 @@ spec:
 {% if clusterapi_cluster_proxy_env | d({}) | length > 0 %}
         - systemctl daemon-reload
         - systemctl restart containerd
+{% endif %}
+{% if kvm_ptp %}
+        - DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
+        - DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confold chrony
+        - modprobe ptp_kvm || true
+        - udevadm trigger --subsystem-match=ptp || true
+        - udevadm settle || true
+        - systemctl daemon-reload
+        - systemctl restart chrony
 {% endif %}
 {% endif %}
       joinConfiguration:
@@ -256,7 +299,30 @@ spec:
           Environment="{{ key | upper }}={{ value }}"
 {% endfor %}
 {% endif %}
-{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 %}
+{% if kvm_ptp %}
+      - path: /etc/modules-load.d/ptp_kvm.conf
+        owner: root:root
+        permissions: "0644"
+        content: |
+          ptp_kvm
+      - path: /etc/udev/rules.d/60-kvm-ptp.rules
+        owner: root:root
+        permissions: "0644"
+        content: |
+          SUBSYSTEM=="ptp", ATTR{clock_name}=="kvm-ptp", SYMLINK+="ptp_kvm", TAG+="systemd"
+      - path: /etc/systemd/system/chrony.service.d/10-after-ptp-kvm.conf
+        owner: root:root
+        permissions: "0644"
+        content: |
+          [Unit]
+          Wants=dev-ptp_kvm.device
+          After=dev-ptp_kvm.device
+      - path: /etc/chrony/chrony.conf
+        owner: root:root
+        permissions: "0644"
+        content: |
+{{ chrony_conf | indent(10, true) }}{% endif %}
+{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 or kvm_ptp %}
     preKubeadmCommands:
 {% for entry in clusterapi_cluster_hosts_entries | d([]) %}
       - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
@@ -264,6 +330,15 @@ spec:
 {% if clusterapi_cluster_proxy_env | d({}) | length > 0 %}
       - systemctl daemon-reload
       - systemctl restart containerd
+{% endif %}
+{% if kvm_ptp %}
+      - DEBIAN_FRONTEND=noninteractive apt-get update -qq || true
+      - DEBIAN_FRONTEND=noninteractive apt-get install -y -o Dpkg::Options::=--force-confold chrony
+      - modprobe ptp_kvm || true
+      - udevadm trigger --subsystem-match=ptp || true
+      - udevadm settle || true
+      - systemctl daemon-reload
+      - systemctl restart chrony
 {% endif %}
 {% endif %}
     clusterConfiguration:

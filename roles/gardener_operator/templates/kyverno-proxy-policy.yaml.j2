@@ -226,21 +226,22 @@ spec:
   # Installs chrony from the apt mirror and syncs it against the hypervisor clock (KVM PTP).
   # The unit depends on the files via filePaths, so the gardener-node-agent re-runs it when they change.
 {% for f in kvm_ptp_files %}
-{% set file_json = {'path': f.path, 'permissions': 420, 'content': {'inline': {'encoding': '', 'data': f.data}}} | to_json %}
+{# CEL map literals are typed by their values, so mixed value types need every value wrapped in dyn() #}
+{% set file_cel = '{"path": dyn(' + (f.path | to_json) + '), "permissions": dyn(420), "content": dyn({"inline": {"encoding": "", "data": ' + (f.data | to_json) + '}})}' %}
   - patchType: JSONPatch
     jsonPatch:
       expression: |
         !has(object.spec.files) ?
-          [JSONPatch{op: "add", path: "/spec/files", value: [dyn({{ file_json }})]}]
+          [JSONPatch{op: "add", path: "/spec/files", value: [dyn({{ file_cel }})]}]
         : !object.spec.files.exists(f, f.path == "{{ f.path }}") ?
-          [JSONPatch{op: "add", path: "/spec/files/-", value: dyn({{ file_json }})}]
+          [JSONPatch{op: "add", path: "/spec/files/-", value: dyn({{ file_cel }})}]
         : []
 {% endfor %}
-{% set unit_json = {'name': 'yake-chrony-ptp-kvm.service', 'command': 'start', 'enable': true, 'content': kvm_ptp_unit_content, 'filePaths': kvm_ptp_files | map(attribute='path') | list} | to_json %}
+{% set unit_cel = '{"name": dyn("yake-chrony-ptp-kvm.service"), "command": dyn("start"), "enable": dyn(true), "content": dyn(' + (kvm_ptp_unit_content | to_json) + '), "filePaths": dyn(' + (kvm_ptp_files | map(attribute='path') | list | to_json) + ')}' %}
   - patchType: JSONPatch
     jsonPatch:
       expression: |
         !object.spec.units.exists(u, u.name == "yake-chrony-ptp-kvm.service") ?
-          [JSONPatch{op: "add", path: "/spec/units/-", value: dyn({{ unit_json }})}]
+          [JSONPatch{op: "add", path: "/spec/units/-", value: dyn({{ unit_cel }})}]
         : []
 {% endif %}

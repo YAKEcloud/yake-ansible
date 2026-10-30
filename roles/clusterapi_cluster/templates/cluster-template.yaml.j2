@@ -164,6 +164,9 @@ spec:
           kind: KubeadmConfigTemplate
           name: {{ clusterapi_cluster_name }}-md
       clusterName: {{ clusterapi_cluster_name }}
+      deletion:
+        nodeDrainTimeoutSeconds: {{ clusterapi_cluster_worker_node_drain_timeout_seconds }}
+        nodeVolumeDetachTimeoutSeconds: {{ clusterapi_cluster_worker_node_volume_detach_timeout_seconds }}
       failureDomain: {{ md.failure_domain }}
       infrastructureRef:
         apiGroup: infrastructure.cluster.x-k8s.io

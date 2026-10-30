@@ -83,6 +83,8 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_worker_machine_health_check_unhealthy_timeout` | `300s` | How long a worker Machine may report `Ready=Unknown/False` before it is remediated. |
 | `clusterapi_cluster_worker_machine_health_check_node_startup_timeout` | `20m` | How long a new worker Machine may take to register its Node; a server that never boots is caught by this timer. |
 | `clusterapi_cluster_worker_machine_health_check_max_unhealthy` | `40%` | Remediation stops while more workers of a deployment are unhealthy than this, so an outage of the whole cloud does not delete every worker (40% allows 1 of 3). |
+| `clusterapi_cluster_worker_node_drain_timeout_seconds` | `600` | How long deleting a worker Machine may spend draining its Node; `0` means no limit. On an unreachable Node, Pods stay Terminating until their grace period ends, so without a limit a remediation can wait indefinitely. |
+| `clusterapi_cluster_worker_node_volume_detach_timeout_seconds` | `600` | How long deleting a worker Machine may wait for its volumes to detach; `0` means no limit. |
 | `clusterapi_cluster_control_plane_remediation_min_healthy_period_seconds` | `3600` | Time after which a new failure is treated as unrelated to a previous remediation (retry counter resets). |
 | `clusterapi_cluster_control_plane_server_group_enabled` | `true` | Place control-plane machines in an OpenStack server group so they're spread across hypervisors. |
 | `clusterapi_cluster_control_plane_server_group_policy` | `soft-anti-affinity` | Server group policy for control-plane machines. `soft-anti-affinity` prefers separate hosts without hard-failing scheduling on clouds with few hypervisors (unlike `anti-affinity`). |

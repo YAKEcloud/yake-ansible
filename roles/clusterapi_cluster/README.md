@@ -79,6 +79,10 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_control_plane_machine_health_check_unhealthy_timeout` | `300s` | How long a control-plane Machine may report `Ready=Unknown/False` before the MachineHealthCheck marks it unhealthy. |
 | `clusterapi_cluster_control_plane_remediation_max_retry` | `3` | Max number of remediation retries KubeadmControlPlane performs for a control-plane Machine before giving up. |
 | `clusterapi_cluster_control_plane_remediation_retry_period_seconds` | `120` | Minimum time between two remediation retries. |
+| `clusterapi_cluster_worker_machine_health_check_enabled` | `true` | Deploy one MachineHealthCheck per worker MachineDeployment, so a worker whose server failed (for example ERROR after an OpenStack API error) or whose Node turned unhealthy is replaced instead of waiting for a human. |
+| `clusterapi_cluster_worker_machine_health_check_unhealthy_timeout` | `300s` | How long a worker Machine may report `Ready=Unknown/False` before it is remediated. |
+| `clusterapi_cluster_worker_machine_health_check_node_startup_timeout` | `20m` | How long a new worker Machine may take to register its Node; a server that never boots is caught by this timer. |
+| `clusterapi_cluster_worker_machine_health_check_max_unhealthy` | `40%` | Remediation stops while more workers of a deployment are unhealthy than this, so an outage of the whole cloud does not delete every worker (40% allows 1 of 3). |
 | `clusterapi_cluster_control_plane_remediation_min_healthy_period_seconds` | `3600` | Time after which a new failure is treated as unrelated to a previous remediation (retry counter resets). |
 | `clusterapi_cluster_control_plane_server_group_enabled` | `true` | Place control-plane machines in an OpenStack server group so they're spread across hypervisors. |
 | `clusterapi_cluster_control_plane_server_group_policy` | `soft-anti-affinity` | Server group policy for control-plane machines. `soft-anti-affinity` prefers separate hosts without hard-failing scheduling on clouds with few hypervisors (unlike `anti-affinity`). |

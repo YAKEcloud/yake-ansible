@@ -170,6 +170,27 @@ spec:
         kind: OpenStackMachineTemplate
         name: {{ md_machine_template_name }}
       version: {{ clusterapi_cluster_kubernetes_version }}
+{% if clusterapi_cluster_worker_machine_health_check_enabled | bool %}
+---
+apiVersion: cluster.x-k8s.io/v1beta1
+kind: MachineHealthCheck
+metadata:
+  name: {{ clusterapi_cluster_name }}-{{ md.name }}-mhc
+spec:
+  clusterName: {{ clusterapi_cluster_name }}
+  selector:
+    matchLabels:
+      cluster.x-k8s.io/deployment-name: {{ clusterapi_cluster_name }}-{{ md.name }}
+  maxUnhealthy: {{ clusterapi_cluster_worker_machine_health_check_max_unhealthy }}
+  nodeStartupTimeout: {{ clusterapi_cluster_worker_machine_health_check_node_startup_timeout }}
+  unhealthyConditions:
+    - type: Ready
+      status: Unknown
+      timeout: {{ clusterapi_cluster_worker_machine_health_check_unhealthy_timeout }}
+    - type: Ready
+      status: "False"
+      timeout: {{ clusterapi_cluster_worker_machine_health_check_unhealthy_timeout }}
+{% endif %}
 {% endfor %}
 ---
 apiVersion: controlplane.cluster.x-k8s.io/v1beta2

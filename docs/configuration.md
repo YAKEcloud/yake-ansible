@@ -96,6 +96,8 @@ Control plane and worker nodes are placed in OpenStack server groups with a `sof
 
 Control plane machine health checks are enabled by default (`clusterapi_cluster_control_plane_machine_health_check_enabled`). Unhealthy nodes are remediated after `300s`, with up to `3` retries (`clusterapi_cluster_control_plane_remediation_max_retry`).
 
+Worker machine health checks are enabled by default as well, one per machine deployment (`clusterapi_cluster_worker_machine_health_check_enabled`). A worker is replaced after `300s` with `Ready` Unknown or False, or when its Node has not registered after `20m` (`clusterapi_cluster_worker_machine_health_check_node_startup_timeout`); remediation pauses while more than `40%` of a deployment's workers are unhealthy (`clusterapi_cluster_worker_machine_health_check_max_unhealthy`).
+
 Worker machine deployments support multiple pools and failure domains:
 
 ```yaml

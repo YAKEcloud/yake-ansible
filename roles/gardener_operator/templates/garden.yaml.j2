@@ -89,6 +89,17 @@ stringData:
   "ca.crt": |-
     {{ gardener_operator_garden_dashboard_oidc_ca | indent(4) }}
 {% endif %}
+{% if gardener_operator_garden_dashboard_frontend_config %}
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gardener-dashboard-frontend
+  namespace: garden
+data:
+  frontend-config.yaml: |
+    {{ gardener_operator_garden_dashboard_frontend_config | to_nice_yaml | indent(4) }}
+{% endif %}
 ---
 apiVersion: v1
 kind: Secret
@@ -184,6 +195,10 @@ spec:
                 concurrentSyncs: 5
                 candidateDeterminationStrategy: MinimalDistance
       gardenerDashboard:
+{% if gardener_operator_garden_dashboard_frontend_config %}
+        frontendConfigMapRef:
+          name: gardener-dashboard-frontend
+{% endif %}
         oidcConfig:
           clientIDPublic: "kube-kubectl"
           issuerURL: https://identity.{{ gardener_operator_garden_url }}

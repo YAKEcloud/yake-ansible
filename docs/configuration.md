@@ -181,6 +181,7 @@ The `gardener_operator` role deploys the Gardener Operator and configures the en
 | `gardener_operator_networking_type` | `cilium` | Default CNI for shoots: `cilium` or `calico`. |
 | `gardener_operator_image_registry` | `europe-docker.pkg.dev` | Registry the Gardener component images are pulled from. |
 | `gardener_operator_gardenlet_image_vector_overwrite` | `""` | Image vector overwrite for all gardenlets, for example to pull images from a private registry. |
+| `gardener_operator_garden_dashboard_frontend_config` | `{}` | Frontend configuration of the Gardener dashboard, for example `externalTools` links on every shoot. Replaces the whole frontend block, see the [dashboard values](https://github.com/gardener/dashboard/blob/master/charts/gardener-dashboard/values.yaml). |
 | `gardener_operator_gardenlet_feature_gates` | `{}` | Feature gates for all gardenlets (internal seed and managed seeds). |
 | `gardener_operator_seed_block_cidrs` | `[169.254.169.254/32]` | CIDRs blocked in all shoot clusters via NetworkPolicy. |
 | `gardener_operator_proxy_host` / `gardener_operator_proxy_port` | `""` / `3128` | HTTP proxy for the managed seeds; also allowed through a NetworkPolicy. |

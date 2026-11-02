@@ -1,3 +1,4 @@
+{% set ntp = clusterapi_cluster_ntp_servers | d([]) | length > 0 %}
 apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
 kind: KubeadmConfigTemplate
 metadata:
@@ -83,7 +84,16 @@ spec:
             Environment="{{ key | upper }}={{ value }}"
 {% endfor %}
 {% endif %}
-{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 %}
+{% if ntp %}
+        - path: /etc/systemd/timesyncd.conf.d/10-ntp.conf
+          owner: root:root
+          permissions: "0644"
+          content: |
+            [Time]
+            NTP={{ clusterapi_cluster_ntp_servers | join(' ') }}
+            FallbackNTP=
+{% endif %}
+{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 or ntp %}
       preKubeadmCommands:
 {% for entry in clusterapi_cluster_hosts_entries | d([]) %}
         - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
@@ -91,6 +101,9 @@ spec:
 {% if clusterapi_cluster_proxy_env | d({}) | length > 0 %}
         - systemctl daemon-reload
         - systemctl restart containerd
+{% endif %}
+{% if ntp %}
+        - systemctl restart systemd-timesyncd
 {% endif %}
 {% endif %}
       joinConfiguration:
@@ -280,7 +293,16 @@ spec:
           Environment="{{ key | upper }}={{ value }}"
 {% endfor %}
 {% endif %}
-{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 %}
+{% if ntp %}
+      - path: /etc/systemd/timesyncd.conf.d/10-ntp.conf
+        owner: root:root
+        permissions: "0644"
+        content: |
+          [Time]
+          NTP={{ clusterapi_cluster_ntp_servers | join(' ') }}
+          FallbackNTP=
+{% endif %}
+{% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 or ntp %}
     preKubeadmCommands:
 {% for entry in clusterapi_cluster_hosts_entries | d([]) %}
       - echo "{{ entry.ip }} {{ entry.hostname }}" >> /etc/hosts
@@ -288,6 +310,9 @@ spec:
 {% if clusterapi_cluster_proxy_env | d({}) | length > 0 %}
       - systemctl daemon-reload
       - systemctl restart containerd
+{% endif %}
+{% if ntp %}
+      - systemctl restart systemd-timesyncd
 {% endif %}
 {% endif %}
     clusterConfiguration:

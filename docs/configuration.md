@@ -81,6 +81,7 @@ The garden cluster is provisioned by the `clusterapi_cluster` role on OpenStack.
 | `clusterapi_cluster_kubernetes_version` | `v1.36.5` | Kubernetes version for the garden cluster. |
 | `clusterapi_cluster_openstack_image_id` | `""` | Glance image UUID for cluster nodes. |
 | `clusterapi_cluster_openstack_image_name` | `""` | Expected name of the image. Strongly recommended: it is used to verify that the image ID is correct. |
+| `clusterapi_cluster_ntp_servers` | `[]` | NTP servers for the cluster nodes (`systemd-timesyncd`). Empty keeps the image defaults. |
 | `clusterapi_cluster_control_plane_machine_count` | `3` | Number of control plane nodes. |
 | `clusterapi_cluster_control_plane_machine_flavor` | `SCS-2V-4` | OpenStack flavor for control plane nodes. |
 | `clusterapi_cluster_worker_machine_flavor` | `SCS-4V-8` | OpenStack flavor for worker nodes. |
@@ -187,6 +188,7 @@ The `gardener_operator` role deploys the Gardener Operator and configures the en
 | `gardener_operator_gardenlet_feature_gates` | `{}` | Feature gates for all gardenlets (internal seed and managed seeds). |
 | `gardener_operator_seed_block_cidrs` | `[169.254.169.254/32]` | CIDRs blocked in all shoot clusters via NetworkPolicy. |
 | `gardener_operator_proxy_host` / `gardener_operator_proxy_port` | `""` / `3128` | HTTP proxy for the managed seeds; also allowed through a NetworkPolicy. |
+| `gardener_operator_ntp_servers` | `[]` | NTP servers for all shoot nodes. Injected as a `systemd-timesyncd` drop-in into the OperatingSystemConfigs via Kyverno (no package installation, works with the read-only Garden Linux root). Empty keeps the OS defaults, which are public NTP pools. |
 
 ### Dex, Kyverno and Reflector
 

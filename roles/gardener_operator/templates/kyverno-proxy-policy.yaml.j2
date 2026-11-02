@@ -3,6 +3,7 @@
 {%- set _ns.items = _ns.items + ['Object.spec.containers.env{name:"' + key + '",value:"' + value + '"}'] -%}
 {%- endfor -%}
 {%- set _cel_env = '[' + (_ns.items | join(', ')) + ']' -%}
+{% if gardener_operator_proxy_env | d({}) | length > 0 %}
 ---
 apiVersion: policies.kyverno.io/v1
 kind: MutatingPolicy
@@ -42,6 +43,7 @@ spec:
             })
           }
         } : Object{}
+{% endif %}
 ---
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
@@ -187,4 +189,26 @@ spec:
         : []
         ).flatten()
 {% endfor %}
+{% endif %}
+{% if gardener_operator_ntp_servers | d([]) | length > 0 %}
+{% set timesyncd_conf = '[Time]\nNTP=' + (gardener_operator_ntp_servers | join(' ')) + '\nFallbackNTP=\n' %}
+{% set timesyncd_path = '/etc/systemd/timesyncd.conf.d/10-ntp.conf' %}
+  # Points systemd-timesyncd at the internal NTP servers (empty FallbackNTP disables the public pools).
+  # The unit lists the file in filePaths, so the gardener-node-agent restarts it when the file changes.
+{# CEL map literals are typed by their values, so mixed value types need every value wrapped in dyn() #}
+{% set file_cel = '{"path": dyn("' + timesyncd_path + '"), "permissions": dyn(420), "content": dyn({"inline": {"encoding": "", "data": ' + (timesyncd_conf | to_json) + '}})}' %}
+  - patchType: JSONPatch
+    jsonPatch:
+      expression: |
+        !has(object.spec.files) ?
+          [JSONPatch{op: "add", path: "/spec/files", value: [dyn({{ file_cel }})]}]
+        : !object.spec.files.exists(f, f.path == "{{ timesyncd_path }}") ?
+          [JSONPatch{op: "add", path: "/spec/files/-", value: dyn({{ file_cel }})}]
+        : []
+  - patchType: JSONPatch
+    jsonPatch:
+      expression: |
+        !object.spec.units.exists(u, u.name == "systemd-timesyncd.service") ?
+          [JSONPatch{op: "add", path: "/spec/units/-", value: dyn({"name": dyn("systemd-timesyncd.service"), "filePaths": dyn(["{{ timesyncd_path }}"])})}]
+        : []
 {% endif %}

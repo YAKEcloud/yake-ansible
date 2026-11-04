@@ -19,12 +19,5 @@ spec:
   secretRef:
     name: seed-ingress-certificate
     namespace: garden
----
-apiVersion: v1
-kind: Secret
-metadata:
-  labels:
+  secretLabels:
     gardener.cloud/role: controlplane-cert
-  name: seed-ingress-certificate
-  namespace: garden
-type: Opaque

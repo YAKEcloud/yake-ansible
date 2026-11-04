@@ -109,7 +109,6 @@ jobs:
     concurrency:
       group: "yake-ansible-install"
       cancel-in-progress: false
-    environment: ${{ github.event_name == 'issue_comment' && 'ci-external' || 'ci-internal' }}
     env:
       STATUS_SHA: ${{ needs.authorize.outputs.sha }}
     steps:

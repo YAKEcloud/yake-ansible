@@ -125,6 +125,12 @@
     src: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
   when: gardener_operator_proxy_env | d({}) | length > 0
 
+- name: Generate a CA for the cert-service issuer
+  ansible.builtin.include_tasks: generated-ca.yml
+  when:
+    - gardener_operator_shoot_cert_service_issuer_type == 'ca'
+    - gardener_operator_shoot_cert_service_ca_certificate | length == 0
+
 - name: Template garden files and dependencies
   ansible.builtin.template:
     src: "{{ item }}.j2"

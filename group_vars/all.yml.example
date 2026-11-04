@@ -12,7 +12,7 @@ management_cluster_engine: kind
 #   no_proxy: "127.0.0.1,localhost"
 
 # === clusterapi_cluster ===
-clusterapi_cluster_kubernetes_version: "1.35.3"
+clusterapi_cluster_kubernetes_version: "1.37.2"
 
 clusterapi_cluster_openstack_auth_url: "https://keystone.example.com/v3"
 clusterapi_cluster_openstack_application_credential_id: ""
@@ -25,9 +25,9 @@ clusterapi_cluster_openstack_image_id: ""
 clusterapi_cluster_openstack_image_name: ""
 clusterapi_cluster_openstack_cacert: ""
 
-clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4-20s"
+clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4"
 clusterapi_cluster_control_plane_machine_count: 3
-clusterapi_cluster_worker_machine_flavor: "SCS-4V-8-50s"
+clusterapi_cluster_worker_machine_flavor: "SCS-4V-8"
 clusterapi_cluster_worker_machine_deployments:
   - name: md-0
     replicas: 3
@@ -81,6 +81,9 @@ gardener_operator_dex:
   #     redirectURI: https://identity.example.com/callback
 
 # === gardener_operator: certificates ===
+# Use "ca" to sign with a CA instead of ACME. Without a certificate and key, a
+# self-signed CA is generated (see docs/configuration.md).
+# gardener_operator_shoot_cert_service_issuer_type: ca
 gardener_operator_shoot_cert_service_acme_email: "operations@example.com"
 gardener_operator_shoot_cert_service_acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
 
@@ -90,7 +93,6 @@ gardener_operator_cloudprofiles:
     storageclasses:
       - name: default
         default: "true"
-        # Set this to 'default' to use '__DEFAULT__'
         type: default
         availability: nova
     floating_pools:
@@ -103,14 +105,14 @@ gardener_operator_cloudprofiles:
     machine_images:
       - name: gardenlinux
         versions:
-          - version: "2150.0.0"
+          - version: "2150.14.0"
             # classification: supported
-            image: "Garden Linux 2150.0"
+            image: "Garden Linux 2150.14"
             regions:
               - name: "{{ clusterapi_cluster_openstack_region_name }}"
                 id: ""
     kubernetes_versions:
-      - version: 1.35.3
+      - version: 1.37.2
         classification: supported
     machinetypes:
       - name: SCS-4V-8
@@ -159,7 +161,7 @@ gardener_operator_managed_seeds:
   - name: managed-seed-a
     cloudprofile_name: cloudprofile
     networking_type: cilium
-    kubernetes_version: 1.35.3
+    kubernetes_version: 1.37.2
     floating_pool_name: "public"
     openstack:
       auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
@@ -173,7 +175,7 @@ gardener_operator_managed_seeds:
       - name: worker-4v8
         machinetype: SCS-4V-8
         image_name: gardenlinux
-        image_version: 2150.0.0
+        image_version: 2150.14.0
         minimum: 3
         maximum: 15
         # Omit that variable to let Openstack choose the default volume-type
@@ -192,14 +194,3 @@ gardener_operator_managed_seeds:
 # === cleanup ===
 cleanup_openstack_cloud: openstack
 cleanup_clouds_file: /var/lib/yake/clouds.garden.yaml
-
-cleanup_openstack_preserve_security_groups:
-  - default
-
-cleanup_openstack_preserve_networks:
-  - public
-  - wireguard
-
-cleanup_openstack_preserve_dns_record_types:
-  - SOA
-  - NS

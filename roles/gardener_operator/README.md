@@ -72,6 +72,26 @@ The `default-domain` secret for `gardener_operator_garden_url` is also reference
 
 For `openstack-designate`, set `gardener_operator_dns_credentials: {}` to reuse the OpenStack credentials above. For other providers, set the corresponding key/value credentials in `gardener_operator_dns_credentials`.
 
+### Certificates
+
+`gardener_operator_shoot_cert_service_issuer_type` selects how the `garden` issuer signs certificates (Garden components, Dex, seed ingress and, as default issuer, shoots):
+
+- `acme` (default): ACME with DNS-01 against `gardener_operator_shoot_cert_service_acme_server` (Let's Encrypt by default, or your own ACME endpoint).
+- `ca`: certificates are signed locally with a CA, without ACME or DNS challenges (e.g. air-gapped). The same `Certificate` objects with the same names are issued and renewed automatically; clients just have to trust the CA.
+
+With `ca` you can bring your own CA (`gardener_operator_shoot_cert_service_ca_certificate` and `..._ca_key`, an intermediate CA is recommended). If both are empty, the role generates a self-signed root CA once in `gardener_operator_generated_ca_dir` (default `/var/lib/yake/ca`, `gardener_operator_generated_ca_days` default `3650`, `gardener_operator_generated_ca_common_name`) and reuses it on later runs. It is also used as `gardener_operator_garden_dashboard_oidc_ca` if that is empty. `gardener_operator_shoot_cert_service_ca_certificates` and `..._precheck_nameservers` only apply to `acme` and are not rendered for `ca`.
+
+| Variable | Default | Description |
+|----------|---------|-------------|
+| `gardener_operator_shoot_cert_service_issuer_type` | `acme` | `acme` or `ca`. |
+| `gardener_operator_shoot_cert_service_ca_certificate` / `_ca_key` | `""` | PEM CA certificate and key for `ca`. Generated if both are empty. |
+| `gardener_operator_generated_ca_dir` | `/var/lib/yake/ca` | Where the generated CA is stored (`ca.crt`, `ca.key`). **Back this up.** |
+| `gardener_operator_generated_ca_days` | `3650` | Validity of the generated CA. Must exceed the lifetime of the certificates it signs (Gardener requests about 180 days, otherwise issuance fails). Not renewed and not changed for an existing CA: delete the directory to apply a new value. |
+| `gardener_operator_generated_ca_common_name` | `Gardener CA` | Subject CN of the generated CA. |
+
+> [!WARNING]
+> The generated CA key lies unencrypted (mode `0600`) on the Ansible host and, as part of the issuer configuration, in the cluster. Everyone who has it can issue certificates that your clients trust. For production use your own (intermediate) CA instead. Distribute `ca.crt` to all clients (browsers, `kubectl`, seeds, shoots). Replacing the CA means re-issuing all certificates and re-importing it everywhere: delete the directory and run the role again.
+
 ### Cloud Profiles
 
 `gardener_operator_cloudprofiles` is a list of cloud profile definitions. Each entry creates a `CloudProfile` resource in the virtual garden.

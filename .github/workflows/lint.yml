@@ -1,0 +1,63 @@
+---
+name: Lint
+
+"on":
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: lint-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Set up python
+        uses: actions/setup-python@v7
+        with:
+          python-version: '3.14'
+
+      - name: Install linters and collections
+        run: |
+          pip install -r requirements-lint.txt
+          ansible-galaxy collection install -r requirements.yml
+
+      - name: yamllint
+        if: ${{ !cancelled() }}
+        run: yamllint .
+
+      - name: flake8
+        if: ${{ !cancelled() }}
+        run: flake8 .
+
+      - name: black
+        if: ${{ !cancelled() }}
+        run: black --check .
+
+      - name: ansible-lint
+        if: ${{ !cancelled() }}
+        run: ansible-lint
+
+      - name: hadolint
+        if: ${{ !cancelled() }}
+        run: |
+          mapfile -t files < <(git ls-files | grep -E '(^|/)Dockerfile$')
+          hadolint "${files[@]}"
+
+      - name: shellcheck
+        if: ${{ !cancelled() }}
+        run: |
+          mapfile -t files < <(git ls-files | while read -r f; do
+            if [ -f "$f" ] && head -n1 "$f" | grep -qE '^#!.*(ba)?sh'; then echo "$f"; fi
+          done)
+          shellcheck --severity=warning "${files[@]}"

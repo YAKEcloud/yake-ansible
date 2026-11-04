@@ -266,7 +266,7 @@ OS types to deploy are controlled by `gardener_operator_os_types` (default: `[ga
 
 ### Certificate Issuance
 
-The shoot certificate service supports ACME (Let's Encrypt) and a custom CA.
+The shoot certificate service supports ACME (Let's Encrypt or your own ACME endpoint) and a CA. With a CA, no ACME endpoint or DNS challenge is needed (for example in air-gapped setups).
 
 ```yaml
 # ACME (default)
@@ -283,9 +283,14 @@ gardener_operator_shoot_cert_service_ca_certificate: |
 gardener_operator_shoot_cert_service_ca_key: |
   -----BEGIN RSA PRIVATE KEY-----
   ...
+
+# Generated CA: issuer_type ca without certificate and key
+gardener_operator_shoot_cert_service_issuer_type: ca
 ```
 
-The nameservers used for the DNS precheck of the ACME challenge are set with `gardener_operator_shoot_cert_service_precheck_nameservers` (default: `1.1.1.1,1.0.0.1`).
+If `issuer_type` is `ca` and neither certificate nor key is set, the role generates a self-signed root CA once in `gardener_operator_generated_ca_dir` (default `/var/lib/yake/ca`) and reuses it. Its subject and validity are set with `gardener_operator_generated_ca_common_name` (default `Gardener CA`) and `gardener_operator_generated_ca_days` (default `3650`). The validity must exceed the lifetime of the certificates it signs (Gardener requests about 180 days) and is not changed for an existing CA: delete the directory to apply a new value. Import `ca.crt` into your clients. The CA key is stored unencrypted on the Ansible host and in the cluster, so use your own (intermediate) CA for production. See the [role README](../roles/gardener_operator/README.md#certificates) for details.
+
+The nameservers used for the DNS precheck of the ACME challenge are set with `gardener_operator_shoot_cert_service_precheck_nameservers` (default: `1.1.1.1,1.0.0.1`). They and `gardener_operator_shoot_cert_service_ca_certificates` only apply to ACME.
 
 ### Monitoring
 

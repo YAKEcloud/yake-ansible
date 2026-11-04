@@ -129,6 +129,11 @@ gardener_operator_provider_gcp_version: '1.58.1'
 # renovate: datasource=github-releases depName=gardener/gardener-extension-shoot-cert-service
 gardener_operator_shoot_cert_service_version: '1.66.0'
 gardener_operator_shoot_cert_service_issuer_type: acme  # acme or ca
+# With issuer_type ca and no certificate/key set, a self-signed root CA is generated
+# once in this directory (back it up, see README)
+gardener_operator_generated_ca_dir: /var/lib/yake/ca
+gardener_operator_generated_ca_common_name: Gardener CA
+gardener_operator_generated_ca_days: 3650
 gardener_operator_shoot_cert_service_ca_certificate: ""
 gardener_operator_shoot_cert_service_ca_key: ""
 gardener_operator_shoot_cert_service_acme_email: ""

@@ -1,0 +1,55 @@
+---
+# Self-signed root CA for the "garden" cert-service issuer (issuer_type "ca"), so no
+# ACME endpoint or DNS-01 is needed (e.g. air-gapped). Created once, reused on re-runs.
+- name: Create generated CA directory
+  ansible.builtin.file:
+    path: "{{ gardener_operator_generated_ca_dir }}"
+    mode: "0700"
+    state: directory
+
+- name: Create generated CA key
+  community.crypto.openssl_privatekey:
+    path: "{{ gardener_operator_generated_ca_dir }}/ca.key"
+    type: ECC
+    curve: secp256r1
+    mode: "0600"
+
+- name: Create generated CA CSR
+  community.crypto.openssl_csr_pipe:
+    privatekey_path: "{{ gardener_operator_generated_ca_dir }}/ca.key"
+    common_name: "{{ gardener_operator_generated_ca_common_name }}"
+    basic_constraints: ["CA:TRUE"]
+    basic_constraints_critical: true
+    key_usage: [keyCertSign, cRLSign]
+    key_usage_critical: true
+  register: gardener_operator_generated_ca_csr
+
+- name: Create generated CA certificate
+  community.crypto.x509_certificate:
+    path: "{{ gardener_operator_generated_ca_dir }}/ca.crt"
+    csr_content: "{{ gardener_operator_generated_ca_csr.csr }}"
+    privatekey_path: "{{ gardener_operator_generated_ca_dir }}/ca.key"
+    provider: selfsigned
+    selfsigned_not_after: "+{{ gardener_operator_generated_ca_days }}d"
+    ignore_timestamps: true
+    mode: "0644"
+
+- name: Read generated CA certificate
+  ansible.builtin.slurp:
+    src: "{{ gardener_operator_generated_ca_dir }}/ca.crt"
+  register: gardener_operator_generated_ca_crt
+
+- name: Read generated CA key
+  ansible.builtin.slurp:
+    src: "{{ gardener_operator_generated_ca_dir }}/ca.key"
+  register: gardener_operator_generated_ca_key
+  no_log: true
+
+- name: Use the generated CA for the issuer and the OIDC trust
+  ansible.builtin.set_fact:
+    gardener_operator_shoot_cert_service_ca_certificate: "{{ gardener_operator_generated_ca_crt.content | b64decode }}"
+    gardener_operator_shoot_cert_service_ca_key: "{{ gardener_operator_generated_ca_key.content | b64decode }}"
+    gardener_operator_garden_dashboard_oidc_ca: >-
+      {{ gardener_operator_garden_dashboard_oidc_ca
+         | d('') | default(gardener_operator_generated_ca_crt.content | b64decode, true) }}
+  no_log: true

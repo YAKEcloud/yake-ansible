@@ -4,11 +4,14 @@ name: Yake-Ansible install
 permissions:
   contents: read
 
-# pull_request_target: the workflow file always comes from the base branch and
-# has access to secrets. The PR head is only checked out in the job that is
-# gated by an environment (manual approval for fork PRs, see below).
+# Same-repo PRs (e.g. Renovate) and workflow_dispatch run the install test
+# directly. Fork PRs never get secrets: a repo admin approves them by commenting
+# "/ok-to-test" (or "/retest") on the PR. The issue_comment workflow always comes
+# from the default branch. The head SHA is pinned when the comment is processed,
+# later pushes are not tested. Optional: "/ok-to-test <sha>" aborts if the head
+# differs from <sha>.
 "on":
-  pull_request_target:
+  pull_request:
     types: [opened, reopened, synchronize]
     paths:
       - 'group_vars/**'
@@ -18,55 +21,114 @@ permissions:
       - 'Giltfile.yaml'
       - 'requirements.txt'
       - 'requirements.yml'
+  issue_comment:
+    types: [created]
   workflow_dispatch:
 
-concurrency:
-  group: "yake-ansible-install"
-  cancel-in-progress: false
-
 jobs:
-  check-relevance:
-    if: github.event_name == 'pull_request_target'
+  authorize:
+    if: >-
+      github.event_name != 'issue_comment' ||
+      (github.event.issue.pull_request &&
+       (startsWith(github.event.comment.body, '/ok-to-test') ||
+        startsWith(github.event.comment.body, '/retest')))
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
     outputs:
-      relevant: ${{ steps.check.outputs.relevant }}
+      run: ${{ steps.gate.outputs.run || steps.rel.outputs.run }}
+      sha: ${{ steps.gate.outputs.sha }}
     steps:
+      - name: Authorize ChatOps command
+        id: gate
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            core.setOutput('run', 'false');
+            const comment = context.payload.comment;
+            const first = comment.body.split(/\r?\n/)[0].trim();
+            const m = /^\/(?:ok-to-test|retest)(?:[ \t]+([0-9a-f]{7,40}))?$/i.exec(first);
+            if (!m) return core.notice('Not a valid command.');
+            const { owner, repo } = context.repo;
+            const { data: perm } = await github.rest.repos.getCollaboratorPermissionLevel({
+              owner, repo, username: comment.user.login,
+            });
+            if (perm.permission !== 'admin') {
+              return core.notice(`${comment.user.login} is not a repo admin, ignoring.`);
+            }
+            const { data: pr } = await github.rest.pulls.get({
+              owner, repo, pull_number: context.issue.number,
+            });
+            if (pr.state !== 'open') return core.notice('PR is not open.');
+            if (m[1] && !pr.head.sha.startsWith(m[1].toLowerCase())) {
+              return core.setFailed(`Head is ${pr.head.sha}, not ${m[1]}. Review again.`);
+            }
+            core.setOutput('sha', pr.head.sha);
+            core.setOutput('run', 'true');
+            await core.summary.addRaw(`Testing PR head \`${pr.head.sha}\``).write();
+
       - name: Checkout repository
+        if: >-
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
         uses: actions/checkout@v7
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      # By SHA, as refs/pull/<n>/head can lag behind the pushed head.
-      - name: Fetch PR head (script and checkout stay on the base branch)
+      - name: Decide whether to run
+        id: rel
+        if: github.event_name != 'issue_comment'
         env:
+          EVENT: ${{ github.event_name }}
+          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
+          REPO: ${{ github.repository }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
           HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: git fetch --no-tags origin "${HEAD_SHA}"
-
-      - name: Check whether this PR touches anything CI-relevant
-        id: check
         run: |
-          .github/scripts/check-relevant-changes.sh \
-            "${{ github.event.pull_request.base.sha }}" \
-            "${{ github.event.pull_request.head.sha }}" \
-            >> "$GITHUB_OUTPUT"
+          if [ "${EVENT}" = "workflow_dispatch" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif [ "${HEAD_REPO}" != "${REPO}" ]; then
+            echo "::notice::Fork PR: no secrets. A repo admin must comment /ok-to-test to run the install test."
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          else
+            out=$(.github/scripts/check-relevant-changes.sh "${BASE_SHA}" "${HEAD_SHA}")
+            echo "run=${out#relevant=}" >> "$GITHUB_OUTPUT"
+          fi
 
   yake-ansible-install:
-    needs: [check-relevance]
-    if: needs.check-relevance.outputs.relevant != 'false'
+    needs: [authorize]
+    if: needs.authorize.outputs.run == 'true'
     runs-on: ubuntu-latest
     timeout-minutes: 150
-    # Fork PRs need approval by a required reviewer before this job gets the
-    # secrets. Review the whole diff first and approve again after every push.
-    environment: ${{ github.event.pull_request.head.repo.full_name == github.repository && 'ci-internal' || 'ci-external' }}
+    permissions:
+      contents: read
+      statuses: write
+    concurrency:
+      group: "yake-ansible-install"
+      cancel-in-progress: false
+    environment: ${{ github.event_name == 'issue_comment' && 'ci-external' || 'ci-internal' }}
+    env:
+      STATUS_SHA: ${{ needs.authorize.outputs.sha }}
     steps:
+      - name: Report pending status
+        if: github.event_name == 'issue_comment'
+        uses: actions/github-script@v9
+        with:
+          script: |
+            await github.rest.repos.createCommitStatus({
+              ...context.repo, sha: process.env.STATUS_SHA, state: 'pending',
+              context: 'yake-ansible-install', description: 'Install test running',
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });
+
       - name: Checkout repository
         uses: actions/checkout@v7
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ needs.authorize.outputs.sha }}
           persist-credentials: false
-          # Intended: fork code runs here only after the environment approval.
-          allow-unsafe-pr-checkout: true
 
       - name: Set up Python
         uses: actions/setup-python@v7
@@ -128,3 +190,17 @@ jobs:
           timeout_minutes: 30
           max_attempts: 3
           command: ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt
+
+      - name: Report final status
+        if: always() && github.event_name == 'issue_comment'
+        uses: actions/github-script@v9
+        env:
+          JOB_STATUS: ${{ job.status }}
+        with:
+          script: |
+            const state = { success: 'success', cancelled: 'error' }[process.env.JOB_STATUS] || 'failure';
+            await github.rest.repos.createCommitStatus({
+              ...context.repo, sha: process.env.STATUS_SHA, state,
+              context: 'yake-ansible-install', description: `Install test: ${state}`,
+              target_url: `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`,
+            });

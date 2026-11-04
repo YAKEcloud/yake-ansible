@@ -1,3 +1,0 @@
----
-clusterapi_cluster_charts_dir: ../../charts
-clusterapi_cluster_become: true

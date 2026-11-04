@@ -85,13 +85,20 @@ spec:
 {% endfor %}
 {% endif %}
 {% if ntp %}
-        - path: /etc/systemd/timesyncd.conf.d/10-ntp.conf
+        - path: /etc/chrony/chrony.conf
           owner: root:root
           permissions: "0644"
           content: |
-            [Time]
-            NTP={{ clusterapi_cluster_ntp_servers | join(' ') }}
-            FallbackNTP=
+            keyfile /etc/chrony/chrony.keys
+            driftfile /var/lib/chrony/chrony.drift
+            ntsdumpdir /var/lib/chrony
+            logdir /var/log/chrony
+            maxupdateskew 100.0
+            rtcsync
+            makestep 1 3
+{% for entry in clusterapi_cluster_ntp_servers | d([]) %}
+            server {{ entry }}
+{% endfor %}
 {% endif %}
 {% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 or ntp %}
       preKubeadmCommands:
@@ -103,7 +110,7 @@ spec:
         - systemctl restart containerd
 {% endif %}
 {% if ntp %}
-        - systemctl restart systemd-timesyncd
+        - systemctl restart chrony.service
 {% endif %}
 {% endif %}
       joinConfiguration:
@@ -294,13 +301,20 @@ spec:
 {% endfor %}
 {% endif %}
 {% if ntp %}
-      - path: /etc/systemd/timesyncd.conf.d/10-ntp.conf
+      - path: /etc/chrony/chrony.conf
         owner: root:root
         permissions: "0644"
         content: |
-          [Time]
-          NTP={{ clusterapi_cluster_ntp_servers | join(' ') }}
-          FallbackNTP=
+          keyfile /etc/chrony/chrony.keys
+          driftfile /var/lib/chrony/chrony.drift
+          ntsdumpdir /var/lib/chrony
+          logdir /var/log/chrony
+          maxupdateskew 100.0
+          rtcsync
+          makestep 1 3
+{% for entry in clusterapi_cluster_ntp_servers | d([]) %}
+          server {{ entry }}
+{% endfor %}
 {% endif %}
 {% if clusterapi_cluster_hosts_entries | d([]) | length > 0 or clusterapi_cluster_proxy_env | d({}) | length > 0 or ntp %}
     preKubeadmCommands:
@@ -312,7 +326,7 @@ spec:
       - systemctl restart containerd
 {% endif %}
 {% if ntp %}
-      - systemctl restart systemd-timesyncd
+      - systemctl restart chrony.service
 {% endif %}
 {% endif %}
     clusterConfiguration:

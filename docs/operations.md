@@ -11,7 +11,7 @@ The vault password itself is never committed. It lives in:
 - **Locally**: `.vault-pass.txt` in the repo root (gitignored).
 - **In CI**: the `ANSIBLE_VAULT_PASSWORD` GitHub Actions secret. The workflow writes it to a temporary `.vault-pass.txt` at the start of the run and passes `--vault-password-file` to `ansible-playbook`.
 
-It is deliberately **not** wired up via `ansible.cfg`'s `vault_password_file` setting, since that would apply to every `ansible-playbook`/`ansible-lint` invocation in the repo — including unrelated syntax checks in CI systems (e.g. Zuul/ansible-lint) that don't have the password file and don't need it, causing those to fail hard.
+It is deliberately **not** wired up via `ansible.cfg`'s `vault_password_file` setting, since that would apply to every `ansible-playbook`/`ansible-lint` invocation in the repo — including unrelated syntax checks in CI systems (e.g. ansible-lint) that don't have the password file and don't need it, causing those to fail hard.
 
 To view or edit the CI variables:
 

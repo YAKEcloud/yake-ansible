@@ -42,7 +42,7 @@
     group: "{{ gardener_operator_gid }}"
     mode: "0644"
 
-- name: Create the certificate and secret
+- name: Create the certificate
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     state: present

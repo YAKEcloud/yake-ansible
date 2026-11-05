@@ -1,30 +1,69 @@
 ---
 name: Update Kubernetes version cap
 
-permissions:
-  contents: write
+permissions: {}
 
 "on":
   schedule:
     - cron: "0 6 * * 1"
   workflow_dispatch:
 
+concurrency:
+  group: update-k8s-version-cap
+  cancel-in-progress: false
+
 jobs:
   update-cap:
+    if: github.repository == 'YAKEcloud/yake-ansible'
     runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      operation: ${{ steps.pr.outputs.pull-request-operation }}
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Update cap from provider-openstack's supported versions
         id: update
         run: .github/scripts/update-k8s-version-cap.sh >> "$GITHUB_OUTPUT"
 
-      - name: Commit and push
-        if: steps.update.outputs.changed == 'true'
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add renovate.json
-          git commit -m "Update Kubernetes version cap to ${{ steps.update.outputs.allowed }}"
-          git push
+      # main is protected, so the change goes through a PR. Without a diff
+      # (cap already current) the action closes the PR and deletes the branch.
+      - name: Create or update pull request
+        id: pr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1  # v8.1.1
+        with:
+          commit-message: "Update Kubernetes version cap to ${{ steps.update.outputs.allowed }}"
+          committer: "YAKE Bot <bot@yake.cloud>"
+          author: "YAKE Bot <bot@yake.cloud>"
+          signoff: true
+          branch: update-k8s-version-cap
+          delete-branch: true
+          title: "Update Kubernetes version cap to ${{ steps.update.outputs.allowed }}"
+          body: |
+            Set the Renovate cap for the cluster Kubernetes version to
+            `${{ steps.update.outputs.allowed }}`, following the versions
+            gardener-extension-provider-openstack supports.
+          add-paths: renovate.json
+
+  # PRs created with GITHUB_TOKEN do not trigger pull_request workflows, but
+  # workflow_dispatch does. The runs attach to the PR head commit and so
+  # satisfy the required checks.
+  run-checks:
+    needs: update-cap
+    if: contains(fromJSON('["created", "updated"]'), needs.update-cap.outputs.operation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch checks on the PR branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run lint.yml --ref update-k8s-version-cap

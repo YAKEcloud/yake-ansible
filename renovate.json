@@ -1,38 +1,43 @@
 {
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
-  "extends": ["config:recommended"],
-  "dependencyDashboard": true,
+  "extends": ["config:recommended", "helpers:pinGitHubActionDigests"],
   "rebaseWhen": "behind-base-branch",
-  "schedule": ["at any time"],
   "labels": ["renovate"],
   "automerge": true,
   "automergeType": "pr",
   "platformAutomerge": true,
+  "minimumReleaseAge": "3 days",
   "separateMinorPatch": true,
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
   "packageRules": [
+    {
+      "description": "Major updates need a human review.",
+      "matchUpdateTypes": ["major"],
+      "automerge": false
+    },
+    {
+      "description": "Our own images are built from upstream releases that already passed minimumReleaseAge.",
+      "matchPackageNames": ["ghcr.io/yakecloud/**"],
+      "minimumReleaseAge": null
+    },
     {
       "groupName": "kind and kindest/node",
       "description": "kind CLI and kindest/node must stay on compatible kubeadm config versions; bump together.",
       "matchDepNames": ["kubernetes-sigs/kind", "kindest/node"]
     },
     {
+      "description": "Cluster Kubernetes versions only, capped by .github/workflows/update-k8s-version-cap.yml. Tools (kubectl) are not capped.",
       "matchDepNames": ["kubernetes/kubernetes"],
-      "allowedVersions": "<1.37.0"
+      "matchFileNames": ["roles/**", "group_vars/**"],
+      "allowedVersions": "<1.38.0"
     }
   ],
   "customManagers": [
     {
       "customType": "regex",
       "managerFilePatterns": [
-        "/^roles\\/clusterctl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/gardenctl_install\\/defaults\\/main.yml$/",
-        "/^roles\\/helm_install\\/defaults\\/main.yml$/",
-        "/^roles\\/kubectl_install\\/defaults\\/main.yml$/",
-        "/^group_vars\\/all\\.yml\\.example/",
-        "/^roles\\/clusterapi_cluster\\/defaults\\/main.yml$/",
-        "/^roles\\/gardener_operator\\/defaults\\/main.yml$/",
-        "/^roles\\/management_cluster\\/defaults\\/main.yml$/"
+        "/^roles\\/[^/]+\\/defaults\\/main\\.yml$/",
+        "/^group_vars\\/all\\.yml\\.example$/"
       ],
       "matchStrings": [
         "# renovate: datasource=(?<datasource>.*?)( registryUrl=(?<registryUrl>.*?))? depName=(?<depName>.*?)( extractVersion=(?<extractVersion>.*?))?\\n.*?(_tag|_version): '(?<currentValue>.*?)'"
@@ -54,15 +59,9 @@
     },
     {
       "customType": "regex",
-      "managerFilePatterns": [
-        "/^images\\/clusterctl\\/Containerfile$/",
-        "/^images\\/gardenctl\\/Containerfile$/",
-        "/^images\\/helm\\/Containerfile$/",
-        "/^images\\/kind\\/Containerfile$/",
-        "/^images\\/kubectl\\/Containerfile$/"
-      ],
+      "managerFilePatterns": ["/^images\\/[^/]+\\/Containerfile$/"],
       "matchStrings": [
-        "ARG \\w*VERSION=(?<currentValue>.*?)  # renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\n"
+        "# renovate: datasource=(?<datasource>.*?) depName=(?<depName>.*?)\nARG \\w*VERSION=(?<currentValue>.*?)\n"
       ]
     }
   ]

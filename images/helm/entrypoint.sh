@@ -6,8 +6,4 @@ if [ -n "${USER_ID}" ] && [ -n "${GROUP_ID}" ]; then
     chown -R ${USER_ID}:${GROUP_ID} /home/${USER_NAME}
 fi
 
-if [ -n "${DOCKER_GROUP_ID}" ]; then
-    groupmod -g ${DOCKER_GROUP_ID} ${DOCKER_GROUP_NAME} 2>/dev/null
-fi
-
 exec /usr/bin/dumb-init -- su - "$USER_NAME" -c "$*"

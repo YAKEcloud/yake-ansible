@@ -2,8 +2,10 @@ ARG ALPINE_VERSION=3.24@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c9100339
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v0.33.0  # renovate: datasource=github-releases depName=kubernetes-sigs/kind
+# renovate: datasource=github-releases depName=kubernetes-sigs/kind
+ARG VERSION=v0.33.0
 ADD --chmod=0755 https://kind.sigs.k8s.io/dl/${VERSION}/kind-linux-amd64 /usr/bin/kind
+ADD https://kind.sigs.k8s.io/dl/${VERSION}/kind-linux-amd64.sha256sum /tmp/kind.sha256sum
 
 ENV USER_NAME=kind
 ENV USER_ID=1000
@@ -12,7 +14,9 @@ ENV GROUP_ID=1000
 ENV DOCKER_GROUP_NAME=docker
 ENV DOCKER_GROUP_ID=988
 
-RUN apk update --no-cache \
+RUN echo "$(cut -d ' ' -f 1 /tmp/kind.sha256sum)  /usr/bin/kind" > /tmp/sha256sums \
+    && sha256sum -c /tmp/sha256sums \
+    && rm /tmp/kind.sha256sum /tmp/sha256sums \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
       docker-cli \

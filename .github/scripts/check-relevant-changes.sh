@@ -27,7 +27,9 @@ declare -A IGNORE_PATTERNS=(
   ["roles/gardener_operator/defaults/main.yml"]='^gardener_operator_(kubernetes_version|kyverno_version|provider_aws_version|provider_azure_version|provider_gcp_version|networking_calico_version|os_ubuntu_version|extension_registry_cache_version|shoot_oidc_service_version|backup_s3_version):'
 )
 
-changed_files=$(git diff --name-only "${BASE_SHA}" "${HEAD_SHA}")
+# Three-dot diff: only what the PR changed since its merge base, not what
+# landed on the base branch in the meantime.
+changed_files=$(git diff --name-only "${BASE_SHA}...${HEAD_SHA}")
 
 if [ -z "${changed_files}" ]; then
   echo "relevant=false"
@@ -44,8 +46,10 @@ done
 # Every changed file has an ignore pattern - relevant unless every changed
 # line in every one of those files matches its own pattern.
 for f in ${changed_files}; do
-  changed_lines=$(git diff --unified=0 "${BASE_SHA}" "${HEAD_SHA}" -- "${f}" \
-    | grep -E '^[+-][^+-]' \
+  # Skip the ---/+++ file headers (everything before the first hunk), keep
+  # every added/removed line, including ones whose content starts with - or +.
+  changed_lines=$(git diff --unified=0 "${BASE_SHA}...${HEAD_SHA}" -- "${f}" \
+    | awk '/^@@/ { hunk = 1; next } hunk && /^[+-]/' \
     | sed -E 's/^[+-]//' \
     | sed -E 's/^[[:space:]]+//;s/[[:space:]]+$//' \
     | grep -v '^$' \

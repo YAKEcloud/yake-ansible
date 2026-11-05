@@ -1,8 +1,7 @@
 ---
 name: Yake-Ansible install
 
-permissions:
-  contents: read
+permissions: {}
 
 # Same-repo PRs (e.g. Renovate) and workflow_dispatch run the install test
 # directly. Fork PRs never get secrets: a repo admin approves them by commenting
@@ -33,6 +32,7 @@ jobs:
        (startsWith(github.event.comment.body, '/ok-to-test') ||
         startsWith(github.event.comment.body, '/retest')))
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     permissions:
       contents: read
       pull-requests: read
@@ -43,7 +43,7 @@ jobs:
       - name: Authorize ChatOps command
         id: gate
         if: github.event_name == 'issue_comment'
-        uses: actions/github-script@v9
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
             core.setOutput('run', 'false');
@@ -73,7 +73,7 @@ jobs:
         if: >-
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name == github.repository
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           fetch-depth: 0
           persist-credentials: false
@@ -102,10 +102,15 @@ jobs:
     needs: [authorize]
     if: needs.authorize.outputs.run == 'true'
     runs-on: ubuntu-latest
-    timeout-minutes: 150
+    # At least the sum of the step timeouts below, so the cleanup always gets
+    # its full budget before the job itself times out.
+    timeout-minutes: 210
     permissions:
       contents: read
       statuses: write
+    # One install test at a time (shared OpenStack project). GitHub keeps at
+    # most one pending run per group: a newer run replaces a pending one, the
+    # replaced run is cancelled and has to be triggered again if still needed.
     concurrency:
       group: "yake-ansible-install"
       cancel-in-progress: false
@@ -114,7 +119,8 @@ jobs:
     steps:
       - name: Report pending status
         if: github.event_name == 'issue_comment'
-        uses: actions/github-script@v9
+        timeout-minutes: 2
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         with:
           script: |
             await github.rest.repos.createCommitStatus({
@@ -124,54 +130,60 @@ jobs:
             });
 
       - name: Checkout repository
-        uses: actions/checkout@v7
+        timeout-minutes: 5
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
           ref: ${{ needs.authorize.outputs.sha }}
           persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v7
+        timeout-minutes: 5
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: '3.14'
 
-      - name: Install dependencies
-        run: sudo apt-get update && sudo apt-get install -y ssh git curl ca-certificates
-
       - name: Install requirements
+        timeout-minutes: 15
         run: pip install -r requirements.txt && ansible-galaxy install -f -r requirements.yml
 
       - name: Write Ansible Vault password
+        timeout-minutes: 1
         env:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: printf '%s' "$ANSIBLE_VAULT_PASSWORD" > .vault-pass.txt && chmod 600 .vault-pass.txt
 
       - name: Run ansible-playbook site.yml
-        uses: nick-fields/retry@v4
-        with:
-          timeout_minutes: 45
-          max_attempts: 3
-          command: ansible-playbook -i localhost, -c local site.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt
-        env:
-          ANSIBLE_HOST_KEY_CHECKING: "False"
+        timeout-minutes: 92
+        run: |
+          for attempt in 1 2; do
+            timeout --kill-after=1m 45m \
+              ansible-playbook -i localhost, -c local site.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt \
+              && exit 0
+            echo "::warning::site.yml attempt ${attempt} failed"
+          done
+          exit 1
 
       - name: Wait for Garden readiness
-        uses: nick-fields/retry@v4
-        with:
-          timeout_minutes: 20
-          max_attempts: 3
-          retry_wait_seconds: 30
-          command: |
-            ./.local/yake-kubectl \
+        timeout-minutes: 32
+        run: |
+          for attempt in 1 2 3; do
+            timeout 10m ./.local/yake-kubectl \
               --kubeconfig /var/lib/yake/kubeconfig.garden \
               wait garden gardener \
               --for=condition=VirtualGardenAPIServerAvailable=True \
               --for=condition=RuntimeComponentsHealthy=True \
               --for=condition=VirtualComponentsHealthy=True \
               --for=condition=ObservabilityComponentsHealthy=True \
-              --timeout=-1s
+              --timeout=-1s \
+              && exit 0
+            echo "::warning::Garden not ready (attempt ${attempt})"
+            sleep 30
+          done
+          exit 1
 
       - name: Dump Gardener status on failure
         if: failure()
+        timeout-minutes: 5
         run: |
           echo "::group::Garden status"
           ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden get garden -o wide || true
@@ -184,15 +196,20 @@ jobs:
 
       - name: Run cleanup
         if: always()
-        uses: nick-fields/retry@v4
-        with:
-          timeout_minutes: 30
-          max_attempts: 3
-          command: ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt
+        timeout-minutes: 47
+        run: |
+          for attempt in 1 2 3; do
+            timeout --kill-after=1m 14m \
+              ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt \
+              && exit 0
+            echo "::warning::cleanup.yml attempt ${attempt} failed"
+          done
+          exit 1
 
       - name: Report final status
         if: always() && github.event_name == 'issue_comment'
-        uses: actions/github-script@v9
+        timeout-minutes: 2
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3  # v9.0.0
         env:
           JOB_STATUS: ${{ job.status }}
         with:

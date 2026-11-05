@@ -1,5 +1,5 @@
 ansible-core==2.22.0
-ansible-lint==26.10.1
+ansible-lint==26.11.0
 black==26.10.1
 flake8==7.5.0
 hadolint-py==2.15.1.3

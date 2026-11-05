@@ -222,7 +222,7 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 ./.local/yake-kubectl delete cluster garden
 ./.local/yake-kubectl wait --for=delete cluster/garden --timeout=30m
 ./.local/yake-kind delete cluster --name clusterapi
-docker rm -f $(docker ps -qa)
+docker rm -f kind helm kubectl clusterctl
 sudo rm -rf /var/lib/yake/
 ```
 
@@ -244,11 +244,16 @@ the controller mid-reconciliation and leaves those OpenStack resources behind.
 ### OpenStack Resource Cleanup
 
 The `cleanup.yml` playbook removes OpenStack resources left behind after a teardown: servers,
-volumes, floating IPs, load balancers, routers, networks, subnets, security groups, DNS record
-sets, and SSH key pairs. It only ever touches resources it can positively identify as belonging
-to this run's `clusterapi_cluster_name` and `gardener_operator_managed_seeds`, matched by name
-(see `scripts/README.md` for details) — safe to run against a project that also holds unrelated
-infrastructure.
+volumes (including PVC volumes), floating IPs, load balancers (API server and Service LBs),
+routers, ports, networks, subnets, security groups, server groups, SSH key pairs and the DNS
+record sets of the garden URL zone (except SOA/NS). It only touches resources it can positively
+identify as belonging to this run's `clusterapi_cluster_name` and `gardener_operator_managed_seeds`
+(exact CAPO/Gardener names, ownership and attachment, inside the current project; see
+`scripts/README.md` for the rules). The DNS zone is the exception: all its record sets are
+removed, so it must be dedicated to this deployment.
+
+The playbook requires two variables: `cleanup_openstack_cloud` (cloud name in the clouds file)
+and `cleanup_clouds_file` (path to that clouds.yaml, e.g. `/var/lib/yake/clouds.garden.yaml`).
 
 ```bash
 ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/all.yml"
@@ -259,7 +264,7 @@ something behind (e.g. a stuck finalizer): rather than tracking down every orpha
 hand, re-running `cleanup.yml` reclaims it.
 
 The OpenStack part can also be run standalone, outside Ansible: `scripts/cleanup-openstack.py`
-(pass `--dry-run` to preview first).
+(pass `--dry-run` to preview first). It exits non-zero if any resource could not be deleted.
 
 **Full local reset** — for a manual test run where you also want the local docker containers,
 images, and `/var/lib/yake/` gone afterwards (not something CI needs, since its runner is

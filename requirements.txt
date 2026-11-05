@@ -5,8 +5,4 @@ kubernetes==37.0.2
 openstacksdk==4.22.0
 python-gilt==2.2.5
 requests==2.34.2
-tqdm
 yq==4.4.5
-python-openstackclient
-python-octaviaclient
-python-designateclient

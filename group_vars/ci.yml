@@ -79,11 +79,10 @@ gardener_operator_dex:
       username: "admin"
 
 # === gardener_operator: certificates ===
-# CI signs with its own CA instead of ACME (no external dependency). The CA has to
-# outlive the certificates it signs (Gardener requests ~180 days).
-gardener_operator_shoot_cert_service_issuer_type: ca
-gardener_operator_generated_ca_common_name: yake-ci-ca
-gardener_operator_generated_ca_days: 365
+# CI uses ACME (DNS-01 via Designate) against the Let's Encrypt staging endpoint, like most real
+# installations. The staging CA is not trusted by clients, which is fine for the test.
+gardener_operator_shoot_cert_service_acme_email: "ci@not-existent.com"
+gardener_operator_shoot_cert_service_acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
 
 # === gardener_operator: cloud profiles ===
 gardener_operator_cloudprofiles: []

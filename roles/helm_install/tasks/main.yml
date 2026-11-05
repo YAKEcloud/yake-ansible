@@ -35,28 +35,40 @@
     group: root
   when: helm_install_method == "docker"
 
+- name: Create helm download directory
+  ansible.builtin.file:
+    path: "{{ playbook_dir }}/.local/helm-{{ helm_install_version }}"
+    mode: "0755"
+    state: directory
+  when: helm_install_method == "binary"
+
+# The archive and the extracted binary are kept per version, so that a version bump
+# takes effect and nothing is downloaded or changed on later runs.
 - name: Download helm archive
+  ansible.builtin.get_url:
+    url: "https://get.helm.sh/helm-{{ helm_install_version }}-linux-amd64.tar.gz"
+    checksum: "sha256:https://get.helm.sh/helm-{{ helm_install_version }}-linux-amd64.tar.gz.sha256sum"
+    dest: "{{ playbook_dir }}/.local/helm-{{ helm_install_version }}/helm.tar.gz"
+    mode: "0644"
+  environment: "{{ helm_install_proxy_env }}"
+  when: helm_install_method == "binary"
+
+- name: Extract helm binary
   ansible.builtin.unarchive:
-    src: "https://get.helm.sh/helm-{{ helm_install_version }}-linux-amd64.tar.gz"
-    dest: "{{ playbook_dir }}/.local/"
+    src: "{{ playbook_dir }}/.local/helm-{{ helm_install_version }}/helm.tar.gz"
+    dest: "{{ playbook_dir }}/.local/helm-{{ helm_install_version }}"
     remote_src: true
+    creates: "{{ playbook_dir }}/.local/helm-{{ helm_install_version }}/helm"
     extra_opts:
       - "--strip-components=1"
       - "--wildcards"
       - "*/helm"
-  environment: "{{ helm_install_proxy_env }}"
   when: helm_install_method == "binary"
 
-- name: Rename helm binary
+- name: Install helm binary
   ansible.builtin.copy:
-    src: "{{ playbook_dir }}/.local/helm"
+    src: "{{ playbook_dir }}/.local/helm-{{ helm_install_version }}/helm"
     dest: "{{ playbook_dir }}/.local/yake-helm"
     mode: "0755"
     remote_src: true
-  when: helm_install_method == "binary"
-
-- name: Remove extracted helm
-  ansible.builtin.file:
-    path: "{{ playbook_dir }}/.local/helm"
-    state: absent
   when: helm_install_method == "binary"

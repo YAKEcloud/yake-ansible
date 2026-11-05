@@ -2,12 +2,9 @@
 - name: Cleanup the deployment
   hosts: all
 
-  vars_files:
-    - roles/clusterapi_cluster/defaults/main.yml
-
   tasks:
     - name: Delete kind cluster
-      ansible.builtin.command: "{{ playbook_dir }}/.local/yake-kind delete cluster --name clusterapi"
+      ansible.builtin.command: "{{ playbook_dir }}/.local/yake-kind delete cluster --name {{ management_cluster_name | d('clusterapi') }}"
       register: kind_delete
       changed_when: kind_delete.rc == 0
       failed_when: false
@@ -38,7 +35,7 @@
       block:
         - name: Remove yake-ansible's own docker containers
           ansible.builtin.command: "docker rm -f {{ item }}"
-          loop: [kind, helm, kubectl, clusterctl]
+          loop: [kind, helm, kubectl, clusterctl, gardenctl]
           failed_when: false
           changed_when: true
 
@@ -52,6 +49,7 @@
             - ghcr.io/yakecloud/helm
             - ghcr.io/yakecloud/kubectl
             - ghcr.io/yakecloud/clusterctl
+            - ghcr.io/yakecloud/gardenctl
 
         - name: Remove yake-ansible's own docker images
           ansible.builtin.command: "docker rmi -f {{ item }}"

@@ -1,72 +1,30 @@
 {% set ntp = clusterapi_cluster_ntp_servers | d([]) | length > 0 %}
-apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
-kind: KubeadmConfigTemplate
-metadata:
-  name: {{ clusterapi_cluster_name }}-md
+{% set cilium = clusterapi_cluster_network == 'cilium' %}
+{% set k8s_version = 'v' ~ (clusterapi_cluster_kubernetes_version | string | regex_replace('^v', '')) %}
+{% set _mirrors = [
+  {'host': 'docker.io', 'url': clusterapi_cluster_container_registry_cache_dockerhub},
+  {'host': 'europe-docker.pkg.dev', 'url': clusterapi_cluster_container_registry_cache_pkg},
+  {'host': 'gcr.io', 'url': clusterapi_cluster_container_registry_cache_gcr},
+  {'host': 'ghcr.io', 'url': clusterapi_cluster_container_registry_cache_ghcr},
+  {'host': 'quay.io', 'url': clusterapi_cluster_container_registry_cache_quay},
+  {'host': 'registry.k8s.io', 'url': clusterapi_cluster_container_registry_cache_k8s},
+] %}
+{% set kct_spec %}
 spec:
   template:
     spec:
       files:
-        - path: /etc/containerd/certs.d/docker.io/hosts.toml
+{% for m in _mirrors if m.url | d('') | length > 0 %}
+        - path: /etc/containerd/certs.d/{{ m.host }}/hosts.toml
           owner: root:root
           permissions: "0644"
           content: |
-            server = "https://docker.io"
+            server = "https://{{ m.host }}"
 
-            [host."{{ clusterapi_cluster_container_registry_cache_dockerhub }}"]
+            [host."{{ m.url }}"]
               capabilities = ["pull", "resolve"]
-              skip_verify = true
               override_path = true
-        - path: /etc/containerd/certs.d/europe-docker.pkg.dev/hosts.toml
-          owner: root:root
-          permissions: "0644"
-          content: |
-            server = "https://europe-docker.pkg.dev"
-
-            [host."{{ clusterapi_cluster_container_registry_cache_pkg }}"]
-              capabilities = ["pull", "resolve"]
-              skip_verify = true
-              override_path = true
-        - path: /etc/containerd/certs.d/gcr.io/hosts.toml
-          owner: root:root
-          permissions: "0644"
-          content: |
-            server = "https://gcr.io"
-
-            [host."{{ clusterapi_cluster_container_registry_cache_gcr }}"]
-              capabilities = ["pull", "resolve"]
-              skip_verify = true
-              override_path = true
-        - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
-          owner: root:root
-          permissions: "0644"
-          content: |
-            server = "https://ghcr.io"
-
-            [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
-              capabilities = ["pull", "resolve"]
-              skip_verify = true
-              override_path = true
-        - path: /etc/containerd/certs.d/quay.io/hosts.toml
-          owner: root:root
-          permissions: "0644"
-          content: |
-            server = "https://quay.io"
-
-            [host."{{ clusterapi_cluster_container_registry_cache_quay }}"]
-              capabilities = ["pull", "resolve"]
-              skip_verify = true
-              override_path = true
-        - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
-          owner: root:root
-          permissions: "0644"
-          content: |
-            server = "https://registry.k8s.io"
-
-            [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
-              capabilities = ["pull", "resolve"]
-              skip_verify = true
-              override_path = true
+{% endfor %}
 {% if clusterapi_cluster_openstack_cacert | d('') %}
         - path: /etc/certs/cacert.pem
           owner: root:root
@@ -121,11 +79,20 @@ spec:
           - name: provider-id
             value: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
           name: "{% raw %}{{ local_hostname }}{% endraw %}"
+{% if cilium %}
           taints:
           - key: "node.cilium.io/agent-not-ready"
             value: "true"
             effect: "NoSchedule"
----
+{% endif %}
+{% endset %}
+{# Content hash in the name: a changed bootstrap config rolls out to the workers like a machine template change. #}
+{% set kct_name = clusterapi_cluster_name ~ '-md-' ~ (kct_spec | hash('sha1'))[:8] %}
+apiVersion: bootstrap.cluster.x-k8s.io/v1beta2
+kind: KubeadmConfigTemplate
+metadata:
+  name: {{ kct_name }}
+{{ kct_spec }}---
 {% set _cp_machine_template_content = {
   'flavor': clusterapi_cluster_control_plane_machine_flavor,
   'image_id': clusterapi_cluster_openstack_image_id,
@@ -182,7 +149,7 @@ spec:
         configRef:
           apiGroup: bootstrap.cluster.x-k8s.io
           kind: KubeadmConfigTemplate
-          name: {{ clusterapi_cluster_name }}-md
+          name: {{ kct_name }}
       clusterName: {{ clusterapi_cluster_name }}
       deletion:
         nodeDrainTimeoutSeconds: {{ clusterapi_cluster_worker_node_drain_timeout_seconds }}
@@ -192,7 +159,7 @@ spec:
         apiGroup: infrastructure.cluster.x-k8s.io
         kind: OpenStackMachineTemplate
         name: {{ md_machine_template_name }}
-      version: {{ clusterapi_cluster_kubernetes_version }}
+      version: {{ k8s_version }}
 {% if clusterapi_cluster_worker_machine_health_check_enabled | bool %}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -223,66 +190,17 @@ metadata:
 spec:
   kubeadmConfigSpec:
     files:
-      - path: /etc/containerd/certs.d/docker.io/hosts.toml
+{% for m in _mirrors if m.url | d('') | length > 0 %}
+      - path: /etc/containerd/certs.d/{{ m.host }}/hosts.toml
         owner: root:root
         permissions: "0644"
         content: |
-          server = "https://docker.io"
+          server = "https://{{ m.host }}"
 
-          [host."{{ clusterapi_cluster_container_registry_cache_dockerhub }}"]
+          [host."{{ m.url }}"]
             capabilities = ["pull", "resolve"]
-            skip_verify = true
             override_path = true
-      - path: /etc/containerd/certs.d/europe-docker.pkg.dev/hosts.toml
-        owner: root:root
-        permissions: "0644"
-        content: |
-          server = "https://europe-docker.pkg.dev"
-
-          [host."{{ clusterapi_cluster_container_registry_cache_pkg }}"]
-            capabilities = ["pull", "resolve"]
-            skip_verify = true
-            override_path = true
-      - path: /etc/containerd/certs.d/gcr.io/hosts.toml
-        owner: root:root
-        permissions: "0644"
-        content: |
-          server = "https://gcr.io"
-
-          [host."{{ clusterapi_cluster_container_registry_cache_gcr }}"]
-            capabilities = ["pull", "resolve"]
-            skip_verify = true
-            override_path = true
-      - path: /etc/containerd/certs.d/ghcr.io/hosts.toml
-        owner: root:root
-        permissions: "0644"
-        content: |
-          server = "https://ghcr.io"
-
-          [host."{{ clusterapi_cluster_container_registry_cache_ghcr }}"]
-            capabilities = ["pull", "resolve"]
-            skip_verify = true
-            override_path = true
-      - path: /etc/containerd/certs.d/quay.io/hosts.toml
-        owner: root:root
-        permissions: "0644"
-        content: |
-          server = "https://quay.io"
-
-          [host."{{ clusterapi_cluster_container_registry_cache_quay }}"]
-            capabilities = ["pull", "resolve"]
-            skip_verify = true
-            override_path = true
-      - path: /etc/containerd/certs.d/registry.k8s.io/hosts.toml
-        owner: root:root
-        permissions: "0644"
-        content: |
-          server = "https://registry.k8s.io"
-
-          [host."{{ clusterapi_cluster_container_registry_cache_k8s }}"]
-            capabilities = ["pull", "resolve"]
-            skip_verify = true
-            override_path = true
+{% endfor %}
 {% if clusterapi_cluster_openstack_cacert | d('') %}
       - path: /etc/certs/cacert.pem
         owner: root:root
@@ -343,8 +261,10 @@ spec:
           value: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
         name: "{% raw %}{{ local_hostname }}{% endraw %}"
         taints:
+{% if cilium %}
         - key: "node.cilium.io/agent-not-ready"
           effect: "NoSchedule"
+{% endif %}
         - key: "node-role.kubernetes.io/control-plane"
           effect: "NoSchedule"
     joinConfiguration:
@@ -356,8 +276,10 @@ spec:
           value: openstack:///'{% raw %}{{ instance_id }}{% endraw %}'
         name: "{% raw %}{{ local_hostname }}{% endraw %}"
         taints:
+{% if cilium %}
         - key: "node.cilium.io/agent-not-ready"
           effect: "NoSchedule"
+{% endif %}
         - key: "node-role.kubernetes.io/control-plane"
           effect: "NoSchedule"
   machineTemplate:
@@ -371,7 +293,7 @@ spec:
     maxRetry: {{ clusterapi_cluster_control_plane_remediation_max_retry }}
     retryPeriodSeconds: {{ clusterapi_cluster_control_plane_remediation_retry_period_seconds }}
     minHealthyPeriodSeconds: {{ clusterapi_cluster_control_plane_remediation_min_healthy_period_seconds }}
-  version: {{ clusterapi_cluster_kubernetes_version }}
+  version: {{ k8s_version }}
 {% if clusterapi_cluster_control_plane_machine_health_check_enabled | bool %}
 ---
 apiVersion: cluster.x-k8s.io/v1beta1
@@ -400,6 +322,9 @@ spec:
   apiServerLoadBalancer:
     enabled: true
     provider: {{ clusterapi_cluster_openstack_loadbalancer_provider }}
+{% if clusterapi_cluster_openstack_loadbalancer_allowed_cidrs | d([]) | length > 0 %}
+    allowedCIDRs: {{ clusterapi_cluster_openstack_loadbalancer_allowed_cidrs | to_json }}
+{% endif %}
     monitor:
       delay: {{ clusterapi_cluster_openstack_loadbalancer_monitor_delay }}
       timeout: {{ clusterapi_cluster_openstack_loadbalancer_monitor_timeout }}

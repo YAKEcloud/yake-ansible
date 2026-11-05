@@ -20,7 +20,8 @@ on the template are explicitly ignored for this comparison. To make in-place edi
 `clusterapi_cluster_worker_machine_flavor` or a worker's `image_id`) actually roll the machines, this role derives
 the `OpenStackMachineTemplate` name from a hash of its meaningful content (flavor, image, ssh key, root volume,
 server group). Changing any of those values on a re-run produces a new template name, which CAPI picks up as a
-required rollout automatically.
+required rollout automatically. The same applies to the `KubeadmConfigTemplate` of the workers (name
+`<cluster>-md-<hash>`), so changes to NTP, proxy, hosts entries, registry mirrors or the CA roll out to the workers.
 
 `clusterapi_cluster_kubernetes_version` does not need this trick — it's compared directly on
 `KubeadmControlPlane`/`MachineDeployment` and already triggers a rollout on change.
@@ -51,6 +52,7 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_openstack_cacert` | `""` | PEM-encoded CA certificate (optional). |
 | `clusterapi_cluster_openstack_external_network` | `public` | Name of the external network for floating IPs. |
 | `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Load balancer provider for the API server load balancer. |
+| `clusterapi_cluster_openstack_loadbalancer_allowed_cidrs` | `[]` | Source CIDRs allowed to reach the API server load balancer. Empty allows all. |
 | `clusterapi_cluster_openstack_loadbalancer_monitor_delay` | `5` | Seconds between health probes against each API server LB member. |
 | `clusterapi_cluster_openstack_loadbalancer_monitor_timeout` | `5` | Seconds a health probe waits before timing out. |
 | `clusterapi_cluster_openstack_loadbalancer_monitor_max_retries` | `1` | Successful probes required before a member flips to `ONLINE`. Kept low to shrink the race window where a joining control-plane node hits an LB with zero healthy members ("connection refused" during `kubeadm join --control-plane`). |
@@ -60,7 +62,7 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `clusterapi_cluster_name` | `garden` | Cluster name and prefix for all created resources. |
-| `clusterapi_cluster_kubernetes_version` | `v1.36.1` | Kubernetes version. |
+| `clusterapi_cluster_kubernetes_version` | `1.36.6` | Kubernetes version. |
 
 ### Machines
 
@@ -147,9 +149,11 @@ Up to two subnets can be listed (one IPv4 and one IPv6 for dual-stack clusters).
 | `clusterapi_cluster_cilium_version` | `1.19.3` | Cilium Helm chart version. |
 | `clusterapi_cluster_calico_version` | `v3.32.0` | Calico (tigera-operator) Helm chart version. |
 
+The `node.cilium.io/agent-not-ready` taint is only set for `cilium`.
+
 ### Container Registry Mirrors
 
-All nodes are configured to pull images through the OSISM registry cache by default. Override these variables to point to your own mirrors:
+All nodes are configured to pull images through the OSISM registry cache by default (TLS is verified). Override these variables to point to your own mirrors, an empty value disables a mirror:
 
 | Variable | Default |
 |----------|---------|

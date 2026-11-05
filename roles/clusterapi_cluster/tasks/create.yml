@@ -67,6 +67,12 @@
     name: "{{ clusterapi_cluster_openstack_external_network }}"
   register: result_external_network  # noqa: var-naming[no-role-prefix]
 
+- name: Fail if external network not found
+  ansible.builtin.assert:
+    that: result_external_network.networks | length > 0
+    fail_msg: "External network '{{ clusterapi_cluster_openstack_external_network }}' was not found in OpenStack."
+    quiet: true
+
 - name: Set _clusterapi_cluster_openstack_external_network fact
   ansible.builtin.set_fact:
     _clusterapi_cluster_openstack_external_network: "{{ result_external_network.networks | first | d({}) }}"
@@ -103,7 +109,7 @@
     _clusterapi_cluster_worker_server_group_id: "{{ result_worker_server_group.server_group.id }}"
   when: clusterapi_cluster_worker_server_group_enabled | bool
 
-- name: Combine clusterapi_cluster_defaults and clusterapi_cluster_extra
+- name: Set _clusterapi_cluster fact from clusterapi_cluster_extra
   ansible.builtin.set_fact:
     _clusterapi_cluster: "{{ clusterapi_cluster_extra }}"  # noqa: var-naming[no-role-prefix]
 
@@ -180,6 +186,7 @@
     state: present
     wait: true
     src: /var/lib/yake/cloud-secret.yaml
+  no_log: true
 
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:
@@ -196,6 +203,19 @@
         | select('defined')
         | selectattr('kind', 'defined')
         | selectattr('kind', 'equalto', 'OpenStackMachineTemplate')
+        | map(attribute='metadata.name')
+        | list
+      }}
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: Determine currently desired KubeadmConfigTemplate names
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_current_config_template_names: >-
+      {{
+        result_cluster_manifest.stdout | from_yaml_all | list
+        | select('defined')
+        | selectattr('kind', 'defined')
+        | selectattr('kind', 'equalto', 'KubeadmConfigTemplate')
         | map(attribute='metadata.name')
         | list
       }}
@@ -228,6 +248,33 @@
     }}
   when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
 
+- name: List existing KubeadmConfigTemplates
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    api_version: bootstrap.cluster.x-k8s.io/v1beta2
+    kind: KubeadmConfigTemplate
+    namespace: default
+  register: result_existing_config_templates  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: Delete stale KubeadmConfigTemplates no longer referenced
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    state: absent
+    api_version: bootstrap.cluster.x-k8s.io/v1beta2
+    kind: KubeadmConfigTemplate
+    namespace: default
+    name: "{{ item }}"
+  loop: >-
+    {{
+      result_existing_config_templates.resources
+      | map(attribute='metadata.name')
+      | select('match', '^' ~ (clusterapi_cluster_name | regex_escape) ~ '-md(-[0-9a-f]{8})?$')
+      | reject('in', _clusterapi_cluster_current_config_template_names)
+      | list
+    }}
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
 - name: Get kubeconfig
   ansible.builtin.command: "{{ playbook_dir }}/.local/yake-clusterctl get kubeconfig {{ clusterapi_cluster_name }}"
   register: result_kubeconfig  # noqa: var-naming[no-role-prefix]
@@ -237,6 +284,7 @@
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
   retries: 30
   delay: 10
+  no_log: true
 
 - name: Write kubeconfig
   ansible.builtin.copy:

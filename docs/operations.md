@@ -71,7 +71,7 @@ Cluster API performs a rolling upgrade of the control plane nodes followed by wo
 
 kubectl, Helm, clusterctl, and kind versions are set by `kubectl_install_version`, `helm_install_version`, `clusterctl_install_version`, and `management_cluster_kind_version` respectively. After updating these variables, re-run the playbook with the matching tags (`kubectl`, `helm`, `clusterctl`, `management-cluster`).
 
-On the first run the `clusterapi` step initializes Cluster API with `clusterctl init`. On an existing management cluster it runs `clusterctl upgrade apply --contract <contract>` instead, which brings the Cluster API providers (core, kubeadm bootstrap, kubeadm control plane, OpenStack) to the latest versions available for that contract. The contract is set by `clusterapi_install_contract` (default `v1beta2`). A clusterctl release that supports a newer contract makes the step fail until the variable is raised.
+On the first run the `clusterapi` step initializes Cluster API with `clusterctl init`. On an existing management cluster it runs `clusterctl upgrade apply` instead with the same versions. The provider versions are pinned by `clusterapi_install_capi_version` (core, kubeadm bootstrap, kubeadm control plane) and `clusterapi_install_capo_version` (OpenStack). They have to match the vendored ORC manifest (`files/orc.yaml`). If one of them is empty, `clusterctl upgrade apply --contract <contract>` is used instead and the providers float to the latest versions for that contract, set by `clusterapi_install_contract` (default `v1beta2`). A clusterctl release that supports a newer contract makes the step fail until the variable is raised.
 
 ### Upgrading the kind Management Cluster
 
@@ -86,7 +86,7 @@ It runs after the `clusterapi` step so that the Cluster API providers are curren
 
 The OpenStack resources keep running throughout, only reconciliation pauses for a few minutes. Back up and restore are limited to `management_cluster_kind_upgrade_namespace` (all objects of this repo live in `default`). The cloud secret is carried over because it has the `clusterctl.cluster.x-k8s.io/move` label.
 
-The backup is kept. If the step fails after the old cluster was deleted, the playbook does not restore on a re-run, because the new cluster already has the desired version. Restore manually once Cluster API is installed on the new cluster:
+The backup contains CA keys and credentials and is deleted after the clusters are restored. If the step fails after the old cluster was deleted, it is kept and the playbook does not restore on a re-run, because the new cluster already has the desired version. Restore manually once Cluster API is installed on the new cluster:
 
 ```bash
 ./.local/yake-clusterctl move --from-directory /var/lib/yake/backup/<timestamp> \

@@ -93,6 +93,9 @@ gardener_operator_shoot_cert_service_acme_server: "https://acme-staging-v02.api.
 # === gardener_operator: cloud profiles ===
 gardener_operator_cloudprofiles:
   - name: cloudprofile
+    # When compute and volume zones differ (e.g. compute AZ1, volumes nova):
+    # ignore_volume_az: true
+    # root_disk_availability_zone: nova
     storageclasses:
       - name: default
         default: "true"

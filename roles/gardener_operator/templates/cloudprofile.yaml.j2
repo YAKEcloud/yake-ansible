@@ -9,6 +9,9 @@ spec:
     apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
     kind: CloudProfileConfig
     ignoreVolumeAZ: {{ item.ignore_volume_az | d(false) | lower }}
+{% if item.root_disk_availability_zone is defined %}
+    rootDiskAvailabilityZone: {{ item.root_disk_availability_zone | to_json }}
+{% endif %}
     storageClasses:
 {% for sc in item.storageclasses %}
       - name: {{ sc.name }}

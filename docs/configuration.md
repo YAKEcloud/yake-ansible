@@ -248,7 +248,7 @@ Extension versions are managed by Renovate and follow their respective upstream 
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `gardener_operator_provider_openstack_version` | `1.58.0` | OpenStack provider extension version. |
+| `gardener_operator_provider_openstack_version` | `1.59.1` | OpenStack provider extension version. |
 | `gardener_operator_provider_aws_version` | `1.75.0` | AWS provider extension version (deployed only when DNS type is `aws-route53`). |
 | `gardener_operator_provider_azure_version` | `1.65.1` | Azure provider extension version (deployed only when DNS type is `azure-dns`). |
 | `gardener_operator_provider_gcp_version` | `1.56.0` | GCP provider extension version (deployed only when DNS type is `google-clouddns`). |
@@ -353,6 +353,19 @@ gardener_operator_cloudprofiles:
         zones:
           - nova
 ```
+
+#### Different compute and volume availability zones
+
+If the Nova and Cinder availability zones are named differently (e.g. compute in `AZ1`, volumes in `nova`), set both fields on the cloud profile. Then shoots and managed seeds can run with compute and volumes in different zones. This also works with root disks of the OpenStack default volume type `__DEFAULT__`:
+
+```yaml
+gardener_operator_cloudprofiles:
+  - name: openstack-a
+    ignore_volume_az: true               # PVs (e.g. etcd) via cinder-csi
+    root_disk_availability_zone: nova    # root volumes of workers
+```
+
+`root_disk_availability_zone` requires provider-openstack 1.59.0 or later. See the [role README](https://github.com/YAKEcloud/yake-ansible/blob/main/roles/gardener_operator/README.md#cloud-profiles) for details.
 
 ### Managed Seeds
 

@@ -23,6 +23,7 @@
     key_usage: [keyCertSign, cRLSign]
     key_usage_critical: true
   register: gardener_operator_generated_ca_csr
+  changed_when: false
 
 - name: Create generated CA certificate
   community.crypto.x509_certificate:

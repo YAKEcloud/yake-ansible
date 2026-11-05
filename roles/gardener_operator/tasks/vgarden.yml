@@ -5,7 +5,7 @@
     dest: "/var/lib/yake/gardener-operator/{{ item }}"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
   loop:
     - rbac.yaml
     - gardenlet.yaml
@@ -19,7 +19,10 @@
   loop:
     - rbac.yaml
     - gardenlet.yaml
+  no_log: true
 
+# The OIDC CA and auth config are only read on reconciliation, so reconcile when they
+# changed or when Dex was (re)installed (Garden was created before Dex was reachable).
 - name: Patch gardener annotation for reconcile
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
@@ -33,6 +36,12 @@
           gardener.cloud/operation: "reconcile"
     merge_type:
       - merge
+  when: >-
+    (gardener_operator_garden_apply.results | selectattr('changed') | list | length > 0) or
+    (gardener_operator_dex_install is changed)
+
+- name: Wait for Garden to be reconciled after the annotation
+  ansible.builtin.include_tasks: wait-garden.yml
 
 - name: Template ingress-cert file
   ansible.builtin.template:
@@ -40,7 +49,7 @@
     dest: "/var/lib/yake/gardener-operator/seed-ingress-certificate.yaml"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
 
 - name: Create the certificate
   kubernetes.core.k8s:
@@ -80,6 +89,7 @@
     _seed_conditions: "{{ _seed_status.conditions | default([]) | items2dict(key_name='type', value_name='status') }}"
   until:
     - seed_status.resources | length > 0
+    - _seed_status.observedGeneration | default(-1) >= _seed.metadata.generation | default(999999)
     - _seed_last_op.state | default('') == 'Succeeded'
     - _seed_conditions.GardenletReady | default('') == 'True'
     - _seed_conditions.ExtensionsReady | default('') == 'True'

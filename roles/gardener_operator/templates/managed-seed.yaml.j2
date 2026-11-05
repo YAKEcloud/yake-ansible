@@ -20,7 +20,7 @@ apiVersion: security.gardener.cloud/v1alpha1
 kind: CredentialsBinding
 metadata:
   labels:
-    cloudprofile.garden.sapcloud.io/name: {{ item.cloudprofile_name }}
+    cloudprofile.garden.sapcloud.io/name: {{ item.cloudprofile_name | to_json }}
   name: credentialsbinding-{{ item.name }}
   namespace: garden
 credentialsRef:
@@ -39,14 +39,14 @@ metadata:
   namespace: garden
 type: Opaque
 stringData:
-  {{ item.settings.backup.credentials | to_nice_yaml(indent=2) | indent(2) }}
+  {{ (item.settings.backup.credentials if item.settings.backup.credentials is string else item.settings.backup.credentials | to_nice_yaml(indent=2)) | indent(2) }}
 {% endif %}
 {% if gardener_operator_managed_seeds_registry_mirrors | selectattr('ca', 'defined') | selectattr('ca', 'equalto', true) | list %}
 ---
 apiVersion: v1
 kind: Secret
 metadata:
-  name: private-mirrors-ca-bundle-v1
+  name: {{ _gardener_operator_mirrors_ca_secret_name }}
   namespace: garden
 type: Opaque
 immutable: true
@@ -86,7 +86,7 @@ spec:
         kind: RegistryConfig
         caches:
 {% for cache in gardener_operator_managed_seeds_registry_caches %}
-        - upstream: {{ cache.upstream }}
+        - upstream: {{ cache.upstream | to_json }}
           volume:
             size: {{ cache.volume_size | d('10Gi') }}
 {% if gardener_operator_proxy_host | d('') | length > 0 %}
@@ -103,9 +103,9 @@ spec:
         kind: MirrorConfig
         mirrors:
 {% for mirror in gardener_operator_managed_seeds_registry_mirrors %}
-          - upstream: {{ mirror.upstream }}
+          - upstream: {{ mirror.upstream | to_json }}
             hosts:
-            - host: "{{ mirror.host }}"
+            - host: {{ mirror.host | to_json }}
               capabilities: ["pull", "resolve"]
               overridePath: {{ mirror.override_path | d(false) | lower }}
 {% if mirror.ca | d(false) %}
@@ -115,8 +115,8 @@ spec:
 {% endif %}
   seedName: internal-seed
   cloudProfile:
-    name: {{ item.cloudprofile_name }}
-  region: {{ item.openstack.region_name }}
+    name: {{ item.cloudprofile_name | to_json }}
+  region: {{ item.openstack.region_name | to_json }}
   credentialsBindingName: credentialsbinding-{{ item.name }}
   dns:
     domain: {{ item.name }}.{{ gardener_operator_managed_seeds_project.name }}.{{ gardener_operator_garden_url }}
@@ -132,54 +132,54 @@ spec:
     infrastructureConfig:
       apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
       kind: InfrastructureConfig
-      floatingPoolName: {{ item.floating_pool_name }}
+      floatingPoolName: {{ item.floating_pool_name | to_json }}
       networks:
 {% if item.network_id is defined %}
-        id: {{ item.network_id }}
+        id: {{ item.network_id | to_json }}
 {% endif %}
 {% if item.router_id is defined %}
         router:
-          id: {{ item.router_id }}
+          id: {{ item.router_id | to_json }}
 {% endif %}
 {% if item.subnet_pool is defined %}
         subnetPool:
-          id: {{ item.subnet_pool.id }}
+          id: {{ item.subnet_pool.id | to_json }}
 {% if item.subnet_pool.prefix_length is defined %}
           prefixLength: {{ item.subnet_pool.prefix_length }}
 {% endif %}
 {% else %}
-        workers: {{ item.workers_cidr | d('100.96.0.0/16') }}
+        workers: {{ item.workers_cidr | d('100.96.0.0/16') | to_json }}
 {% endif %}
     controlPlaneConfig:
       apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
       kind: ControlPlaneConfig
-      loadBalancerProvider: {{ item.loadbalancer_provider | d('amphora') }}
+      loadBalancerProvider: {{ item.loadbalancer_provider | d('amphora') | to_json }}
     workers:
 {% for w in item.workers %}
-      - name: {{ w.name }}
+      - name: {{ w.name | to_json }}
         machine:
-          type: {{ w.machinetype }}
+          type: {{ w.machinetype | to_json }}
           image:
-            name: {{ w.image_name }}
-            version: {{ w.image_version }}
+            name: {{ w.image_name | to_json }}
+            version: {{ w.image_version | string | to_json }}
         minimum: {{ w.minimum }}
         maximum: {{ w.maximum }}
 {% if w.volume_size is defined %}
         volume:
 {% if w.volume_type is defined and w.volume_type %}
-          type: {{ w.volume_type }}
+          type: {{ w.volume_type | to_json }}
 {% endif %}
-          size: {{ w.volume_size }}
+          size: {{ w.volume_size | to_json }}
 {% endif %}
-        zones: {{ w.zones }}
+        zones: {{ w.zones | to_json }}
 {% endfor %}
   networking:
-    nodes: {{ item.workers_cidr | d('100.96.0.0/16') }}
+    nodes: {{ item.workers_cidr | d('100.96.0.0/16') | to_json }}
     pods: 100.72.0.0/16
     services: 100.80.0.0/13
-    type: {{ item.networking_type }}
+    type: {{ item.networking_type | to_json }}
   kubernetes:
-    version: {{ item.kubernetes_version }}
+    version: {{ item.kubernetes_version | string | to_json }}
   maintenance:
     autoUpdate:
       kubernetesVersion: true
@@ -191,7 +191,7 @@ spec:
       resourceRef:
         apiVersion: v1
         kind: Secret
-        name: private-mirrors-ca-bundle-v1
+        name: {{ _gardener_operator_mirrors_ca_secret_name }}
 {% endif %}
 ---
 apiVersion: seedmanagement.gardener.cloud/v1alpha1
@@ -230,9 +230,9 @@ spec:
         spec:
 {% if item.settings.backup | d({}) | length > 0 %}
           backup:
-            provider: {{ item.settings.backup.provider }}
-            region: {{ item.settings.backup.region }}
-            bucketName: {{ item.settings.backup.bucket_name }}
+            provider: {{ item.settings.backup.provider | to_json }}
+            region: {{ item.settings.backup.region | to_json }}
+            bucketName: {{ item.settings.backup.bucket_name | to_json }}
             credentialsRef:
               apiVersion: v1
               kind: Secret
@@ -262,13 +262,13 @@ spec:
                 name: openstack-cloud
                 namespace: garden
               type: {{ gardener_operator_dns_provider_type }}
-              domain: {{ item.internal_domain | d('internal.' ~ gardener_operator_garden_url) }}
+              domain: {{ item.internal_domain | d('internal.' ~ gardener_operator_garden_url) | to_json }}
           ingress:
             domain: ingress.{{ item.name }}.{{ gardener_operator_managed_seeds_project.name }}.{{ gardener_operator_garden_url }}
             controller:
               kind: nginx
           networks:
-            nodes: {{ item.workers_cidr | d('100.96.0.0/16') }}
+            nodes: {{ item.workers_cidr | d('100.96.0.0/16') | to_json }}
             pods: 100.72.0.0/16
             services: 100.80.0.0/13
             shootDefaults:
@@ -283,12 +283,12 @@ spec:
 {% endif %}
           provider:
             type: openstack
-            region: {{ item.openstack.region_name }}
+            region: {{ item.openstack.region_name | to_json }}
           settings:
             scheduling:
               visible: true
             excessCapacityReservation:
-              enabled: {{ item.settings.excess_capacity_reservation | lower }}
+              enabled: {{ item.settings.excess_capacity_reservation | bool | lower }}
     deployment:
 {% if gardener_operator_proxy_env | d({}) | length > 0 %}
       env:

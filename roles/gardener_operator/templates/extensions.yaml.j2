@@ -1,4 +1,32 @@
 ---
+{% macro cert_service_values() %}
+        certificateConfig:
+          defaultIssuer:
+{% if gardener_operator_shoot_cert_service_issuer_type == 'acme' %}
+            acme:
+              email: {{ gardener_operator_shoot_cert_service_acme_email | to_json }}
+              server: {{ gardener_operator_shoot_cert_service_acme_server | to_json }}
+            ca: null
+{% else %}
+            acme: null
+            ca:
+              certificate: |
+{{ gardener_operator_shoot_cert_service_ca_certificate | indent(16, true) }}
+              certificateKey: |
+{{ gardener_operator_shoot_cert_service_ca_key | indent(16, true) }}
+{% endif %}
+            name: garden
+{% if gardener_operator_shoot_cert_service_issuer_type == 'acme' %}
+{% if gardener_operator_shoot_cert_service_ca_certificates | d('') %}
+          caCertificates: |
+{{ gardener_operator_shoot_cert_service_ca_certificates | indent(12, true) }}
+{% endif %}
+          precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers }}
+{% else %}
+          caCertificates: null
+          precheckNameservers: null
+{% endif %}
+{% endmacro %}
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Extension
 metadata:
@@ -74,59 +102,9 @@ spec:
       injectGardenKubeconfig: true
       policy: Always
       runtimeClusterValues:
-        certificateConfig:
-          defaultIssuer:
-{% if gardener_operator_shoot_cert_service_issuer_type == 'acme' %}
-            acme:
-              email: {{ gardener_operator_shoot_cert_service_acme_email }}
-              server: {{ gardener_operator_shoot_cert_service_acme_server }}
-            ca: null
-{% else %}
-            acme: null
-            ca:
-              certificate: |
-{{ gardener_operator_shoot_cert_service_ca_certificate | indent(16, true) }}
-              certificateKey: |
-{{ gardener_operator_shoot_cert_service_ca_key | indent(16, true) }}
-{% endif %}
-            name: garden
-{% if gardener_operator_shoot_cert_service_issuer_type == 'acme' %}
-{% if gardener_operator_shoot_cert_service_ca_certificates | d('') %}
-          caCertificates: |
-{{ gardener_operator_shoot_cert_service_ca_certificates | indent(12, true) }}
-{% endif %}
-          precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers }}
-{% else %}
-          caCertificates: null
-          precheckNameservers: null
-{% endif %}
+{{ cert_service_values() | trim('\n') }}
       values:
-        certificateConfig:
-          defaultIssuer:
-{% if gardener_operator_shoot_cert_service_issuer_type == 'acme' %}
-            acme:
-              email: {{ gardener_operator_shoot_cert_service_acme_email }}
-              server: {{ gardener_operator_shoot_cert_service_acme_server }}
-            ca: null
-{% else %}
-            acme: null
-            ca:
-              certificate: |
-{{ gardener_operator_shoot_cert_service_ca_certificate | indent(16, true) }}
-              certificateKey: |
-{{ gardener_operator_shoot_cert_service_ca_key | indent(16, true) }}
-{% endif %}
-            name: garden
-{% if gardener_operator_shoot_cert_service_issuer_type == 'acme' %}
-{% if gardener_operator_shoot_cert_service_ca_certificates | d('') %}
-          caCertificates: |
-{{ gardener_operator_shoot_cert_service_ca_certificates | indent(12, true) }}
-{% endif %}
-          precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers }}
-{% else %}
-          caCertificates: null
-          precheckNameservers: null
-{% endif %}
+{{ cert_service_values() | trim('\n') }}
   resources:
   - autoEnable:
     - shoot
@@ -408,6 +386,7 @@ helm:
   values:
     image:
       tag: v{{ gardener_operator_backup_s3_version }}
+      pullPolicy: IfNotPresent
 ---
 apiVersion: core.gardener.cloud/v1beta1
 kind: ControllerRegistration

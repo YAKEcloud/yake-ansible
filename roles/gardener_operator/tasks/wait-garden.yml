@@ -1,0 +1,25 @@
+---
+- name: Wait for the Garden to be reconciled and healthy
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    api_version: operator.gardener.cloud/v1alpha1
+    kind: Garden
+    name: gardener
+  register: garden_status  # noqa: var-naming[no-role-prefix]
+  vars:
+    _garden: "{{ garden_status.resources | first | default({}) }}"
+    _garden_meta: "{{ _garden.metadata | default({}) }}"
+    _garden_status: "{{ _garden.status | default({}) }}"
+    _garden_last_op: "{{ _garden_status.lastOperation | default({}) }}"
+    _garden_conditions: "{{ _garden_status.conditions | default([]) | items2dict(key_name='type', value_name='status') }}"
+  until:
+    - garden_status.resources | length > 0
+    - _garden_status.observedGeneration | default(-1) >= _garden_meta.generation | default(999999)
+    # The operator removes the operation annotation when it starts the reconciliation
+    - "'gardener.cloud/operation' not in _garden_meta.annotations | default({})"
+    - _garden_last_op.state | default('') == 'Succeeded'
+    - _garden_conditions.VirtualGardenAPIServerAvailable | default('') == 'True'
+    - _garden_conditions.RuntimeComponentsHealthy | default('') == 'True'
+    - _garden_conditions.VirtualComponentsHealthy | default('') == 'True'
+  retries: 60
+  delay: 10

@@ -182,6 +182,7 @@ The `gardener_operator` role deploys the Gardener Operator and configures the en
 | `gardener_operator_version` | see defaults | Gardener Operator Helm chart version. |
 | `gardener_operator_kubernetes_version` | see defaults | Kubernetes version for the internal seed shoot. |
 | `gardener_operator_cluster_name` | `prod-garden` | Name of the garden cluster. |
+| `gardener_operator_login_check_enabled` | `true` | Check after the virtual garden is ready that the dashboard login reaches Dex (`https://dashboard.<garden_url>/auth` must redirect to `https://identity.<garden_url>/`). The dashboard backend fetches the OIDC discovery for this, so it covers DNS, network and TLS from inside the cluster. Disable it if the Ansible host cannot reach the dashboard. |
 | `gardener_operator_virtual_garden_high_availability` | `true` | Run the virtual garden control plane highly available: 3 replicas each for etcd main and events, spread over the garden cluster nodes (and zones, if the runtime cluster has several). Use at least 3 worker nodes, so that each replica gets its own node. Cannot be disabled again once enabled. |
 | `gardener_operator_garden_url` | `example.com` | Base domain for the Gardener installation. Must be changed, the run fails with `example.com`. |
 | `gardener_operator_nodes_cidr` | `""` | Nodes CIDR of the garden cluster. Empty detects it from the first node's InternalIP (as /24). Set it if the nodes do not share that /24. |

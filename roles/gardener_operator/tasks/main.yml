@@ -240,6 +240,34 @@
 - name: Include vgarden tasks
   ansible.builtin.include_tasks: vgarden.yml
 
+# /auth makes the dashboard backend fetch the OIDC discovery from Dex, i.e. the same path as a real login (DNS, network
+# and TLS from inside the cluster). It redirects to Dex on success and to /login#error=... otherwise. TLS of the probe
+# itself is not verified, because ACME staging certificates are not trusted on the Ansible host.
+- name: Check that the dashboard login reaches the identity provider
+  ansible.builtin.uri:
+    url: "https://dashboard.{{ gardener_operator_garden_url }}/auth"
+    follow_redirects: none
+    status_code: 302
+    validate_certs: false
+    timeout: 30
+  register: gardener_operator_login_check_result
+  until: gardener_operator_login_check_result.location | d('') is match('https://identity\.' ~ (gardener_operator_garden_url | regex_escape) ~ '/')
+  retries: 30
+  delay: 10
+  failed_when: false
+  when: gardener_operator_login_check_enabled | bool
+
+- name: Assert that the dashboard login works
+  ansible.builtin.assert:
+    that: gardener_operator_login_check_result.location | d('') is match('https://identity\.' ~ (gardener_operator_garden_url | regex_escape) ~ '/')
+    fail_msg: >-
+      The dashboard login does not reach Dex: {{ gardener_operator_login_check_result.location
+      | d(gardener_operator_login_check_result.msg | d('no response')) }}. "Issuer not available" means the dashboard
+      pods cannot fetch https://identity.{{ gardener_operator_garden_url }}/.well-known/openid-configuration, e.g.
+      because of a DNS search domain of the nodes that returns SERVFAIL.
+    quiet: true
+  when: gardener_operator_login_check_enabled | bool
+
 - name: Include project tasks
   ansible.builtin.include_tasks: projects.yml
 

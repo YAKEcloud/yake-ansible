@@ -1,11 +1,28 @@
 ---
+- name: Validate required values
+  ansible.builtin.assert:
+    that:
+      - gardener_operator_dex.dashboard_secret | d('') | string | length > 0
+      - gardener_operator_garden_url | d('') | length > 0
+      - gardener_operator_garden_url != 'example.com'
+      - gardener_operator_openstack_application_credential_id | d('') | length > 0
+      - gardener_operator_openstack_application_credential_secret | d('') | length > 0
+      - gardener_operator_shoot_cert_service_issuer_type != 'ca' or
+        (gardener_operator_shoot_cert_service_ca_certificate | d('') | length > 0) == (gardener_operator_shoot_cert_service_ca_key | d('') | length > 0)
+      - gardener_operator_proxy_host | d('') | length == 0 or gardener_operator_proxy_host is match('^[0-9]{1,3}([.][0-9]{1,3}){3}$')
+    fail_msg: >-
+      Missing or invalid values: gardener_operator_dex.dashboard_secret, gardener_operator_garden_url (not example.com)
+      and the OpenStack application credential id/secret must be set, the cert-service CA certificate and key must be
+      set together (or both empty), and gardener_operator_proxy_host must be an IPv4 address (it is used as a /32 in a NetworkPolicy).
+    quiet: true
+
 - name: Create gardener-operator directory
   become: true
   ansible.builtin.file:
     path: /var/lib/yake/gardener-operator
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0755"
+    mode: "0700"
     state: directory
 
 - name: Create garden namespace
@@ -46,42 +63,30 @@
   register: node_cidr_output  # noqa: var-naming[no-role-prefix]
   changed_when: false
   failed_when: node_cidr_output.stdout | trim == ""
+  when: gardener_operator_nodes_cidr | length == 0
 
 - name: Set node_cidr fact
   ansible.builtin.set_fact:
     gardener_operator_nodes_cidr: "{{ node_cidr_output.stdout | trim }}"
+  when: gardener_operator_nodes_cidr | length == 0
 
-- name: Extract service CIDR from API server flags
+- name: Extract service and pod CIDR from API server flags
   ansible.builtin.shell: |
     set -o pipefail
-    {{ playbook_dir }}/.local/yake-kubectl cluster-info dump | grep -m 1 -- '--service-cluster-ip-range' | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/'
+    dump=$({{ playbook_dir }}/.local/yake-kubectl cluster-info dump)
+    echo "service=$(printf '%s\n' "$dump" | grep -m 1 -- '--service-cluster-ip-range' | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/')"
+    echo "pod=$(printf '%s\n' "$dump" | grep -m 1 -- '--cluster-cidr' | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/')"
   args:
     executable: /bin/bash
   environment:
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: service_cidr_output  # noqa: var-naming[no-role-prefix]
+  register: cidr_dump_output  # noqa: var-naming[no-role-prefix]
   changed_when: false
-  failed_when: service_cidr_output.stdout | trim == ""
 
-- name: Set service_cidr fact
+- name: Set service_cidr and pod_cidr facts
   ansible.builtin.set_fact:
-    gardener_operator_services_cidr: "{{ service_cidr_output.stdout | trim }}"
-
-- name: Extract pod CIDR from API server output
-  ansible.builtin.shell: |
-    set -o pipefail
-    {{ playbook_dir }}/.local/yake-kubectl cluster-info dump | grep -m 1 -- '--cluster-cidr' | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/'
-  args:
-    executable: /bin/bash
-  environment:
-    KUBECONFIG: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-  register: pod_cidr_output  # noqa: var-naming[no-role-prefix]
-  changed_when: false
-  failed_when: pod_cidr_output.stdout | trim == ""
-
-- name: Set pod_cidr fact
-  ansible.builtin.set_fact:
-    gardener_operator_pods_cidr: "{{ pod_cidr_output.stdout | trim }}"
+    gardener_operator_services_cidr: "{{ cidr_dump_output.stdout | regex_search('^service=(.*)$', '\\1', multiline=True) | first | default('') | trim }}"
+    gardener_operator_pods_cidr: "{{ cidr_dump_output.stdout | regex_search('^pod=(.*)$', '\\1', multiline=True) | first | default('') | trim }}"
 
 - name: Fail if any CIDR could not be extracted
   ansible.builtin.fail:
@@ -107,8 +112,7 @@
         forceFailurePolicyIgnore:
           enabled: true
   environment: "{{ gardener_operator_proxy_env }}"
-  when: gardener_operator_proxy_env | d({}) | length > 0 or
-        gardener_operator_ntp_servers | d([]) | length > 0
+  when: _gardener_operator_kyverno_enabled | bool
 
 - name: Template Kyverno injection policy
   ansible.builtin.template:
@@ -116,17 +120,15 @@
     dest: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
-  when: gardener_operator_proxy_env | d({}) | length > 0 or
-        gardener_operator_ntp_servers | d([]) | length > 0
+    mode: "0600"
+  when: _gardener_operator_kyverno_enabled | bool
 
 - name: Apply Kyverno injection policy
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     state: present
     src: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
-  when: gardener_operator_proxy_env | d({}) | length > 0 or
-        gardener_operator_ntp_servers | d([]) | length > 0
+  when: _gardener_operator_kyverno_enabled | bool
 
 - name: Generate a CA for the cert-service issuer
   ansible.builtin.include_tasks: generated-ca.yml
@@ -140,7 +142,7 @@
     dest: "/var/lib/yake/gardener-operator/{{ item }}"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
   loop:
     - extensions.yaml
     - garden.yaml
@@ -151,9 +153,11 @@
     state: present
     wait: true
     src: "/var/lib/yake/gardener-operator/{{ item }}"
+  register: gardener_operator_garden_apply
   loop:
     - extensions.yaml
     - garden.yaml
+  no_log: true
 
 - name: Get Gardener Secret
   kubernetes.core.k8s_info:
@@ -166,6 +170,7 @@
   until: gardener_secret.resources | length > 0 and gardener_secret.resources[0].data is defined and gardener_secret.resources[0].data.kubeconfig is defined
   retries: 60
   delay: 10
+  no_log: true
 
 - name: Save Kubeconfig to file
   ansible.builtin.copy:
@@ -194,7 +199,7 @@
     dest: /var/lib/yake/gardener-operator/proxy-network-policy.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
   when: gardener_operator_proxy_host | d('') | length > 0
 
 - name: Apply proxy NetworkPolicy to DNS extension namespace
@@ -205,25 +210,27 @@
   when: gardener_operator_proxy_host | d('') | length > 0
 
 - name: Wait for Garden to be fully reconciled
+  ansible.builtin.include_tasks: wait-garden.yml
+
+- name: Wait for extensions to be installed
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     api_version: operator.gardener.cloud/v1alpha1
-    kind: Garden
-    name: gardener
-  register: garden_status  # noqa: var-naming[no-role-prefix]
+    kind: Extension
+  register: gardener_operator_extensions  # noqa: var-naming[no-role-prefix]
   vars:
-    _garden: "{{ garden_status.resources | first | default({}) }}"
-    _garden_meta: "{{ _garden.metadata | default({}) }}"
-    _garden_status: "{{ _garden.status | default({}) }}"
-    _garden_last_op: "{{ _garden_status.lastOperation | default({}) }}"
-    _garden_conditions: "{{ _garden_status.conditions | default([]) | items2dict(key_name='type', value_name='status') }}"
+    _pending: >-
+      {% set ns = namespace(names=[]) %}
+      {% for e in gardener_operator_extensions.resources %}
+      {% set conds = e.status.conditions | default([]) | items2dict(key_name='type', value_name='status') %}
+      {% if e.status.observedGeneration | default(-1) < e.metadata.generation or conds.Installed | default('') != 'True' %}
+      {% set ns.names = ns.names + [e.metadata.name] %}
+      {% endif %}
+      {% endfor %}
+      {{ ns.names | join(',') }}
   until:
-    - garden_status.resources | length > 0
-    - _garden_status.observedGeneration | default(-1) >= _garden_meta.generation | default(999999)
-    - _garden_last_op.state | default('') == 'Succeeded'
-    - _garden_conditions.VirtualGardenAPIServerAvailable | default('') == 'True'
-    - _garden_conditions.RuntimeComponentsHealthy | default('') == 'True'
-    - _garden_conditions.VirtualComponentsHealthy | default('') == 'True'
+    - gardener_operator_extensions.resources | length > 0
+    - _pending | trim == ''
   retries: 60
   delay: 10
 

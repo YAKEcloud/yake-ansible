@@ -182,13 +182,15 @@ The `gardener_operator` role deploys the Gardener Operator and configures the en
 | `gardener_operator_version` | `1.152.0` | Gardener Operator Helm chart version. |
 | `gardener_operator_kubernetes_version` | `1.36.5` | Kubernetes version for the internal seed shoot. |
 | `gardener_operator_cluster_name` | `prod-garden` | Name of the garden cluster. |
-| `gardener_operator_garden_url` | `example.com` | Base domain for the Gardener installation. |
+| `gardener_operator_garden_url` | `example.com` | Base domain for the Gardener installation. Must be changed, the run fails with `example.com`. |
+| `gardener_operator_nodes_cidr` | `""` | Nodes CIDR of the garden cluster. Empty detects it from the first node's InternalIP (as /24). Set it if the nodes do not share that /24. |
+| `gardener_operator_ops_toolbelt_version` | `0.56.0` | Image tag of the ops-toolbelt for dashboard terminals. |
 | `gardener_operator_garden_cluster_admin_email` | `admin@example.com` | Email address for the Gardener dashboard admin. |
 | `gardener_operator_networking_type` | `cilium` | Default CNI for shoots: `cilium` or `calico`. |
 | `gardener_operator_image_registry` | `europe-docker.pkg.dev` | Registry the Gardener component images are pulled from. |
 | `gardener_operator_gardenlet_image_vector_overwrite` | `""` | Image vector overwrite for all gardenlets, for example to pull images from a private registry. |
 | `gardener_operator_garden_dashboard_frontend_config` | `{}` | Frontend configuration of the Gardener dashboard, for example `externalTools` links on every shoot. Replaces the whole frontend block, see the [dashboard values](https://github.com/gardener/dashboard/blob/master/charts/gardener-dashboard/values.yaml). |
-| `gardener_operator_gardenlet_feature_gates` | `{}` | Feature gates for all gardenlets (internal seed and managed seeds). |
+| `gardener_operator_gardenlet_feature_gates` | `{}` | Feature gates for all gardenlets (internal seed and managed seeds). The gardener-apiserver gate `InPlaceNodeUpdates` (Alpha) is set by the role in the `Garden`; gardenlets do not have this gate. |
 | `gardener_operator_seed_block_cidrs` | `[169.254.169.254/32]` | CIDRs blocked in all shoot clusters via NetworkPolicy. |
 | `gardener_operator_proxy_host` / `gardener_operator_proxy_port` | `""` / `3128` | HTTP proxy for the managed seeds; also allowed through a NetworkPolicy. |
 | `gardener_operator_ntp_servers` | `[]` | NTP servers for all shoot nodes. Injected as a `systemd-timesyncd` drop-in into the OperatingSystemConfigs via Kyverno (no package installation, works with the read-only Garden Linux root). Empty keeps the OS defaults, which are public NTP pools. |

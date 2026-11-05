@@ -4,11 +4,12 @@ gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
 
 gardener_operator_clusterapi_name: garden
 gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
+# IPv4 address of the proxy (used as /32 in a NetworkPolicy, a hostname is not supported).
 gardener_operator_proxy_host: ""
 gardener_operator_proxy_port: 3128
 
-# NTP servers for shoot nodes (systemd-timesyncd, injected into OperatingSystemConfigs).
-# Empty keeps the OS defaults.
+# NTP servers for shoot nodes (systemd-timesyncd, injected into OperatingSystemConfigs of
+# the internal seed and all managed seeds via Kyverno). Empty keeps the OS defaults.
 gardener_operator_ntp_servers: []
 
 # renovate: datasource=github-releases depName=gardener/gardener
@@ -55,6 +56,12 @@ gardener_operator_cluster_name: prod-garden
 # renovate: datasource=github-releases depName=kubernetes/kubernetes
 gardener_operator_kubernetes_version: '1.36.6'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
+# renovate: datasource=docker depName=europe-docker.pkg.dev/gardener-project/releases/gardener/ops-toolbelt
+gardener_operator_ops_toolbelt_version: '0.56.0'
+
+# Optional override of the nodes CIDR of the garden cluster. Empty detects it from the
+# first node's InternalIP (as /24). Set it when the nodes do not share that /24.
+gardener_operator_nodes_cidr: ""
 
 # Optional: Override the gardenlet image vector, e.g. to pull images from a private registry.
 # The value is injected verbatim into Gardenlet.spec.deployment.helm.imageVectorOverwrite.

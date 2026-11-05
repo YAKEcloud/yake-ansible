@@ -2,19 +2,26 @@ ARG ALPINE_VERSION=3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v2.19.1  # renovate: datasource=github-releases depName=gardener/gardenctl-v2
-ARG GARDENLOGIN_VERSION=v0.11.0  # renovate: datasource=github-releases depName=gardener/gardenlogin
-ARG KUBECTL_VERSION=v1.37.1  # renovate: datasource=github-releases depName=kubernetes/kubernetes
+# renovate: datasource=github-releases depName=gardener/gardenctl-v2
+ARG VERSION=v2.19.1
+# renovate: datasource=github-releases depName=gardener/gardenlogin
+ARG GARDENLOGIN_VERSION=v0.11.0
+# renovate: datasource=github-releases depName=kubernetes/kubernetes
+ARG KUBECTL_VERSION=v1.37.1
+# Upstream publishes no checksums for gardenctl and gardenlogin.
 ADD --chmod=0755 https://github.com/gardener/gardenctl-v2/releases/download/${VERSION}/gardenctl_v2_linux_amd64 /usr/local/bin/gardenctl
 ADD --chmod=0755 https://github.com/gardener/gardenlogin/releases/download/${GARDENLOGIN_VERSION}/gardenlogin_linux_amd64 /usr/local/bin/gardenlogin
 ADD --chmod=0755 https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl /usr/local/bin/kubectl
+ADD https://dl.k8s.io/release/${KUBECTL_VERSION}/bin/linux/amd64/kubectl.sha256 /tmp/kubectl.sha256
 
 ENV USER_NAME=gardenctl
 ENV USER_ID=1000
 ENV GROUP_ID=1000
 ENV GCTL_SESSION_ID=yake
 
-RUN apk update --no-cache \
+RUN echo "$(cat /tmp/kubectl.sha256)  /usr/local/bin/kubectl" > /tmp/sha256sums \
+    && sha256sum -c /tmp/sha256sums \
+    && rm /tmp/kubectl.sha256 /tmp/sha256sums \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
       bash \

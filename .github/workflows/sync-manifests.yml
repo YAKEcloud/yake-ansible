@@ -1,35 +1,47 @@
 ---
 name: Sync manifests
 
-permissions:
-  contents: write
-  pull-requests: write
+permissions: {}
 
 "on":
   workflow_dispatch:
   schedule:
     - cron: '0 0 * * *'
 
+concurrency:
+  group: sync-manifests
+  cancel-in-progress: false
+
 jobs:
   sync-manifests:
     if: github.repository == 'YAKEcloud/yake-ansible'
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      operation: ${{ steps.pr.outputs.pull-request-operation }}
     steps:
       - name: Checkout repo
-        uses: actions/checkout@v7
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
 
       - name: Set up python
-        uses: actions/setup-python@v7
+        uses: actions/setup-python@6d4fd22b20465ccc0f7354476588e8df7c9ca0e0  # v7.1.0
         with:
           python-version: '3.x'
 
+      # The gilt version is pinned (and kept current by Renovate) in requirements.txt.
       - name: Run gilt
         run: |
-          pip install python-gilt==2.2.5
+          pip install "$(grep -xE 'python-gilt==[0-9.]+' requirements.txt)"
           gilt overlay
 
       - name: Create Pull Request
-        uses: peter-evans/create-pull-request@v8
+        id: pr
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1  # v8.1.1
         with:
           commit-message: "chore: sync manifests"
           committer: "YAKE Bot <bot@yake.cloud>"
@@ -38,3 +50,23 @@ jobs:
           branch: sync-manifests
           delete-branch: true
           title: "chore: sync manifests"
+
+  # PRs created with GITHUB_TOKEN do not trigger pull_request workflows, but
+  # workflow_dispatch does. The runs attach to the PR head commit and so
+  # satisfy the required checks. The install test is what a same-repo PR
+  # touching roles/ would run anyway.
+  run-checks:
+    needs: sync-manifests
+    if: contains(fromJSON('["created", "updated"]'), needs.sync-manifests.outputs.operation)
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      actions: write
+    steps:
+      - name: Dispatch checks on the PR branch
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          gh workflow run lint.yml --ref sync-manifests
+          gh workflow run yake-ansible-install.yml --ref sync-manifests

@@ -2,14 +2,18 @@ ARG ALPINE_VERSION=3.24@sha256:f59abe656b692d901e184be3445e084786602108599d2a51d
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v1.37.1  # renovate: datasource=github-releases depName=kubernetes/kubernetes
+# renovate: datasource=github-releases depName=kubernetes/kubernetes
+ARG VERSION=v1.37.1
 ADD --chmod=0755 https://dl.k8s.io/release/${VERSION}/bin/linux/amd64/kubectl /usr/bin/kubectl
+ADD https://dl.k8s.io/release/${VERSION}/bin/linux/amd64/kubectl.sha256 /tmp/kubectl.sha256
 
 ENV USER_NAME=kubectl
 ENV USER_ID=1000
 ENV GROUP_ID=1000
 
-RUN apk update --no-cache \
+RUN echo "$(cat /tmp/kubectl.sha256)  /usr/bin/kubectl" > /tmp/sha256sums \
+    && sha256sum -c /tmp/sha256sums \
+    && rm /tmp/kubectl.sha256 /tmp/sha256sums \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
       dumb-init \

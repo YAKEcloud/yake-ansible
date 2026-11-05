@@ -34,7 +34,7 @@ clusterapi_cluster_host_aliases: |-
 
 # With or without the leading v, the templates normalize it.
 # renovate: datasource=github-releases depName=kubernetes/kubernetes extractVersion=^v(?<version>.+)$
-clusterapi_cluster_kubernetes_version: '1.36.6'
+clusterapi_cluster_kubernetes_version: '1.37.2'
 
 clusterapi_cluster_openstack_auth_url: ""
 clusterapi_cluster_openstack_application_credential_id: ""

@@ -59,7 +59,7 @@ Provider extension versions are separate variables (e.g., `gardener_operator_pro
 
 ### Switching the Virtual Garden to High Availability
 
-`gardener_operator_virtual_garden_high_availability` (default `true`) runs etcd main and events of the virtual garden with 3 members each. On an existing installation with a single member, the next playbook run switches it over:
+`gardener_operator_virtual_garden_high_availability` (default `true`) runs etcd main and events of the virtual garden with 3 members each (instead of 1) and the virtual kube-apiserver and the gardener-apiserver with 3 replicas (instead of 2). On an existing installation with a single member, the next playbook run switches it over:
 
 1. etcd-druid restarts the existing member and adds two new members one after another.
 2. While the membership changes, the virtual garden kube-apiserver restarts several times. The Gardener API and the dashboard are unavailable for a few minutes, and `gardener-apiserver`, `gardener-controller-manager`, `gardener-scheduler`, `gardenlet` and `virtual-garden-kube-controller-manager` go into `CrashLoopBackOff`.

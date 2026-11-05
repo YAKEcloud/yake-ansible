@@ -1,3 +1,8 @@
+{#- Go duration (e.g. 300s, 20m, 1h) or plain seconds to seconds, for the v1beta2 *Seconds fields. -#}
+{%- macro _seconds(v) -%}
+{%- set p = (v | string | regex_findall('^([0-9]+)([smh]?)$'))[0] -%}
+{{ (p[0] | int) * {'': 1, 's': 1, 'm': 60, 'h': 3600}[p[1]] }}
+{%- endmacro -%}
 {% set ntp = clusterapi_cluster_ntp_servers | d([]) | length > 0 %}
 {% set cilium = clusterapi_cluster_network == 'cilium' %}
 {% set k8s_version = 'v' ~ (clusterapi_cluster_kubernetes_version | string | regex_replace('^v', '')) %}
@@ -162,7 +167,7 @@ spec:
       version: {{ k8s_version }}
 {% if clusterapi_cluster_worker_machine_health_check_enabled | bool %}
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineHealthCheck
 metadata:
   name: {{ clusterapi_cluster_name }}-{{ md.name }}-mhc
@@ -171,15 +176,19 @@ spec:
   selector:
     matchLabels:
       cluster.x-k8s.io/deployment-name: {{ clusterapi_cluster_name }}-{{ md.name }}
-  maxUnhealthy: {{ clusterapi_cluster_worker_machine_health_check_max_unhealthy }}
-  nodeStartupTimeout: {{ clusterapi_cluster_worker_machine_health_check_node_startup_timeout }}
-  unhealthyConditions:
-    - type: Ready
-      status: Unknown
-      timeout: {{ clusterapi_cluster_worker_machine_health_check_unhealthy_timeout }}
-    - type: Ready
-      status: "False"
-      timeout: {{ clusterapi_cluster_worker_machine_health_check_unhealthy_timeout }}
+  checks:
+    nodeStartupTimeoutSeconds: {{ _seconds(clusterapi_cluster_worker_machine_health_check_node_startup_timeout) }}
+    unhealthyNodeConditions:
+      - type: Ready
+        status: Unknown
+        timeoutSeconds: {{ _seconds(clusterapi_cluster_worker_machine_health_check_unhealthy_timeout) }}
+      - type: Ready
+        status: "False"
+        timeoutSeconds: {{ _seconds(clusterapi_cluster_worker_machine_health_check_unhealthy_timeout) }}
+  remediation:
+    triggerIf:
+{% set _max_unhealthy = clusterapi_cluster_worker_machine_health_check_max_unhealthy | string %}
+      unhealthyLessThanOrEqualTo: {{ (_max_unhealthy | int) if _max_unhealthy is match('^[0-9]+$') else (_max_unhealthy | to_json) }}
 {% endif %}
 {% endfor %}
 ---
@@ -296,7 +305,7 @@ spec:
   version: {{ k8s_version }}
 {% if clusterapi_cluster_control_plane_machine_health_check_enabled | bool %}
 ---
-apiVersion: cluster.x-k8s.io/v1beta1
+apiVersion: cluster.x-k8s.io/v1beta2
 kind: MachineHealthCheck
 metadata:
   name: {{ clusterapi_cluster_name }}-control-plane-mhc
@@ -305,30 +314,32 @@ spec:
   selector:
     matchLabels:
       cluster.x-k8s.io/control-plane: ""
-  unhealthyConditions:
-    - type: Ready
-      status: Unknown
-      timeout: {{ clusterapi_cluster_control_plane_machine_health_check_unhealthy_timeout }}
-    - type: Ready
-      status: "False"
-      timeout: {{ clusterapi_cluster_control_plane_machine_health_check_unhealthy_timeout }}
+  checks:
+    unhealthyNodeConditions:
+      - type: Ready
+        status: Unknown
+        timeoutSeconds: {{ _seconds(clusterapi_cluster_control_plane_machine_health_check_unhealthy_timeout) }}
+      - type: Ready
+        status: "False"
+        timeoutSeconds: {{ _seconds(clusterapi_cluster_control_plane_machine_health_check_unhealthy_timeout) }}
 {% endif %}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: OpenStackCluster
 metadata:
   name: {{ clusterapi_cluster_name }}
 spec:
-  apiServerLoadBalancer:
-    enabled: true
-    provider: {{ clusterapi_cluster_openstack_loadbalancer_provider }}
+  apiServer:
+    managedLoadBalancer:
+      enabled: true
+      provider: {{ clusterapi_cluster_openstack_loadbalancer_provider }}
 {% if clusterapi_cluster_openstack_loadbalancer_allowed_cidrs | d([]) | length > 0 %}
-    allowedCIDRs: {{ clusterapi_cluster_openstack_loadbalancer_allowed_cidrs | to_json }}
+      allowedCIDRs: {{ clusterapi_cluster_openstack_loadbalancer_allowed_cidrs | to_json }}
 {% endif %}
-    monitor:
-      delay: {{ clusterapi_cluster_openstack_loadbalancer_monitor_delay }}
-      timeout: {{ clusterapi_cluster_openstack_loadbalancer_monitor_timeout }}
-      maxRetries: {{ clusterapi_cluster_openstack_loadbalancer_monitor_max_retries }}
+      monitor:
+        delay: {{ clusterapi_cluster_openstack_loadbalancer_monitor_delay }}
+        timeout: {{ clusterapi_cluster_openstack_loadbalancer_monitor_timeout }}
+        maxRetries: {{ clusterapi_cluster_openstack_loadbalancer_monitor_max_retries }}
   externalNetwork:
     id: {{ clusterapi_cluster_openstack_external_network_id }}
   identityRef:
@@ -358,14 +369,16 @@ spec:
     - {{ az }}
 {% endfor %}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: OpenStackMachineTemplate
 metadata:
   name: {{ cp_machine_template_name }}
 spec:
   template:
     spec:
-      flavor: {{ clusterapi_cluster_control_plane_machine_flavor }}
+      flavor:
+        filter:
+          name: {{ clusterapi_cluster_control_plane_machine_flavor | to_json }}
       image:
         id: {{ clusterapi_cluster_openstack_image_id }}
       sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}
@@ -393,14 +406,16 @@ spec:
 } %}
 {% set md_machine_template_name = clusterapi_cluster_name ~ '-' ~ md.name ~ '-' ~ (_md_machine_template_content | to_json | hash('sha1'))[:8] %}
 ---
-apiVersion: infrastructure.cluster.x-k8s.io/v1beta1
+apiVersion: infrastructure.cluster.x-k8s.io/v1beta2
 kind: OpenStackMachineTemplate
 metadata:
   name: {{ md_machine_template_name }}
 spec:
   template:
     spec:
-      flavor: {{ clusterapi_cluster_worker_machine_flavor }}
+      flavor:
+        filter:
+          name: {{ clusterapi_cluster_worker_machine_flavor | to_json }}
       image:
         id: {{ md.image_id }}
       sshKeyName: {{ clusterapi_cluster_openstack_ssh_key_name }}

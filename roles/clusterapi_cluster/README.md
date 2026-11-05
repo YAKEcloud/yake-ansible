@@ -94,6 +94,8 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_worker_server_group_policy` | `soft-anti-affinity` | Server group policy for worker machines. |
 | `clusterapi_cluster_stale_machine_template_cleanup_enabled` | `true` | Delete `OpenStackMachineTemplate` objects no longer referenced after a flavor/image-triggered rollout (see "Rolling out flavor/image changes" below). |
 
+The health check timeouts accept seconds or a duration with one unit (`300s`, `20m`, `1h`). They are converted to the `*Seconds` fields of the `cluster.x-k8s.io/v1beta2` MachineHealthCheck.
+
 Worker node deployments support multiple pools across failure domains:
 
 ```yaml

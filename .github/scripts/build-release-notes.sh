@@ -62,18 +62,20 @@ if [ -n "$versions" ]; then
   done
 fi
 
-# Generated notes of this repository: own changes first, dependency bumps
-# below, without the duplicate "What's Changed" heading and without bot
+# Generated notes of this repository: breaking changes first, then own
+# changes, dependency bumps below, without the duplicate "What's Changed" heading and without bot
 # mentions (they would show up as contributors).
 reorder_own_notes() {
   sed -E 's/ by @[A-Za-z0-9_-]+\[bot\]//' |
     awk '
       /^## What.s Changed/ { next }
+      /^### Breaking changes$/ { cur = "breaking"; next }
       /^### Changes$/ { cur = "changes"; next }
       /^### Dependency updates$/ { cur = "updates"; next }
       /^## / || /^\*\*Full Changelog/ { cur = "rest" }
       { text[cur] = text[cur] $0 "\n" }
       END {
+        if (text["breaking"] ~ /[^[:space:]]/) printf "### Breaking changes\n%s\n", text["breaking"]
         if (text["changes"] ~ /[^[:space:]]/) printf "### Changes\n%s\n", text["changes"]
         if (text["updates"] ~ /[^[:space:]]/) printf "### Dependency updates\n%s\n", text["updates"]
         printf "%s", text["rest"]

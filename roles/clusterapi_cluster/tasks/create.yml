@@ -188,6 +188,10 @@
     src: /var/lib/yake/cloud-secret.yaml
   no_log: true
 
+- name: Include secrets encryption config tasks
+  ansible.builtin.include_tasks: encryption-config.yml
+  when: clusterapi_cluster_secrets_encryption_enabled | bool
+
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
@@ -473,3 +477,7 @@
     namespace: kube-system
     wait: true
     wait_timeout: 300
+
+- name: Include secrets encryption migration tasks
+  ansible.builtin.include_tasks: encryption-migrate.yml
+  when: clusterapi_cluster_secrets_encryption_enabled | bool

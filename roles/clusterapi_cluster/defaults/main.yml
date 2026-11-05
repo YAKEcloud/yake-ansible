@@ -91,6 +91,9 @@ clusterapi_cluster_control_plane_server_group_policy: soft-anti-affinity
 clusterapi_cluster_worker_server_group_enabled: true
 clusterapi_cluster_worker_server_group_policy: soft-anti-affinity
 clusterapi_cluster_stale_machine_template_cleanup_enabled: true
+# Encrypt Secrets at rest in the etcd of the cluster (secretbox). The key is generated once and kept in the Secret
+# <name>-encryption-config in the management cluster and in /var/lib/yake/encryption-key.<name>. Back it up.
+clusterapi_cluster_secrets_encryption_enabled: true
 clusterapi_cluster_control_plane_machine_health_check_enabled: true
 clusterapi_cluster_control_plane_machine_health_check_unhealthy_timeout: 300s
 clusterapi_cluster_control_plane_remediation_max_retry: 3

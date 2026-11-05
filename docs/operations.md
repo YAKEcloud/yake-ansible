@@ -57,6 +57,25 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.garden
 
 Provider extension versions are separate variables (e.g., `gardener_operator_provider_openstack_version`). Update the relevant version and re-run the playbook with `--tags gardener`. Renovate automatically opens pull requests for version updates.
 
+### Switching the Virtual Garden to High Availability
+
+`gardener_operator_virtual_garden_high_availability` (default `true`) runs etcd main and events of the virtual garden with 3 members each. On an existing installation with a single member, the next playbook run switches it over:
+
+1. etcd-druid restarts the existing member and adds two new members one after another.
+2. While the membership changes, the virtual garden kube-apiserver restarts several times. The Gardener API and the dashboard are unavailable for a few minutes, and `gardener-apiserver`, `gardener-controller-manager`, `gardener-scheduler`, `gardenlet` and `virtual-garden-kube-controller-manager` go into `CrashLoopBackOff`.
+3. Once all members are ready, the Garden returns to `Succeeded` (about 6 minutes in our tests). The crashing pods recover on their own, the `CrashLoopBackOff` can delay this by up to 5 more minutes. The `gardenlet` may log `panic: ... no matches for seedmanagement.gardener.cloud/v1alpha1` until the `gardener-apiserver` is back, this is expected.
+
+Existing shoot clusters keep running, only changes through the Gardener API are delayed. Plan the switch in a maintenance window. It cannot be reverted. To stay on a single member, set `gardener_operator_virtual_garden_high_availability: false` before the run.
+
+Watch the progress with:
+
+```bash
+export KUBECONFIG=/var/lib/yake/kubeconfig.garden
+./.local/yake-kubectl -n garden get etcd
+./.local/yake-kubectl -n garden get pods -l app.kubernetes.io/part-of=virtual-garden-etcd-main
+./.local/yake-kubectl get garden
+```
+
 ### Upgrading the Garden Cluster
 
 Update `clusterapi_cluster_kubernetes_version` and re-run:

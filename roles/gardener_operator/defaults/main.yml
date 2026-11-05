@@ -53,6 +53,9 @@ gardener_operator_openstack_cacert: ""
 
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
+# Run the virtual garden control plane highly available (3 etcd replicas spread over nodes and zones).
+# Once enabled, Gardener does not support disabling it again.
+gardener_operator_virtual_garden_high_availability: true
 # renovate: datasource=github-releases depName=kubernetes/kubernetes extractVersion=^v(?<version>.+)$
 gardener_operator_kubernetes_version: '1.37.2'
 gardener_operator_image_registry: "europe-docker.pkg.dev"

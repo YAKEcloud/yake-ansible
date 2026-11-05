@@ -6,7 +6,6 @@
   "automerge": true,
   "automergeType": "pr",
   "platformAutomerge": true,
-  "minimumReleaseAge": "3 days",
   "separateMinorPatch": true,
   "commitBody": "Signed-off-by: Renovate Bot <bot@renovateapp.com>",
   "packageRules": [
@@ -16,9 +15,9 @@
       "automerge": false
     },
     {
-      "description": "Our own images are built from upstream releases that already passed minimumReleaseAge.",
-      "matchPackageNames": ["ghcr.io/yakecloud/**"],
-      "minimumReleaseAge": null
+      "description": "Actions run with repository secrets. Wait a few days, so that a compromised release is likely yanked before it is merged.",
+      "matchManagers": ["github-actions"],
+      "minimumReleaseAge": "3 days"
     },
     {
       "groupName": "kind and kindest/node",

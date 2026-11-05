@@ -56,6 +56,9 @@ gardener_operator_cluster_name: prod-garden
 # Run the virtual garden control plane highly available (3 etcd replicas spread over nodes and zones).
 # Once enabled, Gardener does not support disabling it again.
 gardener_operator_virtual_garden_high_availability: true
+# Check at the end of the role that the dashboard login reaches Dex. Disable it if the Ansible host cannot reach
+# https://dashboard.<garden_url>.
+gardener_operator_login_check_enabled: true
 # renovate: datasource=github-releases depName=kubernetes/kubernetes extractVersion=^v(?<version>.+)$
 gardener_operator_kubernetes_version: '1.37.2'
 gardener_operator_image_registry: "europe-docker.pkg.dev"

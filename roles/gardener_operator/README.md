@@ -36,6 +36,7 @@ This role deploys the Gardener Operator on an existing Kubernetes cluster and co
 | `gardener_operator_nodes_cidr` | `""` | Nodes CIDR of the garden cluster. Empty detects it from the first node's InternalIP (as /24). Set it if the nodes do not share that /24. |
 | `gardener_operator_ops_toolbelt_version` | see defaults | Image tag of the ops-toolbelt used for dashboard terminals. |
 | `gardener_operator_kubernetes_version` | see defaults | Kubernetes version for the internal seed shoot. |
+| `gardener_operator_login_check_enabled` | `true` | Fail the role if `https://dashboard.<garden_url>/auth` does not redirect to Dex, i.e. a dashboard login would fail (e.g. "Issuer not available"). |
 | `gardener_operator_virtual_garden_high_availability` | `true` | Sets `spec.virtualCluster.controlPlane.highAvailability` in the Garden: 3 replicas each for etcd main and events, spread over nodes (and zones). Use at least 3 worker nodes, so that each replica gets its own node. Gardener does not support disabling it again. |
 | `gardener_operator_networking_type` | `cilium` | Default CNI for shoots: `cilium` or `calico`. |
 | `gardener_operator_garden_cluster_admin_email` | `admin@example.com` | Cluster-admin email for the Gardener dashboard; also the default sole member of `gardener_operator_managed_seeds_project`. |

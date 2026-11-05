@@ -23,7 +23,9 @@ The `kubectl_install`, `helm_install`, and `clusterctl_install` roles provide th
 
 Each role also exposes `<role>_container_registry` (default `ghcr.io`) and `<role>_container_image` (`yakecloud/kubectl`, `yakecloud/helm`, `yakecloud/clusterctl`) to pull the images from a different registry.
 
-`clusterapi_install_contract` (default `v1beta2`) is the Cluster API contract that `clusterctl upgrade apply` uses to upgrade the providers of an existing management cluster.
+`clusterapi_install_capi_version` (`v1.14.4`, core, kubeadm bootstrap and control plane) and `clusterapi_install_capo_version` (`v0.15.1`, OpenStack) pin the Cluster API providers for `clusterctl init` and `clusterctl upgrade apply`. CAPO must match the vendored ORC manifest. If one is empty, `clusterapi_install_contract` (default `v1beta2`) is used and the providers float to the latest versions.
+
+With the `binary` method the downloads of kubectl, Helm and kind are verified against the published sha256 files. clusterctl, gardenctl and gardenlogin publish none and are not verified. Binaries are kept per version (`.local/<tool>-<version>`), so a version change takes effect.
 
 The optional `gardenctl_install` role (tag `gardenctl`) is disabled by default. Set `gardenctl_install_enabled: true` to install [gardenctl](https://github.com/gardener/gardenctl-v2). The container image `ghcr.io/yakecloud/gardenctl` contains gardenctl, gardenlogin, and kubectl; with `binary` gardenctl and gardenlogin are downloaded to `.local/`.
 
@@ -72,13 +74,14 @@ The garden cluster is provisioned by the `clusterapi_cluster` role on OpenStack.
 | `clusterapi_cluster_openstack_external_network` | `public` | Name of the external (floating IP) network. |
 | `clusterapi_cluster_openstack_ssh_key_name` | `<cluster name>` | Name of the OpenStack key pair for the nodes. |
 | `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Octavia provider for load balancers created by the cloud controller manager. |
+| `clusterapi_cluster_openstack_loadbalancer_allowed_cidrs` | `[]` | Source CIDRs allowed to reach the API server load balancer (`allowedCIDRs`). Empty allows all. |
 
 ### Machines
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `clusterapi_cluster_name` | `garden` | Name of the garden cluster. |
-| `clusterapi_cluster_kubernetes_version` | `v1.36.5` | Kubernetes version for the garden cluster. |
+| `clusterapi_cluster_kubernetes_version` | `1.36.6` | Kubernetes version for the garden cluster. |
 | `clusterapi_cluster_openstack_image_id` | `""` | Glance image UUID for cluster nodes. |
 | `clusterapi_cluster_openstack_image_name` | `""` | Expected name of the image. Strongly recommended: it is used to verify that the image ID is correct. |
 | `clusterapi_cluster_ntp_servers` | `[]` | NTP servers for the cluster nodes (`systemd-timesyncd`). Empty keeps the image defaults. |
@@ -158,7 +161,7 @@ clusterapi_cluster_openstack_subnets:
 
 ### Registry Caches and Host Entries
 
-The nodes pull images through the registry caches at `https://registry.osism.tech/v2/<name>`. The URLs are set per upstream registry through `clusterapi_cluster_container_registry_cache_dockerhub`, `..._pkg`, `..._gcr`, `..._ghcr`, `..._quay` and `..._k8s`.
+The nodes pull images through the registry caches at `https://registry.osism.tech/v2/<name>`. The mirrors need a valid TLS certificate (no `skip_verify`). An empty URL disables a mirror. The URLs are set per upstream registry through `clusterapi_cluster_container_registry_cache_dockerhub`, `..._pkg`, `..._gcr`, `..._ghcr`, `..._quay` and `..._k8s`.
 
 To make additional hostnames resolvable on the nodes (for example for a private registry or Keystone), use `clusterapi_cluster_hosts_entries`:
 

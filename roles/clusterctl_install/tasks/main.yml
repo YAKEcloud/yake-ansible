@@ -25,12 +25,22 @@
     state: started
   when: clusterctl_install_method == "docker"
 
+# The release publishes no checksums. The download is kept per version so that a version
+# bump takes effect, the installed binary is only replaced if it differs.
 - name: Download clusterctl binary
   ansible.builtin.get_url:
     url: "https://github.com/kubernetes-sigs/cluster-api/releases/download/{{ clusterctl_install_version }}/clusterctl-linux-amd64"
-    dest: "{{ playbook_dir }}/.local/yake-clusterctl"
+    dest: "{{ playbook_dir }}/.local/clusterctl-{{ clusterctl_install_version }}"
     mode: "0755"
   environment: "{{ clusterctl_install_proxy_env }}"
+  when: clusterctl_install_method == "binary"
+
+- name: Install clusterctl binary
+  ansible.builtin.copy:
+    src: "{{ playbook_dir }}/.local/clusterctl-{{ clusterctl_install_version }}"
+    dest: "{{ playbook_dir }}/.local/yake-clusterctl"
+    mode: "0755"
+    remote_src: true
   when: clusterctl_install_method == "binary"
 
 - name: Copy clusterctl script

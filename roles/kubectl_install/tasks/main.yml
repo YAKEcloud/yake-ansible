@@ -25,9 +25,11 @@
     state: started
   when: kubectl_install_method == "docker"
 
+# The checksum makes get_url replace the binary after a version bump.
 - name: Download kubectl binary
   ansible.builtin.get_url:
     url: "https://dl.k8s.io/release/{{ kubectl_install_version }}/bin/linux/amd64/kubectl"
+    checksum: "sha256:https://dl.k8s.io/release/{{ kubectl_install_version }}/bin/linux/amd64/kubectl.sha256"
     dest: "{{ playbook_dir }}/.local/yake-kubectl"
     mode: "0755"
   environment: "{{ kubectl_install_proxy_env }}"

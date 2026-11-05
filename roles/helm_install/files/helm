@@ -4,12 +4,6 @@
 
 PARAMETERS=${PARAMETERS:-}
 
-if [[ -t 0 ]]; then
-    INTERACTIVE=${INTERACTIVE:-true}
-else
-    INTERACTIVE=${INTERACTIVE:-false}
-fi
-
 if [[ -n "$KUBECONFIG" ]]; then
     PARAMETERS="$PARAMETERS --env KUBECONFIG=$KUBECONFIG"
 else
@@ -19,9 +13,9 @@ fi
 PREFIX="HELM_"
 ENV_ARGS=()
 
-while IFS='=' read -r name value; do
+while IFS='=' read -r name _; do
     if [[ $name == ${PREFIX}* ]]; then
-        ENV_ARGS+=("-e" "${name}=${value}")
+        ENV_ARGS+=("-e" "${name}")
     fi
 done < <(env)
 

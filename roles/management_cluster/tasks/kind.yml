@@ -24,11 +24,15 @@
     group: root
   when: management_cluster_kind_method == "docker"
 
+# The checksum makes get_url replace the binary after a version bump.
 - name: Download kind binary
   ansible.builtin.get_url:
-    url: "https://kind.sigs.k8s.io/dl/v{{ management_cluster_kind_version }}/kind-linux-amd64"
+    url: "https://kind.sigs.k8s.io/dl/{{ _kind_version }}/kind-linux-amd64"
+    checksum: "sha256:https://kind.sigs.k8s.io/dl/{{ _kind_version }}/kind-linux-amd64.sha256sum"
     dest: "{{ playbook_dir }}/.local/yake-kind"
     mode: "0755"
+  vars:
+    _kind_version: "v{{ management_cluster_kind_version | regex_replace('^v', '') }}"
   environment: "{{ management_cluster_proxy_env }}"
   when: management_cluster_kind_method == "binary"
 
@@ -85,7 +89,7 @@
   become: true
   ansible.builtin.file:
     path: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
-    mode: "0640"
+    mode: "0600"
     owner: "{{ management_cluster_uid }}"
     group: "{{ management_cluster_gid }}"
 
@@ -94,7 +98,7 @@
   ansible.builtin.copy:
     src: "/var/lib/yake/kubeconfig.{{ management_cluster_name }}"
     dest: "/var/lib/yake/kubeconfig"
-    mode: "0640"
+    mode: "0600"
     owner: "{{ management_cluster_uid }}"
     group: "{{ management_cluster_gid }}"
   when: management_cluster_kind_primary == management_cluster_name

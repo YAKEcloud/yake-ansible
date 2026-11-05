@@ -15,7 +15,7 @@ This role creates a Kubernetes cluster on OpenStack using Cluster API (CAPO). It
 ## Rolling out flavor/image changes
 
 Cluster API only triggers a rollout of a `MachineDeployment`/`KubeadmControlPlane` when the *name* of the
-referenced `OpenStackMachineTemplate` changes — not when the template's content changes, and labels/annotations
+referenced `OpenStackMachineTemplate` changes, not when the template's content changes, and labels/annotations
 on the template are explicitly ignored for this comparison. To make in-place edits (e.g. bumping
 `clusterapi_cluster_worker_machine_flavor` or a worker's `image_id`) actually roll the machines, this role derives
 the `OpenStackMachineTemplate` name from a hash of its meaningful content (flavor, image, ssh key, root volume,
@@ -23,7 +23,7 @@ server group). Changing any of those values on a re-run produces a new template 
 required rollout automatically. The same applies to the `KubeadmConfigTemplate` of the workers (name
 `<cluster>-md-<hash>`), so changes to NTP, proxy, hosts entries, registry mirrors or the CA roll out to the workers.
 
-`clusterapi_cluster_kubernetes_version` does not need this trick — it's compared directly on
+`clusterapi_cluster_kubernetes_version` does not need this trick, it's compared directly on
 `KubeadmControlPlane`/`MachineDeployment` and already triggers a rollout on change.
 
 Old, no-longer-referenced `OpenStackMachineTemplate` objects left behind after such a rollout (Cluster API doesn't
@@ -62,7 +62,7 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `clusterapi_cluster_name` | `garden` | Cluster name and prefix for all created resources. |
-| `clusterapi_cluster_kubernetes_version` | `1.36.6` | Kubernetes version. |
+| `clusterapi_cluster_kubernetes_version` | see defaults | Kubernetes version. |
 
 ### Machines
 
@@ -123,7 +123,7 @@ does not expose it on the PV, causing an AZ mismatch.
 
 Two networking approaches are available and are mutually exclusive.
 
-**Managed subnets** — CAPO creates a new network and subnet:
+**Managed subnets:** CAPO creates a new network and subnet:
 
 ```yaml
 clusterapi_cluster_openstack_managed_subnets:
@@ -132,7 +132,7 @@ clusterapi_cluster_openstack_managed_subnets:
       - "1.1.1.1"
 ```
 
-**Existing subnets** — reference a pre-existing subnet by its OpenStack UUID. This is the preferred approach when subnets are allocated from an OpenStack subnet pool, since the pool allocation must happen before cluster creation. DNS nameservers are configured on the subnet in OpenStack and do not need to be set here.
+**Existing subnets:** Reference a pre-existing subnet by its OpenStack UUID. This is the preferred approach when subnets are allocated from an OpenStack subnet pool, since the pool allocation must happen before cluster creation. DNS nameservers are configured on the subnet in OpenStack and do not need to be set here.
 
 ```yaml
 clusterapi_cluster_openstack_subnets:
@@ -146,8 +146,8 @@ Up to two subnets can be listed (one IPv4 and one IPv6 for dual-stack clusters).
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `clusterapi_cluster_network` | `cilium` | CNI plugin: `cilium` or `calico`. |
-| `clusterapi_cluster_cilium_version` | `1.19.3` | Cilium Helm chart version. |
-| `clusterapi_cluster_calico_version` | `v3.32.0` | Calico (tigera-operator) Helm chart version. |
+| `clusterapi_cluster_cilium_version` | see defaults | Cilium Helm chart version. |
+| `clusterapi_cluster_calico_version` | see defaults | Calico (tigera-operator) Helm chart version. |
 
 The `node.cilium.io/agent-not-ready` taint is only set for `cilium`.
 

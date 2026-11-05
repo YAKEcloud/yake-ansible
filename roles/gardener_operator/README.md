@@ -31,11 +31,11 @@ This role deploys the Gardener Operator on an existing Kubernetes cluster and co
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `gardener_operator_version` | `1.154.2` | Gardener Operator Helm chart version. |
+| `gardener_operator_version` | see defaults | Gardener Operator Helm chart version. |
 | `gardener_operator_garden_url` | `example.com` | Base domain. Wildcard DNS for this domain must point to the garden ingress. Must be changed, the run fails with `example.com`. |
 | `gardener_operator_nodes_cidr` | `""` | Nodes CIDR of the garden cluster. Empty detects it from the first node's InternalIP (as /24). Set it if the nodes do not share that /24. |
-| `gardener_operator_ops_toolbelt_version` | `0.56.0` | Image tag of the ops-toolbelt used for dashboard terminals. |
-| `gardener_operator_kubernetes_version` | `1.36.6` | Kubernetes version for the internal seed shoot. |
+| `gardener_operator_ops_toolbelt_version` | see defaults | Image tag of the ops-toolbelt used for dashboard terminals. |
+| `gardener_operator_kubernetes_version` | see defaults | Kubernetes version for the internal seed shoot. |
 | `gardener_operator_networking_type` | `cilium` | Default CNI for shoots: `cilium` or `calico`. |
 | `gardener_operator_garden_cluster_admin_email` | `admin@example.com` | Cluster-admin email for the Gardener dashboard; also the default sole member of `gardener_operator_managed_seeds_project`. |
 | `gardener_operator_managed_seeds_project` | `{name: seeds, members: [{email: gardener_operator_garden_cluster_admin_email, role: admin, roles: [serviceaccountmanager]}]}` | The `name`/`members` of the `garden` namespace Project used internally for `gardener_operator_managed_seeds` (its namespace is always `garden`, not configurable). Same member entry format as `gardener_operator_projects` below. Adding someone to `gardener_operator_dex.static_passwords` does **not** put them here - the two are independent, so a new Dex user gets no project access unless you explicitly add them to a project's member list. |
@@ -222,7 +222,7 @@ Etcd backups for the virtual garden and the internal seed are enabled when the c
 | `gardener_operator_monitoring.basic_auth.username` | `""` | Basic auth username for the remote write endpoint. |
 | `gardener_operator_monitoring.basic_auth.password` | `""` | Basic auth password. Secret is only created when both username and password are set. |
 
-This only covers shoot metrics. Gardener's own seed/garden monitoring (cache, aggregate and seed Prometheus) has no remote write option — it is pull-based: the [aggregate Prometheus](https://gardener.cloud/docs/gardener/monitoring/#aggregate-prometheus) exposes an ingress in each seed's `garden` namespace so an external Prometheus/Cortex can scrape (federate) it instead. There is no role variable for this; set up such scraping directly on the central Prometheus/Cortex side.
+This only covers shoot metrics. Gardener's own seed/garden monitoring (cache, aggregate and seed Prometheus) has no remote write option, it is pull-based: the [aggregate Prometheus](https://gardener.cloud/docs/gardener/monitoring/#aggregate-prometheus) exposes an ingress in each seed's `garden` namespace so an external Prometheus/Cortex can scrape (federate) it instead. There is no role variable for this; set up such scraping directly on the central Prometheus/Cortex side.
 
 ## Files written
 

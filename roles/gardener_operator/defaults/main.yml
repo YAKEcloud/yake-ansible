@@ -190,14 +190,14 @@ gardener_operator_shoot_oidc_service_version: '0.41.0'
 # renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3
 gardener_operator_backup_s3_version: '0.8.7'
 
-# Garden etcd backup — enabled when credentials are non-empty.
+# Garden etcd backup, enabled when credentials are non-empty.
 gardener_operator_garden_backup_provider: openstack
 gardener_operator_garden_backup_region: "{{ gardener_operator_openstack_region_name }}"
 gardener_operator_garden_backup_bucket_name: gardener-operator
 # Look up your credentials scheme for your provider
 gardener_operator_garden_backup_credentials: ""
 
-# Internal seed backup — enabled when credentials are non-empty.
+# Internal seed backup, enabled when credentials are non-empty.
 gardener_operator_internal_seed_backup_provider: openstack
 gardener_operator_internal_seed_backup_region: "{{ gardener_operator_openstack_region_name }}"
 gardener_operator_internal_seed_backup_bucket_name: gardener-internal-seed
@@ -317,7 +317,7 @@ gardener_operator_managed_seeds:
         zones:
           - nova
     settings:
-      # Seed backup — enabled when backup.bucket_name is set.
+      # Seed backup, enabled when backup.bucket_name is set.
       # backup:
       #   provider: openstack
       #   region: region-a

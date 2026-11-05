@@ -108,7 +108,7 @@ All tools (kubectl, helm, clusterctl, kind) support two install methods controll
 
 | Method | Description |
 |--------|-------------|
-| `docker` (default) | Tools run as Docker containers. Each invocation starts a short-lived container. No binaries are extracted to the host. |
+| `docker` (default) | Tools run as Docker containers. The wrappers run each command in a persistent tool container (`docker exec`). No binaries are extracted to the host. |
 | `binary` | Tools are downloaded as static binaries and stored in `.local/`. |
 
 The wrapper scripts in `.local/` abstract this difference, so the rest of the playbooks and the user experience remain identical regardless of method.

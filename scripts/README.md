@@ -85,7 +85,7 @@ These images are used by Cluster API for management and seed cluster nodes.
 Reference them in `group_vars/all.yml` via `clusterapi_cluster_openstack_image_id`
 (look up the ID in the script's summary or in Glance).
 
-**GardenLinux images** — OS images for Gardener shoot worker nodes:
+**GardenLinux images:** OS images for Gardener shoot worker nodes:
 
 | Glance name | Source |
 |---|---|
@@ -115,7 +115,7 @@ The output tells you which strategy matched, for example:
 The fuzzy scan catches manually uploaded images regardless of how they were named,
 as long as the version number is part of the name.
 If the image exists with no version in its name at all (e.g. just `gardenlinux-latest`),
-the script cannot detect it and will upload a new one — use `--dry-run` first to review.
+the script cannot detect it and will upload a new one. Use `--dry-run` first to review.
 
 ### Integrity
 
@@ -128,7 +128,7 @@ warning. With `web-download` Glance fetches the data itself, so it is not verifi
 
 | Image type | Method |
 |---|---|
-| CAPI | OpenStack `web-download` import (default) — Glance downloads the qcow2 directly from the URL, nothing is transferred through the machine running the script |
+| CAPI | OpenStack `web-download` import (default). Glance downloads the qcow2 directly from the URL, nothing is transferred through the machine running the script |
 | GardenLinux | Local download (tar.xz) → extract → upload (always, since the image is packed inside an archive) |
 
 For the CAPI image, the script creates the Glance image record and then triggers an

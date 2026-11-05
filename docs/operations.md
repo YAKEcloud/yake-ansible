@@ -4,14 +4,14 @@ This document covers day-to-day operations of the platform: upgrading components
 
 ## CI Variables (`group_vars/ci.yml`)
 
-The variables used by the `Yake-Ansible install` GitHub Actions workflow live in `group_vars/ci.yml`, encrypted with [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). Since this repository is public, the file is safe to commit — it's useless without the vault password.
+The variables used by the `Yake-Ansible install` GitHub Actions workflow live in `group_vars/ci.yml`, encrypted with [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). Since this repository is public, the file is safe to commit: it's useless without the vault password.
 
 The vault password itself is never committed. It lives in:
 
 - **Locally**: `.vault-pass.txt` in the repo root (gitignored).
 - **In CI**: the `ANSIBLE_VAULT_PASSWORD` GitHub Actions secret. The workflow writes it to a temporary `.vault-pass.txt` at the start of the run and passes `--vault-password-file` to `ansible-playbook`.
 
-It is deliberately **not** wired up via `ansible.cfg`'s `vault_password_file` setting, since that would apply to every `ansible-playbook`/`ansible-lint` invocation in the repo — including unrelated syntax checks in CI systems (e.g. ansible-lint) that don't have the password file and don't need it, causing those to fail hard.
+It is deliberately **not** wired up via `ansible.cfg`'s `vault_password_file` setting, since that would apply to every `ansible-playbook`/`ansible-lint` invocation in the repo, including unrelated syntax checks in CI systems (e.g. ansible-lint) that don't have the password file and don't need it, causing those to fail hard.
 
 To view or edit the CI variables:
 
@@ -175,7 +175,7 @@ kubectl get secret gardener -n garden -o jsonpath='{.data.kubeconfig}' \
   | base64 -d > /var/lib/yake/gardener-operator/kubeconfig.vgarden
 ```
 
-**1. Delete each managed-seed shoot** — `managedseed`/`shoot` are Gardener API resources, so this
+**1. Delete each managed-seed shoot.** `managedseed`/`shoot` are Gardener API resources, so this
 goes against the virtual garden:
 
 ```bash
@@ -186,10 +186,10 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 # wait until the shoot is fully gone before continuing
 ```
 
-**2. Delete the `internal-seed` gardenlet** — also a virtual garden resource. Unlike
+**2. Delete the `internal-seed` gardenlet.** Also a virtual garden resource. Unlike
 `managed-seed-a`, whose seed registration goes away with the `ManagedSeed` in step 1,
 `internal-seed`'s `Gardenlet` is applied independently and isn't a child of the `Garden`
-resource — deleting `Garden` alone won't remove it, so it needs this separate step. It also fails
+resource. Deleting `Garden` alone won't remove it, so it needs this separate step. It also fails
 as long as any shoot's `spec.seedName` still points at `internal-seed`, which is why it comes
 after step 1 (this is standard Gardener seed-deletion behavior, not something enforced by this
 repo):
@@ -201,7 +201,7 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ./.local/yake-kubectl get seed internal-seed
 ```
 
-**3. Delete the Garden** — `Garden` is reconciled by gardener-operator running on the garden
+**3. Delete the Garden.** `Garden` is reconciled by gardener-operator running on the garden
 cluster itself, so this uses that cluster's own kubeconfig, not the virtual garden:
 
 ```bash
@@ -266,7 +266,7 @@ hand, re-running `cleanup.yml` reclaims it.
 The OpenStack part can also be run standalone, outside Ansible: `scripts/cleanup-openstack.py`
 (pass `--dry-run` to preview first). It exits non-zero if any resource could not be deleted.
 
-**Full local reset** — for a manual test run where you also want the local docker containers,
+**Full local reset.** For a manual test run where you also want the local docker containers,
 images, and `/var/lib/yake/` gone afterwards (not something CI needs, since its runner is
 thrown away anyway):
 

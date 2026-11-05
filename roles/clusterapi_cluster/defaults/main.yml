@@ -18,7 +18,7 @@ clusterapi_cluster_container_registry_cache_ghcr: https://registry.osism.tech/v2
 clusterapi_cluster_container_registry_cache_quay: https://registry.osism.tech/v2/quay
 clusterapi_cluster_container_registry_cache_k8s: https://registry.osism.tech/v2/k8s
 
-# NTP servers for the nodes (systemd-timesyncd). Empty keeps the image defaults.
+# NTP servers for the nodes (chrony). Empty keeps the image defaults.
 clusterapi_cluster_ntp_servers: []
 
 clusterapi_cluster_hosts_entries: []

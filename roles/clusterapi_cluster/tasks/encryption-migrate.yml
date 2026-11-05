@@ -1,0 +1,63 @@
+---
+# Secrets written before encryption was enabled stay unencrypted until they are written again. Once all control plane
+# machines use the EncryptionConfiguration, rewrite all Secrets one time. The annotation on the config Secret in the
+# management cluster records that this happened, so later runs skip it.
+- name: Get the secrets encryption config
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    kind: Secret
+    namespace: default
+    name: "{{ clusterapi_cluster_name }}-encryption-config"
+  register: result_encryption_config  # noqa: var-naming[no-role-prefix]
+  no_log: true
+
+- name: Encrypt the existing secrets
+  when: >-
+    'yake.cloud/secrets-encrypted' not in
+    (result_encryption_config.resources | first).metadata.annotations | d({})
+  block:
+    - name: Wait until all control plane machines use the encryption config
+      kubernetes.core.k8s_info:
+        kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+        api_version: controlplane.cluster.x-k8s.io/v1beta2
+        kind: KubeadmControlPlane
+        namespace: default
+        name: "{{ clusterapi_cluster_name }}-control-plane"
+      register: result_kcp  # noqa: var-naming[no-role-prefix]
+      vars:
+        _kcp: "{{ result_kcp.resources | first | d({}) }}"
+      until: >-
+        _kcp.status.observedGeneration | d(0) == _kcp.metadata.generation and
+        _kcp.status.replicas | d(-1) == _kcp.spec.replicas and
+        _kcp.status.upToDateReplicas | d(-1) == _kcp.spec.replicas and
+        _kcp.status.availableReplicas | d(-1) == _kcp.spec.replicas
+      retries: 120
+      delay: 30
+
+    # The API server writes a Secret again even if nothing changed, because it was stored with an outdated provider.
+    - name: Rewrite all secrets with the encryption config
+      ansible.builtin.shell: |
+        set -o pipefail
+        {{ playbook_dir }}/.local/yake-kubectl get secrets --all-namespaces -o json \
+          | PARAMETERS=-i {{ playbook_dir }}/.local/yake-kubectl replace -f - >/dev/null
+      args:
+        executable: /bin/bash
+      environment:
+        KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_name }}"
+      register: result_reencrypt  # noqa: var-naming[no-role-prefix]
+      until: result_reencrypt.rc == 0
+      retries: 3
+      delay: 10
+      changed_when: true
+
+    - name: Record that the existing secrets are encrypted
+      kubernetes.core.k8s:
+        kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+        state: patched
+        kind: Secret
+        namespace: default
+        name: "{{ clusterapi_cluster_name }}-encryption-config"
+        definition:
+          metadata:
+            annotations:
+              yake.cloud/secrets-encrypted: "true"

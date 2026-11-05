@@ -1,0 +1,60 @@
+---
+# Encryption at rest for Secrets of the cluster. The EncryptionConfiguration lives in a Secret in the management
+# cluster (moved along by clusterctl move) and is referenced by the KubeadmControlPlane, so the key never appears in
+# the KubeadmControlPlane object. An existing Secret is never changed: a different key would make the stored Secrets
+# unreadable for new control plane nodes.
+- name: Get the existing secrets encryption config
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    kind: Secret
+    namespace: default
+    name: "{{ clusterapi_cluster_name }}-encryption-config"
+  register: result_encryption_config  # noqa: var-naming[no-role-prefix]
+  no_log: true
+
+- name: Create the secrets encryption config
+  when: result_encryption_config.resources | length == 0
+  block:
+    - name: Generate the secrets encryption key
+      ansible.builtin.copy:
+        content: "{{ lookup('ansible.builtin.password', '/dev/null', length=32, chars=['ascii_letters', 'digits']) | b64encode }}"
+        dest: "/var/lib/yake/encryption-key.{{ clusterapi_cluster_name }}"
+        owner: "{{ clusterapi_cluster_uid }}"
+        group: "{{ clusterapi_cluster_gid }}"
+        mode: "0600"
+        force: false
+      no_log: true
+
+    - name: Read the secrets encryption key
+      ansible.builtin.slurp:
+        src: "/var/lib/yake/encryption-key.{{ clusterapi_cluster_name }}"
+      register: result_encryption_key  # noqa: var-naming[no-role-prefix]
+      no_log: true
+
+    - name: Create the secrets encryption config secret
+      kubernetes.core.k8s:
+        kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: "{{ clusterapi_cluster_name }}-encryption-config"
+            namespace: default
+            labels:
+              clusterctl.cluster.x-k8s.io/move: "true"
+          stringData:
+            config.yaml: |
+              apiVersion: apiserver.config.k8s.io/v1
+              kind: EncryptionConfiguration
+              resources:
+                - resources:
+                    - secrets
+                  providers:
+                    - secretbox:
+                        keys:
+                          - name: key1
+                            secret: {{ result_encryption_key.content | b64decode | trim }}
+                    - identity: {}
+      no_log: true

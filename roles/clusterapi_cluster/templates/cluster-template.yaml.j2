@@ -199,6 +199,15 @@ metadata:
 spec:
   kubeadmConfigSpec:
     files:
+{% if clusterapi_cluster_secrets_encryption_enabled | bool %}
+      - path: /etc/kubernetes/encryption/config.yaml
+        owner: root:root
+        permissions: "0600"
+        contentFrom:
+          secret:
+            name: {{ clusterapi_cluster_name }}-encryption-config
+            key: config.yaml
+{% endif %}
 {% for m in _mirrors if m.url | d('') | length > 0 %}
       - path: /etc/containerd/certs.d/{{ m.host }}/hosts.toml
         owner: root:root
@@ -257,6 +266,18 @@ spec:
 {% endif %}
 {% endif %}
     clusterConfiguration:
+{% if clusterapi_cluster_secrets_encryption_enabled | bool %}
+      apiServer:
+        extraArgs:
+        - name: encryption-provider-config
+          value: /etc/kubernetes/encryption/config.yaml
+        extraVolumes:
+        - name: encryption-config
+          hostPath: /etc/kubernetes/encryption
+          mountPath: /etc/kubernetes/encryption
+          readOnly: true
+          pathType: DirectoryOrCreate
+{% endif %}
       controllerManager:
         extraArgs:
         - name: cloud-provider

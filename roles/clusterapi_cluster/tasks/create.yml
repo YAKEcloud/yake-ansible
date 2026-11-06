@@ -192,6 +192,29 @@
   ansible.builtin.include_tasks: encryption-config.yml
   when: clusterapi_cluster_secrets_encryption_enabled | bool
 
+# Without the provider config the API server cannot read Secrets that are stored encrypted.
+- name: Get the secrets encryption config of an existing cluster
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    kind: Secret
+    namespace: default
+    name: "{{ clusterapi_cluster_name }}-encryption-config"
+  register: result_encryption_guard  # noqa: var-naming[no-role-prefix]
+  when: not (clusterapi_cluster_secrets_encryption_enabled | bool)
+  no_log: true
+
+- name: Refuse to disable secrets encryption on a cluster that uses it
+  ansible.builtin.assert:
+    that: result_encryption_guard.resources | length == 0
+    fail_msg: >-
+      clusterapi_cluster_secrets_encryption_enabled is false, but the cluster {{ clusterapi_cluster_name }}
+      already stores its Secrets encrypted (Secret {{ clusterapi_cluster_name }}-encryption-config exists).
+      The API server could not read them without the provider config. Keep the variable true. To turn
+      encryption off on purpose, first decrypt the stored Secrets as described in the Kubernetes documentation
+      ("Decrypt all data"), then delete that Secret.
+    quiet: true
+  when: not (clusterapi_cluster_secrets_encryption_enabled | bool)
+
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"

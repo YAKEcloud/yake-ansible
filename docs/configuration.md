@@ -175,7 +175,7 @@ clusterapi_cluster_hosts_entries:
 
 `clusterapi_cluster_secrets_encryption_enabled` (default `true`) encrypts Secrets at rest in the etcd of the garden cluster with `secretbox`. Without it, all Gardener credentials (OpenStack, DNS, CA key, kubeconfigs) are stored in plain text in etcd and in its backups or snapshots.
 
-The key is generated once and kept in the Secret `<name>-encryption-config` in the management cluster (moved along on kind upgrades) and in `/var/lib/yake/encryption-key.<name>` (mode `0600`). **Back up this file.** An existing key is never replaced, rotation is a manual task.
+The key is generated once and kept in the Secret `<name>-encryption-config` in the management cluster (moved along on kind upgrades) and in `/var/lib/yake/encryption-key.<name>` (mode `0600`). **Back up this file.** An existing key is never replaced, rotation is a manual task. Once a cluster stores its Secrets encrypted, the role refuses to run with the variable set to `false`, because the API server could no longer read them. To turn encryption off on purpose, decrypt the stored Secrets first (see "Decrypt all data" in the Kubernetes documentation) and delete the config Secret.
 
 On an existing cluster, enabling it rolls the control plane machines once. After the rollout, the role rewrites all Secrets one time so that they are stored encrypted, and records this with the annotation `yake.cloud/secrets-encrypted` on the config Secret.
 

@@ -187,7 +187,7 @@ python3 scripts/cleanup-openstack.py --seed-names managed-seed-a --dry-run
 `--cluster-name` (default `garden`) and `--seeds-project` (default `seeds`) only need to be
 passed if `clusterapi_cluster_name` / `gardener_operator_managed_seeds_project.name` were
 changed from their defaults. `--insecure` disables TLS verification, `--preserve-dns-type`
-(repeatable, default `SOA`, `NS`) keeps record types in the zone.
+(repeatable) keeps further record types in the zone. `SOA` and `NS` are always kept.
 
 The script prints the auth URL, project name/id and the number of resources found before
 deleting. Individual failures are collected, the remaining resources are still processed,
@@ -199,11 +199,11 @@ and the exit code is 1 if anything could not be deleted (2 for credential errors
 |---|---|
 | Networks, subnets, routers | exact CAPO name `k8s-clusterapi-cluster-default-<cluster>` or shoot ID `shoot--<project>--<seed>` |
 | Security groups | `k8s-cluster-default-<cluster>-secgroup-{controlplane,worker,bastion}` or exact shoot ID |
-| Servers | CAPI machine names `<cluster>-control-plane-xxxxx` / `<cluster>-<md>-<hash>-xxxxx` or Gardener machine names `<shoot ID>-<pool>-z<n>-...`, and on one of the owner's networks |
+| Servers | CAPI machine names `<cluster>-control-plane-xxxxx` / `<cluster>-<md>-<hash>-xxxxx` or Gardener machine names `<shoot ID>-<pool>-z<n>-...`, and on one of the owner's networks. A server without addresses (e.g. in `ERROR`) cannot be checked against the network and is matched by name only, so a cluster `garden-prod` next to `garden` in the same project could be hit by this |
 | Limitation | Clusters on existing subnets (`clusterapi_cluster_openstack_subnets`) have no managed network, so their servers cannot be matched safely and are not deleted. The same holds for everything that is matched through the network. Delete these by hand. |
 | Server groups, key pair | `<cluster>-control-plane`, `<cluster>-worker`; key pair `<cluster>` (or shoot ID) |
 | Load balancers | API server LB `k8s-clusterapi-cluster-default-<cluster>-kubeapi`; CCM LBs `kube_service_kubernetes_*` only if on the cluster's own network; shoot LBs `kube_service_<shoot ID>_*` |
 | Volumes | attached to an own server, or Cinder CSI metadata `cinder.csi.openstack.org/cluster` equal to a shoot ID. PVC volumes of the garden cluster (CSI cluster name `kubernetes`) are only deleted while attached to an own server |
 | Ports | on own networks (Neutron-managed `network:*` ports are left to Neutron) |
 | Floating IPs | attached to an own port, or with the CAPO description `Created by cluster-api-provider-openstack cluster default-<cluster-name>` (also when no longer attached) |
-| DNS | all record sets of the zone `--garden-url` except `--preserve-dns-type`. Gardener names records after projects and shoots, so they cannot be enumerated: use a zone dedicated to this deployment |
+| DNS | all record sets of the zone `--garden-url` except `SOA`, `NS` and `--preserve-dns-type`. Gardener names records after projects and shoots, so they cannot be enumerated: use a zone dedicated to this deployment |

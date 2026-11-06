@@ -320,7 +320,9 @@ class Cleaner:
                 current = self.conn.block_storage.get_volume(volume.id)
             except openstack.exceptions.NotFoundException:
                 return
-            if current.status not in ("in-use", "attaching", "detaching"):
+            # "deleting": Nova started the Cinder delete together with the server,
+            # a second delete request would be rejected. Wait until it is gone.
+            if current.status not in ("in-use", "attaching", "detaching", "deleting"):
                 break
             if time.monotonic() > deadline:
                 raise TimeoutError(f"still '{current.status}' after detach timeout")
@@ -469,7 +471,8 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
         action="append",
         default=None,
         metavar="TYPE",
-        help="DNS record type to keep (default: SOA, NS); repeat for multiple",
+        help="Additional DNS record type to keep, repeat for multiple (SOA and NS"
+        " are always kept)",
     )
     parser.add_argument(
         "--dry-run",
@@ -514,7 +517,10 @@ def main(argv: list[str] | None = None) -> int:
     errors = cleanup(conn, owned, args.dry_run)
     if args.garden_url:
         errors += cleanup_dns(
-            conn, args.garden_url, args.preserve_dns_type or ["SOA", "NS"], args.dry_run
+            conn,
+            args.garden_url,
+            ["SOA", "NS", *(args.preserve_dns_type or [])],
+            args.dry_run,
         )
 
     if errors:

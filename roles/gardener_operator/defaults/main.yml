@@ -60,6 +60,8 @@ gardener_operator_virtual_garden_high_availability: true
 # Check at the end of the role that the dashboard login reaches Dex. Disable it if the Ansible host cannot reach
 # https://dashboard.<garden_url>.
 gardener_operator_login_check_enabled: true
+# Verify the certificate of the dashboard. Set to false for ACME staging or a generated CA, which the Ansible host does not trust.
+gardener_operator_login_check_validate_certs: true
 # renovate: datasource=github-releases depName=kubernetes/kubernetes extractVersion=^v(?<version>.+)$
 gardener_operator_kubernetes_version: '1.37.2'
 gardener_operator_image_registry: "europe-docker.pkg.dev"

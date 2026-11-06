@@ -519,21 +519,23 @@ def main(argv: list[str] | None = None) -> int:
     print("Found: " + ", ".join(f"{len(v)} {k}" for k, v in owned.items() if v))
 
     errors = cleanup(conn, owned, args.dry_run)
+    dns_listing_failed = False
     if args.garden_url:
         preserve = ["SOA", "NS", *(t.upper() for t in args.preserve_dns_type or [])]
         try:
             errors += cleanup_dns(conn, args.garden_url, preserve, args.dry_run)
         except Exception as exc:
-            msg = f"[dns] could not process the zone of {args.garden_url}: {exc}"
-            print(f"  ERROR {msg}", file=sys.stderr)
-            errors.append(msg)
+            # The zone or its record sets could not be listed.
+            print(f"Could not list the DNS records: {exc}", file=sys.stderr)
+            dns_listing_failed = True
 
     if errors:
         print(f"\n{len(errors)} resource(s) could not be deleted:", file=sys.stderr)
         for e in errors:
             print(f"  {e}", file=sys.stderr)
-        return 1
-    return 0
+    if dns_listing_failed:
+        return 2
+    return 1 if errors else 0
 
 
 if __name__ == "__main__":

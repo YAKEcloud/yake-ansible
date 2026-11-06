@@ -67,7 +67,7 @@ stringData:
   {{ gardener_operator_internal_seed_backup_credentials | indent(2) }}
 {% else %}
 {% for k, v in gardener_operator_internal_seed_backup_credentials.items() %}
-  {{ k }}: {{ (v | string | lower if v is boolean else v | string) | to_json }}
+  {{ k | string | to_json }}: {{ (v | string | lower if v is boolean else v | string) | to_json }}
 {% endfor %}
 {% endif %}
 {% endif %}

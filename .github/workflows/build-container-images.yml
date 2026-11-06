@@ -23,10 +23,11 @@ concurrency:
   cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 # Two jobs with the same matrix and steps (YAML anchors), so that only the
-# non-PR job gets packages: write. Pushing still requires main in this repo.
+# job that pushes gets packages: write: runs on main. Pull requests and manual
+# runs on other branches only build.
 jobs:
   build:
-    if: github.event_name == 'pull_request'
+    if: github.event_name == 'pull_request' || github.ref != 'refs/heads/main'
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:
@@ -73,7 +74,7 @@ jobs:
             VERSION=${{ matrix.version }}
 
   publish:
-    if: github.event_name != 'pull_request'
+    if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-26.04
     timeout-minutes: 30
     permissions:

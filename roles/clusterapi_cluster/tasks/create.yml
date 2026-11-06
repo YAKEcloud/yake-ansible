@@ -257,6 +257,34 @@
   register: result_existing_machine_templates  # noqa: var-naming[no-role-prefix]
   when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
 
+# During a rollout the old MachineSets stay around, and a paused rollout or a remediation can still
+# create machines from them. They need the templates they reference, so these are never deleted.
+- name: List existing MachineSets
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    api_version: cluster.x-k8s.io/v1beta2
+    kind: MachineSet
+    namespace: default
+  register: result_existing_machine_sets  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: Determine the templates that MachineSets with replicas still reference
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_referenced_machine_templates: >-
+      {{ active_machine_sets | map(attribute='spec.template.spec.infrastructureRef.name', default='') | list }}
+    _clusterapi_cluster_referenced_config_templates: >-
+      {{ active_machine_sets | map(attribute='spec.template.spec.bootstrap.configRef.name', default='') | list }}
+  vars:
+    cluster_machine_sets: >-
+      {{ result_existing_machine_sets.resources | selectattr('spec.clusterName', 'equalto', clusterapi_cluster_name) | list }}
+    # A MachineSet without replicas counts as active, to be on the safe side.
+    active_machine_sets: >-
+      {{
+        cluster_machine_sets | selectattr('spec.replicas', 'defined') | rejectattr('spec.replicas', 'equalto', 0) | list
+        + cluster_machine_sets | rejectattr('spec.replicas', 'defined') | list
+      }}
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
 - name: Delete stale OpenStackMachineTemplates no longer referenced
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
@@ -271,6 +299,7 @@
       | map(attribute='metadata.name')
       | select('match', '^' ~ (clusterapi_cluster_name | regex_escape) ~ '-')
       | reject('in', _clusterapi_cluster_current_machine_template_names)
+      | reject('in', _clusterapi_cluster_referenced_machine_templates)
       | list
     }}
   when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
@@ -298,6 +327,7 @@
       | map(attribute='metadata.name')
       | select('match', '^' ~ (clusterapi_cluster_name | regex_escape) ~ '-md(-[0-9a-f]{8})?$')
       | reject('in', _clusterapi_cluster_current_config_template_names)
+      | reject('in', _clusterapi_cluster_referenced_config_templates)
       | list
     }}
   when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool

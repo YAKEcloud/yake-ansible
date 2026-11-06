@@ -86,6 +86,8 @@ ansible-playbook -i localhost, -c local site.yml --tags garden-cluster
 
 Cluster API performs a rolling upgrade of the control plane nodes followed by worker nodes.
 
+The default of `clusterapi_cluster_kubernetes_version` (and `gardener_operator_kubernetes_version`) moves with this repository, currently to `1.37.2`. If you did not set the variable, the next run upgrades the garden cluster. Pin the variable in `group_vars/all.yml` to stay on your version. The unused variable `clusterapi_cluster_kubeconfig` has been removed.
+
 ### Upgrading Tool Versions
 
 kubectl, Helm, clusterctl, and kind versions are set by `kubectl_install_version`, `helm_install_version`, `clusterctl_install_version`, and `management_cluster_kind_version` respectively. After updating these variables, re-run the playbook with the matching tags (`kubectl`, `helm`, `clusterctl`, `management-cluster`).

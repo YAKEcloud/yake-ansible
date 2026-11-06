@@ -29,7 +29,9 @@ required rollout automatically. The same applies to the `KubeadmConfigTemplate` 
 Old, no-longer-referenced `OpenStackMachineTemplate` objects left behind after such a rollout (Cluster API doesn't
 garbage-collect them outside of ClusterClass-managed clusters) are deleted automatically on every run: the role
 compares what's currently in the cluster against the freshly generated manifest and removes anything under this
-cluster's name that isn't referenced anymore, so the cluster always matches what `group_vars` describes. Disable
+cluster's name that isn't referenced anymore, so the cluster always matches what `group_vars` describes. Templates
+that a MachineSet with replicas still references (an old MachineSet of a paused rollout, for example) are kept until
+the MachineSet has no replicas left. The same applies to `KubeadmConfigTemplate` objects. Disable
 via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd rather clean these up manually.
 
 ## Requirements
@@ -92,7 +94,7 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_control_plane_server_group_policy` | `soft-anti-affinity` | Server group policy for control-plane machines. `soft-anti-affinity` prefers separate hosts without hard-failing scheduling on clouds with few hypervisors (unlike `anti-affinity`). |
 | `clusterapi_cluster_worker_server_group_enabled` | `true` | Place worker machines in an OpenStack server group so they're spread across hypervisors. |
 | `clusterapi_cluster_worker_server_group_policy` | `soft-anti-affinity` | Server group policy for worker machines. |
-| `clusterapi_cluster_stale_machine_template_cleanup_enabled` | `true` | Delete `OpenStackMachineTemplate` objects no longer referenced after a flavor/image-triggered rollout (see "Rolling out flavor/image changes" below). |
+| `clusterapi_cluster_stale_machine_template_cleanup_enabled` | `true` | Delete `OpenStackMachineTemplate` and `KubeadmConfigTemplate` objects that neither the cluster nor a MachineSet with replicas references after a rollout (see "Rolling out flavor/image changes" below). |
 | `clusterapi_cluster_secrets_encryption_enabled` | `true` | Encrypt Secrets at rest in etcd (`secretbox`). The key is generated once, stored in the Secret `<name>-encryption-config` of the management cluster and in `/var/lib/yake/encryption-key.<name>` (back it up), and never replaced. Enabling it on an existing cluster rolls the control plane once and then rewrites all Secrets one time. |
 
 The health check timeouts accept seconds or a duration made of `h`, `m` and `s` parts (`300s`, `20m`, `1h30m`). They are converted to the `*Seconds` fields of the `cluster.x-k8s.io/v1beta2` MachineHealthCheck.

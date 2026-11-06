@@ -1,0 +1,48 @@
+# yaml-language-server: $schema=https://coderabbit.ai/integrations/schema.v2.json
+---
+language: en-US
+
+reviews:
+  profile: chill
+  poem: false
+  in_progress_fortune: false
+
+  auto_review:
+    ignore_usernames:
+      - renovate[bot]
+
+  # Vendored manifests (synced by gilt, shipped by upstream) are not ours to review.
+  path_filters:
+    - "!roles/clusterapi_install/files/orc.yaml"
+    - "!roles/clusterapi_cluster/files/**"
+
+  path_instructions:
+    - path: "roles/**"
+      instructions: >-
+        Ansible roles for a production Gardener platform. Review for idempotency
+        (a second run must not change anything), secrets in logs (no_log) and file
+        modes, and for changes that break existing user configuration. Variable
+        names and defaults are a public interface, flag every rename or changed
+        default that is not documented.
+    - path: "**/*.j2"
+      instructions: >-
+        Jinja templates that render Kubernetes manifests. Check that user supplied
+        values are quoted (to_json), that booleans and numbers keep their type, and
+        that the rendered YAML stays valid for all optional branches.
+    - path: ".github/workflows/**"
+      instructions: >-
+        Check least privilege permissions, pinned actions, and that no untrusted
+        input (PR titles, branch names, comments) reaches a run: step unescaped.
+
+  # These run in the lint workflow already, do not report them twice.
+  tools:
+    yamllint:
+      enabled: false
+    flake8:
+      enabled: false
+    hadolint:
+      enabled: false
+    shellcheck:
+      enabled: false
+    actionlint:
+      enabled: false

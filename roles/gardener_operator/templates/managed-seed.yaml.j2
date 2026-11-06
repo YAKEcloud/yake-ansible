@@ -39,7 +39,13 @@ metadata:
   namespace: garden
 type: Opaque
 stringData:
-  {{ (item.settings.backup.credentials if item.settings.backup.credentials is string else item.settings.backup.credentials | to_nice_yaml(indent=2)) | indent(2) }}
+{% if item.settings.backup.credentials is string %}
+  {{ item.settings.backup.credentials | indent(2) }}
+{% else %}
+{% for k, v in item.settings.backup.credentials.items() %}
+  {{ k }}: {{ (v | string | lower if v is boolean else v | string) | to_json }}
+{% endfor %}
+{% endif %}
 {% endif %}
 {% if gardener_operator_managed_seeds_registry_mirrors | selectattr('ca', 'defined') | selectattr('ca', 'equalto', true) | list %}
 ---

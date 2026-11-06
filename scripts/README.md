@@ -200,6 +200,7 @@ and the exit code is 1 if anything could not be deleted (2 for credential errors
 | Networks, subnets, routers | exact CAPO name `k8s-clusterapi-cluster-default-<cluster>` or shoot ID `shoot--<project>--<seed>` |
 | Security groups | `k8s-cluster-default-<cluster>-secgroup-{controlplane,worker,bastion}` or exact shoot ID |
 | Servers | CAPI machine names `<cluster>-control-plane-xxxxx` / `<cluster>-<md>-<hash>-xxxxx` or Gardener machine names `<shoot ID>-<pool>-z<n>-...`, and on one of the owner's networks |
+| Limitation | Clusters on existing subnets (`clusterapi_cluster_openstack_subnets`) have no managed network, so their servers cannot be matched safely and are not deleted. The same holds for everything that is matched through the network. Delete these by hand. |
 | Server groups, key pair | `<cluster>-control-plane`, `<cluster>-worker`; key pair `<cluster>` (or shoot ID) |
 | Load balancers | API server LB `k8s-clusterapi-cluster-default-<cluster>-kubeapi`; CCM LBs `kube_service_kubernetes_*` only if on the cluster's own network; shoot LBs `kube_service_<shoot ID>_*` |
 | Volumes | attached to an own server, or Cinder CSI metadata `cinder.csi.openstack.org/cluster` equal to a shoot ID. PVC volumes of the garden cluster (CSI cluster name `kubernetes`) are only deleted while attached to an own server |

@@ -1,7 +1,18 @@
-{#- Go duration (e.g. 300s, 20m, 1h) or plain seconds to seconds, for the v1beta2 *Seconds fields. -#}
+{#- Go duration (e.g. 300s, 20m, 1h30m) or plain seconds to seconds, for the v1beta2 *Seconds fields. -#}
 {%- macro _seconds(v) -%}
-{%- set p = (v | string | regex_findall('^([0-9]+)([smh]?)$'))[0] -%}
-{{ (p[0] | int) * {'': 1, 's': 1, 'm': 60, 'h': 3600}[p[1]] }}
+{%- set s = v | string -%}
+{%- if s is not match('^([0-9]+[smh])+$') and s is not match('^[0-9]+$') -%}
+{{ {}['invalid duration (use e.g. 300s, 20m, 1h30m or seconds): ' ~ s] }}
+{%- endif -%}
+{%- set t = namespace(sum=0) -%}
+{%- if s is match('^[0-9]+$') -%}
+{%- set t.sum = s | int -%}
+{%- else -%}
+{%- for n, u in s | regex_findall('([0-9]+)([smh])') -%}
+{%- set t.sum = t.sum + (n | int) * {'s': 1, 'm': 60, 'h': 3600}[u] -%}
+{%- endfor -%}
+{%- endif -%}
+{{ t.sum }}
 {%- endmacro -%}
 {% set ntp = clusterapi_cluster_ntp_servers | d([]) | length > 0 %}
 {% set cilium = clusterapi_cluster_network == 'cilium' %}

@@ -95,7 +95,7 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_stale_machine_template_cleanup_enabled` | `true` | Delete `OpenStackMachineTemplate` objects no longer referenced after a flavor/image-triggered rollout (see "Rolling out flavor/image changes" below). |
 | `clusterapi_cluster_secrets_encryption_enabled` | `true` | Encrypt Secrets at rest in etcd (`secretbox`). The key is generated once, stored in the Secret `<name>-encryption-config` of the management cluster and in `/var/lib/yake/encryption-key.<name>` (back it up), and never replaced. Enabling it on an existing cluster rolls the control plane once and then rewrites all Secrets one time. |
 
-The health check timeouts accept seconds or a duration with one unit (`300s`, `20m`, `1h`). They are converted to the `*Seconds` fields of the `cluster.x-k8s.io/v1beta2` MachineHealthCheck.
+The health check timeouts accept seconds or a duration made of `h`, `m` and `s` parts (`300s`, `20m`, `1h30m`). They are converted to the `*Seconds` fields of the `cluster.x-k8s.io/v1beta2` MachineHealthCheck.
 
 Worker node deployments support multiple pools across failure domains:
 

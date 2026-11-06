@@ -43,7 +43,7 @@ stringData:
   {{ item.settings.backup.credentials | indent(2) }}
 {% else %}
 {% for k, v in item.settings.backup.credentials.items() %}
-  {{ k }}: {{ (v | string | lower if v is boolean else v | string) | to_json }}
+  {{ k | string | to_json }}: {{ (v | string | lower if v is boolean else v | string) | to_json }}
 {% endfor %}
 {% endif %}
 {% endif %}

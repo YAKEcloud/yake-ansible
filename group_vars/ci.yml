@@ -53,6 +53,8 @@ gardener_operator_garden_url: "botany.yake.cloud"
 # The DNS search domain of the test cloud (bb.cloudpods.site) answers with SERVFAIL, so the dashboard
 # cannot reach Dex. Remove this line once the platform DNS is fixed.
 gardener_operator_login_check_enabled: false
+# The Let's Encrypt staging certificate of the test is not trusted by the runner.
+gardener_operator_login_check_validate_certs: false
 gardener_operator_cluster_name: "botany-yake-cloud"
 gardener_operator_kubernetes_version: "{{ clusterapi_cluster_kubernetes_version }}"
 

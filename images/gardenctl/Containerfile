@@ -2,7 +2,7 @@ ARG ALPINE_VERSION=3.24@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c9100339
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v2.18.0  # renovate: datasource=github-releases depName=gardener/gardenctl-v2
+ARG VERSION=v2.19.1  # renovate: datasource=github-releases depName=gardener/gardenctl-v2
 ARG GARDENLOGIN_VERSION=v0.11.0  # renovate: datasource=github-releases depName=gardener/gardenlogin
 ARG KUBECTL_VERSION=v1.37.1  # renovate: datasource=github-releases depName=kubernetes/kubernetes
 ADD --chmod=0755 https://github.com/gardener/gardenctl-v2/releases/download/${VERSION}/gardenctl_v2_linux_amd64 /usr/local/bin/gardenctl

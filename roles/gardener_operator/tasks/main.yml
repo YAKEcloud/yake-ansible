@@ -73,7 +73,7 @@
 - name: Extract service and pod CIDR from API server flags
   ansible.builtin.shell: |
     set -o pipefail
-    dump=$({{ playbook_dir }}/.local/yake-kubectl cluster-info dump)
+    dump=$({{ playbook_dir }}/.local/yake-kubectl cluster-info dump) || exit $?
     echo "service=$(printf '%s\n' "$dump" | grep -m 1 -- '--service-cluster-ip-range' | sed -E 's/.*--service-cluster-ip-range=([0-9.\/]+).*/\1/')"
     echo "pod=$(printf '%s\n' "$dump" | grep -m 1 -- '--cluster-cidr' | sed -E 's/.*--cluster-cidr=([0-9.\/]+).*/\1/')"
   args:

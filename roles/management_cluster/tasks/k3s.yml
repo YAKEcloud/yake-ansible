@@ -5,9 +5,14 @@
   changed_when: false
   failed_when: false
 
+# The installer uses INSTALL_K3S_VERSION of management_cluster_k3s_env, which a user may override.
+- name: Set the k3s version to install
+  ansible.builtin.set_fact:
+    _management_cluster_k3s_effective_version: "{{ management_cluster_k3s_env.INSTALL_K3S_VERSION | d(management_cluster_k3s_full_version) }}"
+
 - name: Set k3s install required fact
   ansible.builtin.set_fact:
-    _management_cluster_k3s_install: "{{ ('k3s version ' ~ management_cluster_k3s_full_version ~ ' ') not in (_k3s_version.stdout | d('')) }}"
+    _management_cluster_k3s_install: "{{ ('k3s version ' ~ _management_cluster_k3s_effective_version ~ ' ') not in (_k3s_version.stdout | d('')) }}"
 
 # The script is taken from the tag of the requested release and runs as root, so it is
 # kept in a private temporary directory. It verifies the k3s binary against the
@@ -25,7 +30,7 @@
     - name: Download k3s install script
       become: true
       ansible.builtin.get_url:
-        url: "https://raw.githubusercontent.com/k3s-io/k3s/{{ management_cluster_k3s_full_version | urlencode }}/install.sh"
+        url: "https://raw.githubusercontent.com/k3s-io/k3s/{{ _management_cluster_k3s_effective_version | urlencode }}/install.sh"
         dest: "{{ _management_cluster_k3s_tmp.path }}/install.sh"
         mode: "0700"
       environment: "{{ management_cluster_proxy_env }}"

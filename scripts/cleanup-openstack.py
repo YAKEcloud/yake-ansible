@@ -82,6 +82,15 @@ class Owner:
         return set()
 
     @property
+    def capo_description(self) -> str | None:
+        """Description CAPO sets on its floating IPs (pkg/utils/names)."""
+        if self.kind == "capo":
+            return (
+                f"Created by cluster-api-provider-openstack cluster {self._capo_base}"
+            )
+        return None
+
+    @property
     def apiserver_lb_name(self) -> str | None:
         if self.kind == "capo":
             return f"k8s-clusterapi-cluster-{self._capo_base}-kubeapi"
@@ -243,7 +252,14 @@ def gather(conn: Any, owners: list[Owner]) -> dict[str, list[Any]]:
     own_port_ids = {p.id for p in all_ports if p.network_id in network_ids} | {
         p.id for p in router_interface_ports
     }
-    floating_ips = [f for f in conn.network.ips(**scope) if f.port_id in own_port_ids]
+    # Attached to an own port, or created by CAPO for this cluster. The latter
+    # also catches IPs that are no longer attached (e.g. after a LB was gone).
+    capo_descriptions = {o.capo_description for o in owners} - {None}
+    floating_ips = [
+        f
+        for f in conn.network.ips(**scope)
+        if f.port_id in own_port_ids or f.description in capo_descriptions
+    ]
 
     return {
         "servers": servers,

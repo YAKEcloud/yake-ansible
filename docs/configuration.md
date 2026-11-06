@@ -23,7 +23,7 @@ The `kubectl_install`, `helm_install`, and `clusterctl_install` roles provide th
 
 Each role also exposes `<role>_container_registry` (default `ghcr.io`) and `<role>_container_image` (`yakecloud/kubectl`, `yakecloud/helm`, `yakecloud/clusterctl`) to pull the images from a different registry.
 
-`clusterapi_install_capi_version` (`v1.14.4`, core, kubeadm bootstrap and control plane) and `clusterapi_install_capo_version` (`v0.15.1`, OpenStack) pin the Cluster API providers for `clusterctl init` and `clusterctl upgrade apply`. CAPO must match the vendored ORC manifest. If one is empty, `clusterapi_install_contract` (default `v1beta2`) is used and the providers float to the latest versions.
+`clusterapi_install_capi_version` (`v1.14.4`, core, kubeadm bootstrap and control plane) and `clusterapi_install_capo_version` (`v0.15.1`, OpenStack) pin the Cluster API providers for `clusterctl init` and `clusterctl upgrade apply`. CAPO must match the vendored ORC manifest. The two pins are used independently by `clusterctl init`: an empty pin lets only that provider float to the latest version. `clusterctl upgrade apply` uses `clusterapi_install_contract` (default `v1beta2`) for all providers if either pin is empty, and only runs if an installed provider differs from its pin.
 
 With the `binary` method the downloads of kubectl, Helm and kind are verified against the published sha256 files. clusterctl, gardenctl and gardenlogin publish none and are not verified. Binaries are kept per version (`.local/<tool>-<version>`), so a version change takes effect.
 
@@ -52,7 +52,7 @@ Configured via the `management_cluster` role.
 | `management_cluster_kind_upgrade_namespace` | `default` | Namespace of the Cluster API objects that are backed up and restored. |
 | `management_cluster_kind_upgrade_backup_dir` | `/var/lib/yake/backup` | Directory for the backups. |
 | `management_cluster_kind_cluster_api_server_address` | `127.0.0.1` | Address the kind API server listens on. |
-| `management_cluster_k3s_version` | see defaults | k3s version when using the k3s engine. |
+| `management_cluster_k3s_version` | see defaults | k3s version when using the k3s engine, with or without a leading `v`. `+k3s1` is appended unless the value contains a `+k3s<n>` suffix. k3s is installed with Traefik and ServiceLB disabled (a management cluster does not need them). An existing k3s installation keeps its service arguments until its version changes, then they are applied by the reinstall. |
 | `management_cluster_kubeconfig` | `/var/lib/yake/kubeconfig.<name>` | Path of the kubeconfig file. |
 
 The kubeconfig is written to `management_cluster_kubeconfig`, by default `/var/lib/yake/kubeconfig.<management_cluster_name>`.
@@ -191,6 +191,7 @@ The `gardener_operator` role deploys the Gardener Operator and configures the en
 | `gardener_operator_kubernetes_version` | see defaults | Kubernetes version for the internal seed shoot. |
 | `gardener_operator_cluster_name` | `prod-garden` | Name of the garden cluster. |
 | `gardener_operator_login_check_enabled` | `true` | Check after the virtual garden is ready that the dashboard login reaches Dex (`https://dashboard.<garden_url>/auth` must redirect to `https://identity.<garden_url>/`). The dashboard backend fetches the OIDC discovery for this, so it covers DNS, network and TLS from inside the cluster. Disable it if the Ansible host cannot reach the dashboard. |
+| `gardener_operator_login_check_validate_certs` | `true` | Verify the TLS certificate of the dashboard during the login check. Set it to `false` for ACME staging or a generated CA, which the Ansible host does not trust. |
 | `gardener_operator_virtual_garden_high_availability` | `true` | Run the virtual garden control plane highly available: 3 replicas each for etcd main and events (instead of 1), the virtual kube-apiserver and the gardener-apiserver (instead of 2), spread over the garden cluster nodes (and zones, if the runtime cluster has several). Use at least 3 worker nodes, so that each replica gets its own node. Cannot be disabled again once enabled. Switching an existing installation makes the Gardener API unavailable for a few minutes, see [operations](operations.md#switching-the-virtual-garden-to-high-availability). |
 | `gardener_operator_garden_url` | `example.com` | Base domain for the Gardener installation. Must be changed, the run fails with `example.com`. |
 | `gardener_operator_nodes_cidr` | `""` | Nodes CIDR of the garden cluster. Empty detects it from the first node's InternalIP (as /24). Set it if the nodes do not share that /24. |

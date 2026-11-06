@@ -243,7 +243,7 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 ./.local/yake-kubectl delete cluster garden
 ./.local/yake-kubectl wait --for=delete cluster/garden --timeout=30m
 ./.local/yake-kind delete cluster --name clusterapi
-docker rm -f kind helm kubectl clusterctl
+docker rm -f kind helm kubectl clusterctl gardenctl
 sudo rm -rf /var/lib/yake/
 ```
 

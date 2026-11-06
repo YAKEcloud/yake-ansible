@@ -161,7 +161,7 @@ and can be browsed on the [GardenLinux releases page](https://github.com/gardenl
 Deletes the OpenStack resources built by a yake-ansible cluster/seed, and only those.
 Never deletes "everything except a preserved list": a shared OpenStack project can hold
 unrelated infrastructure that must never be touched. All listings are scoped to the
-current project, with one exception: Nova key pairs belong to a user, not to a project. The key pair named like the cluster is deleted for the user of the credentials, so make sure that no other project of that user uses a key pair with this name. Used by `cleanup.yml`.
+current project, with two exceptions. DNS record sets are deleted per zone, not per project: a Designate zone shared with other projects loses their records too (see the DNS row below). Nova key pairs belong to a user, not to a project. The key pair named like the cluster is deleted for the user of the credentials, so make sure that no other project of that user uses a key pair with this name. Used by `cleanup.yml`.
 
 ### Requirements
 

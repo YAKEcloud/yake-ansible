@@ -21,7 +21,7 @@
           caCertificates: |
 {{ gardener_operator_shoot_cert_service_ca_certificates | indent(12, true) }}
 {% endif %}
-          precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers }}
+          precheckNameservers: {{ gardener_operator_shoot_cert_service_precheck_nameservers | to_json }}
 {% else %}
           caCertificates: null
           precheckNameservers: null

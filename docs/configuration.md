@@ -74,7 +74,7 @@ The garden cluster is provisioned by the `clusterapi_cluster` role on OpenStack.
 | `clusterapi_cluster_openstack_external_network` | `public` | Name of the external (floating IP) network. |
 | `clusterapi_cluster_openstack_ssh_key_name` | `<cluster name>` | Name of the OpenStack key pair for the nodes. |
 | `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Octavia provider for load balancers created by the cloud controller manager. |
-| `clusterapi_cluster_openstack_loadbalancer_allowed_cidrs` | `[]` | Source CIDRs allowed to reach the API server load balancer (`allowedCIDRs`). Empty allows all. |
+| `clusterapi_cluster_openstack_loadbalancer_allowed_cidrs` | `[]` | Source CIDRs allowed to reach the API server load balancer (`allowedCIDRs`). Empty allows all. If set, it must include the addresses the cluster is reached from: the management cluster and the Ansible host, and the garden cluster nodes, otherwise Cluster API and the playbook lose access to the API server. |
 
 ### Machines
 

@@ -11,7 +11,7 @@ management_cluster_kubeconfig: "/var/lib/yake/kubeconfig.{{ management_cluster_n
 # renovate: datasource=github-releases depName=k3s-io/k3s extractVersion=^v(?<version>.+)\+k3s\d+$
 management_cluster_k3s_version: '1.37.0'
 # Renovate strips the release suffix, so k3s1 is assumed unless the version carries one (e.g. 1.37.0+k3s2).
-management_cluster_k3s_full_version: "v{{ management_cluster_k3s_version }}{{ '' if '+' in management_cluster_k3s_version else '+k3s1' }}"
+management_cluster_k3s_full_version: "v{{ management_cluster_k3s_version | regex_replace('^v', '') }}{{ '' if '+' in management_cluster_k3s_version else '+k3s1' }}"
 # Traefik and servicelb are not needed on a Cluster API management cluster and would bind the host ports 80 and 443.
 management_cluster_k3s_env:
   INSTALL_K3S_VERSION: "{{ management_cluster_k3s_full_version }}"

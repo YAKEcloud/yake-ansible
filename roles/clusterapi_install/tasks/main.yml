@@ -43,6 +43,34 @@
   changed_when: "'Your management cluster has been initialized successfully' in result.stdout"
   when: clusterapi_install_crd.resources | length == 0
 
+# clusterctl reinstalls every provider named with an explicit version, even if that version is
+# already installed. Only upgrade if an installed provider differs from the pinned version.
+- name: Get the installed Cluster API providers
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}"
+    api_version: clusterctl.cluster.x-k8s.io/v1alpha3
+    kind: Provider
+  register: clusterapi_install_providers
+  when: clusterapi_install_crd.resources | length > 0
+
+- name: Check whether the installed providers match the pinned versions
+  ansible.builtin.set_fact:
+    clusterapi_install_providers_outdated: >-
+      {{
+        clusterapi_install_capi_version | length == 0 or clusterapi_install_capo_version | length == 0
+        or (installed.get('cluster-api') != clusterapi_install_capi_version)
+        or (installed.get('bootstrap-kubeadm') != clusterapi_install_capi_version)
+        or (installed.get('control-plane-kubeadm') != clusterapi_install_capi_version)
+        or (installed.get('infrastructure-' ~ clusterapi_install_infrastructure) != clusterapi_install_capo_version)
+      }}
+  vars:
+    installed: >-
+      {{
+        dict(clusterapi_install_providers.resources | map(attribute='metadata.name')
+             | zip(clusterapi_install_providers.resources | map(attribute='version')))
+      }}
+  when: clusterapi_install_crd.resources | length > 0
+
 # Explicit versions make an upgrade apply the pinned versions, --contract would use the latest.
 - name: Upgrade Cluster API providers
   become: "{{ clusterapi_install_become }}"
@@ -61,7 +89,9 @@
   environment: "{{ {'CLUSTER_TOPOLOGY': clusterapi_install_cluster_topology | lower} | combine(clusterapi_install_proxy_env) }}"
   register: clusterapi_install_upgrade
   changed_when: "'Scaling down' in clusterapi_install_upgrade.stdout"
-  when: clusterapi_install_crd.resources | length > 0
+  when:
+    - clusterapi_install_crd.resources | length > 0
+    - clusterapi_install_providers_outdated | bool
 
 - name: Apply orc controller manifest
   kubernetes.core.k8s:

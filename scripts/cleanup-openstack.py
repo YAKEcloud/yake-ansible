@@ -13,7 +13,7 @@ Usage:
   python3 scripts/cleanup-openstack.py --seed-names managed-seed-a --dry-run
 
 Exit code: 0 on success, 1 if any resource could not be deleted (all other
-resources are still processed), 2 on usage/connection errors.
+resources are still processed), 2 on usage, connection or listing errors.
 """
 
 import argparse
@@ -511,17 +511,22 @@ def main(argv: list[str] | None = None) -> int:
     owners = build_owners(args.cluster_name, args.seeds_project, seed_names)
     print(f"Matching resources owned by: {', '.join(o.name for o in owners)}")
 
-    owned = gather(conn, owners)
+    try:
+        owned = gather(conn, owners)
+    except Exception as exc:
+        print(f"Could not list the resources: {exc}", file=sys.stderr)
+        return 2
     print("Found: " + ", ".join(f"{len(v)} {k}" for k, v in owned.items() if v))
 
     errors = cleanup(conn, owned, args.dry_run)
     if args.garden_url:
-        errors += cleanup_dns(
-            conn,
-            args.garden_url,
-            ["SOA", "NS", *(args.preserve_dns_type or [])],
-            args.dry_run,
-        )
+        preserve = ["SOA", "NS", *(t.upper() for t in args.preserve_dns_type or [])]
+        try:
+            errors += cleanup_dns(conn, args.garden_url, preserve, args.dry_run)
+        except Exception as exc:
+            msg = f"[dns] could not process the zone of {args.garden_url}: {exc}"
+            print(f"  ERROR {msg}", file=sys.stderr)
+            errors.append(msg)
 
     if errors:
         print(f"\n{len(errors)} resource(s) could not be deleted:", file=sys.stderr)

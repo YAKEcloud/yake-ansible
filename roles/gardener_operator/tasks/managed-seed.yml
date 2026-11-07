@@ -5,7 +5,7 @@
     dest: /var/lib/yake/gardener-operator/project.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
   when: gardener_operator_managed_seeds | d([]) | length > 0
 
 - name: Apply project.yaml
@@ -22,7 +22,7 @@
     dest: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
   loop: "{{ gardener_operator_cloudprofiles }}"
   when: gardener_operator_cloudprofiles | d([]) | length > 0 or gardener_operator_managed_seeds | d([]) | length > 0
 
@@ -33,6 +33,7 @@
     wait: true
     src: "/var/lib/yake/gardener-operator/cloudprofile-{{ item.name }}.yaml"
   loop: "{{ gardener_operator_cloudprofiles }}"
+  no_log: true
   when: gardener_operator_cloudprofiles | d([]) | length > 0 or gardener_operator_managed_seeds | d([]) | length > 0
 
 - name: Render ManagedSeed
@@ -41,7 +42,7 @@
     dest: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
   loop: "{{ gardener_operator_managed_seeds }}"
   when: gardener_operator_managed_seeds | d([]) | length > 0
 
@@ -52,6 +53,7 @@
     wait: true
     src: "/var/lib/yake/gardener-operator/managed-seed-{{ item.name }}.yaml"
   loop: "{{ gardener_operator_managed_seeds }}"
+  no_log: true
   when: gardener_operator_managed_seeds | d([]) | length > 0
 
 - name: Wait for ManagedSeed to be fully ready
@@ -69,6 +71,7 @@
     _ms_conditions: "{{ _ms_status.conditions | default([]) | items2dict(key_name='type', value_name='status') }}"
   until:
     - managed_seed_shoot_status.resources | length > 0
+    - _ms_status.observedGeneration | default(-1) >= _ms_shoot.metadata.generation | default(999999)
     - _ms_last_op.state | default('') == 'Succeeded'
     - _ms_conditions.APIServerAvailable | default('') == 'True'
     - _ms_conditions.ControlPlaneHealthy | default('') == 'True'
@@ -84,76 +87,49 @@
     label: "{{ item.name }}"
   when: gardener_operator_managed_seeds | d([]) | length > 0
 
-- name: Request admin kubeconfig for managed seed
-  ansible.builtin.command:
-    argv:
-      - "{{ playbook_dir }}/.local/yake-kubectl"
-      - create
-      - --raw
-      - "/apis/core.gardener.cloud/v1beta1/namespaces/garden/shoots/{{ item.name }}/adminkubeconfig"
-      - -f
-      - "-"
-    stdin: '{"apiVersion":"authentication.gardener.cloud/v1alpha1","kind":"AdminKubeconfigRequest","spec":{"expirationSeconds":600}}'
-  environment:
-    KUBECONFIG: /var/lib/yake/gardener-operator/kubeconfig.vgarden
-    PARAMETERS: -i
-  register: managed_seed_admin_kubeconfig  # noqa: var-naming[no-role-prefix]
-  changed_when: false
-  no_log: true
+- name: Wait for the Seed of the ManagedSeed to be ready
+  kubernetes.core.k8s_info:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    api_version: core.gardener.cloud/v1beta1
+    kind: Seed
+    name: "{{ item.name }}"
+  register: managed_seed_seed_status  # noqa: var-naming[no-role-prefix]
+  vars:
+    _ms_seed: "{{ managed_seed_seed_status.resources | first | default({}) }}"
+    _ms_seed_status: "{{ _ms_seed.status | default({}) }}"
+    _ms_seed_last_op: "{{ _ms_seed_status.lastOperation | default({}) }}"
+    _ms_seed_conditions: "{{ _ms_seed_status.conditions | default([]) | items2dict(key_name='type', value_name='status') }}"
+  until:
+    - managed_seed_seed_status.resources | length > 0
+    - _ms_seed_status.observedGeneration | default(-1) >= _ms_seed.metadata.generation | default(999999)
+    - _ms_seed_last_op.state | default('') == 'Succeeded'
+    - _ms_seed_conditions.GardenletReady | default('') == 'True'
+    - _ms_seed_conditions.ExtensionsReady | default('') == 'True'
+    - _ms_seed_conditions.SeedSystemComponentsHealthy | default('') == 'True'
+  retries: 60
+  delay: 10
   loop: "{{ gardener_operator_managed_seeds }}"
   loop_control:
     label: "{{ item.name }}"
-  when:
-    - gardener_operator_managed_seeds | d([]) | length > 0
-    - gardener_operator_proxy_env | d({}) | length > 0
+  when: gardener_operator_managed_seeds | d([]) | length > 0
 
-- name: Install Kyverno
-  kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
-    kubeconfig: "{{ (result.stdout | from_json).status.kubeconfig | b64decode | from_yaml }}"
-    chart_ref: kyverno
-    chart_repo_url: https://kyverno.github.io/kyverno/
-    chart_version: "{{ gardener_operator_kyverno_version }}"
-    create_namespace: true
-    release_name: kyverno
-    release_namespace: kyverno
-    release_state: present
-    wait: true
-    values:
-      features:
-        forceFailurePolicyIgnore:
-          enabled: true
-  environment: "{{ gardener_operator_proxy_env }}"
-  no_log: true
-  loop: "{{ managed_seed_admin_kubeconfig.results }}"
-  loop_control:
-    loop_var: result
-    label: "{{ result.item.name }}"
-  when:
-    - gardener_operator_managed_seeds | d([]) | length > 0
-    - gardener_operator_proxy_env | d({}) | length > 0
-
-- name: Template Kyverno proxy injection policy
+- name: Template Kyverno injection policy for managed seeds
   ansible.builtin.template:
     src: kyverno-proxy-policy.yaml.j2
     dest: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
   when:
     - gardener_operator_managed_seeds | d([]) | length > 0
-    - gardener_operator_proxy_env | d({}) | length > 0
+    - _gardener_operator_kyverno_enabled | bool
 
-- name: Apply Kyverno proxy injection policy
-  kubernetes.core.k8s:
-    kubeconfig: "{{ (result.stdout | from_json).status.kubeconfig | b64decode | from_yaml }}"
-    state: present
-    src: /var/lib/yake/gardener-operator/kyverno-proxy-policy.yaml
-  no_log: true
-  loop: "{{ managed_seed_admin_kubeconfig.results }}"
+# The admin kubeconfig is short-lived, so it is requested per seed right before it is used.
+- name: Install Kyverno on the managed seeds
+  ansible.builtin.include_tasks: managed-seed-kyverno.yml
+  loop: "{{ gardener_operator_managed_seeds }}"
   loop_control:
-    loop_var: result
-    label: "{{ result.item.name }}"
+    label: "{{ item.name }}"
   when:
     - gardener_operator_managed_seeds | d([]) | length > 0
-    - gardener_operator_proxy_env | d({}) | length > 0
+    - _gardener_operator_kyverno_enabled | bool

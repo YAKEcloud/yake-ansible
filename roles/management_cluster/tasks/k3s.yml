@@ -5,29 +5,48 @@
   changed_when: false
   failed_when: false
 
+# The installer uses INSTALL_K3S_VERSION of management_cluster_k3s_env, which a user may override.
+- name: Set the k3s version to install
+  ansible.builtin.set_fact:
+    _management_cluster_k3s_effective_version: "{{ management_cluster_k3s_env.INSTALL_K3S_VERSION | d(management_cluster_k3s_full_version) }}"
+
 - name: Set k3s install required fact
   ansible.builtin.set_fact:
-    _management_cluster_k3s_install: "{{ (_k3s_version.stdout | d('')) is not search('v' ~ management_cluster_k3s_version ~ '[+ ]') }}"
+    _management_cluster_k3s_install: "{{ ('k3s version ' ~ _management_cluster_k3s_effective_version ~ ' ') not in (_k3s_version.stdout | d('')) }}"
 
-- name: Download k3s install script
-  ansible.builtin.get_url:
-    url: https://get.k3s.io
-    dest: /tmp/k3s-install.sh
-    mode: "0755"
-  environment: "{{ management_cluster_proxy_env }}"
-  when: _management_cluster_k3s_install | bool
-
+# The script is taken from the tag of the requested release and runs as root, so it is
+# kept in a private temporary directory. It verifies the k3s binary against the
+# sha256sum file of the release itself.
 - name: Install or upgrade k3s
-  become: true
-  ansible.builtin.command: sh /tmp/k3s-install.sh
-  environment: "{{ management_cluster_k3s_env | combine(management_cluster_proxy_env) }}"
   when: _management_cluster_k3s_install | bool
-  changed_when: true
+  block:
+    - name: Create temporary directory for the k3s install script
+      become: true
+      ansible.builtin.tempfile:
+        state: directory
+        prefix: k3s-install.
+      register: _management_cluster_k3s_tmp  # noqa: var-naming[no-role-prefix]
 
-- name: Remove install script
-  ansible.builtin.file:
-    path: /tmp/k3s-install.sh
-    state: absent
+    - name: Download k3s install script
+      become: true
+      ansible.builtin.get_url:
+        url: "https://raw.githubusercontent.com/k3s-io/k3s/{{ _management_cluster_k3s_effective_version | urlencode }}/install.sh"
+        dest: "{{ _management_cluster_k3s_tmp.path }}/install.sh"
+        mode: "0700"
+      environment: "{{ management_cluster_proxy_env }}"
+
+    - name: Run k3s install script
+      become: true
+      ansible.builtin.command: "sh {{ _management_cluster_k3s_tmp.path }}/install.sh"
+      environment: "{{ management_cluster_k3s_env | combine(management_cluster_proxy_env) }}"
+      changed_when: true
+  always:
+    - name: Remove install script
+      become: true
+      ansible.builtin.file:
+        path: "{{ _management_cluster_k3s_tmp.path }}"
+        state: absent
+      when: _management_cluster_k3s_tmp.path is defined
 
 - name: Copy kubeconfig
   become: true

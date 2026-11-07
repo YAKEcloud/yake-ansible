@@ -2,14 +2,17 @@ ARG ALPINE_VERSION=3.24@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c9100339
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v4.3.1  # renovate: datasource=github-releases depName=helm/helm
+# renovate: datasource=github-releases depName=helm/helm
+ARG VERSION=v4.3.1
 ADD https://get.helm.sh/helm-${VERSION}-linux-amd64.tar.gz /helm.tar.gz
+ADD https://get.helm.sh/helm-${VERSION}-linux-amd64.tar.gz.sha256sum /helm.tar.gz.sha256sum
 
 ENV USER_NAME=helm
 ENV USER_ID=1000
 ENV GROUP_ID=1000
 
-RUN apk update --no-cache \
+RUN echo "$(cut -d ' ' -f 1 /helm.tar.gz.sha256sum)  /helm.tar.gz" > /tmp/sha256sums \
+    && sha256sum -c /tmp/sha256sums \
     && apk upgrade --no-cache --available \
     && apk add --no-cache \
       dumb-init \
@@ -19,7 +22,7 @@ RUN apk update --no-cache \
     && mkdir /var/lib/yake \
     && chown -R ${USER_NAME}:${USER_NAME} /var/lib/yake \
     && tar -xzf /helm.tar.gz --strip-components=1 -C /usr/local/bin linux-amd64/helm \
-    && rm /helm.tar.gz
+    && rm /helm.tar.gz /helm.tar.gz.sha256sum /tmp/sha256sums
 
 WORKDIR /var/lib/yake
 

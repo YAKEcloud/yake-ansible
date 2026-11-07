@@ -102,3 +102,11 @@
       retries: 30
       delay: 10
       changed_when: false
+
+    # The backup contains CA keys and credentials of the clusters.
+    - name: Remove the backup after a successful restore
+      become: true
+      ansible.builtin.file:
+        path: "{{ _backup_dir }}"
+        state: absent
+      when: (management_cluster_kind_clusters.stdout | from_json)['items'] | length > 0

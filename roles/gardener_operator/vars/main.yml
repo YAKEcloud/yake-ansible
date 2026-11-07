@@ -7,3 +7,9 @@ _gardener_operator_dns_provider_namespace_map:  # noqa: var-naming[no-role-prefi
   aws-route53: runtime-extension-provider-aws
   google-clouddns: runtime-extension-provider-gcp
   openstack-designate: runtime-extension-provider-openstack
+
+# Kyverno injects proxy env and NTP config into extension pods and OperatingSystemConfigs (internal and managed seeds).
+_gardener_operator_kyverno_enabled: "{{ gardener_operator_proxy_env | d({}) | length > 0 or gardener_operator_ntp_servers | d([]) | length > 0 }}"  # noqa: var-naming[no-role-prefix]
+
+# Name of the (immutable) registry mirrors CA bundle Secret, derived from its content so a changed CA creates a new Secret.
+_gardener_operator_mirrors_ca_secret_name: "private-mirrors-ca-bundle-{{ gardener_operator_managed_seeds_registry_mirrors_ca | d('') | hash('sha256') | truncate(10, True, '') }}"  # noqa: var-naming[no-role-prefix]

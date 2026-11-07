@@ -28,27 +28,70 @@
 
 - name: Initialize Cluster API
   become: "{{ clusterapi_install_become }}"
-  ansible.builtin.shell: |
-    export CLUSTER_TOPOLOGY={{ clusterapi_install_cluster_topology | lower }}
-    {{ playbook_dir }}/.local/yake-clusterctl init --infrastructure {{ clusterapi_install_infrastructure }} --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}
-  environment: "{{ clusterapi_install_proxy_env }}"
-  args:
-    executable: /bin/bash
+  ansible.builtin.command:
+    argv: >-
+      {{
+        [playbook_dir ~ '/.local/yake-clusterctl', 'init',
+         '--infrastructure', clusterapi_install_infrastructure ~ (':' ~ clusterapi_install_capo_version if clusterapi_install_capo_version | length > 0 else ''),
+         '--kubeconfig', '/var/lib/yake/kubeconfig.' ~ clusterapi_install_clusterapi_name]
+        + (['--core', 'cluster-api:' ~ clusterapi_install_capi_version,
+            '--bootstrap', 'kubeadm:' ~ clusterapi_install_capi_version,
+            '--control-plane', 'kubeadm:' ~ clusterapi_install_capi_version] if clusterapi_install_capi_version | length > 0 else [])
+      }}
+  environment: "{{ {'CLUSTER_TOPOLOGY': clusterapi_install_cluster_topology | lower} | combine(clusterapi_install_proxy_env) }}"
   register: result  # noqa: var-naming[no-role-prefix]
   changed_when: "'Your management cluster has been initialized successfully' in result.stdout"
   when: clusterapi_install_crd.resources | length == 0
 
+# clusterctl reinstalls every provider named with an explicit version, even if that version is
+# already installed. Only upgrade if an installed provider differs from the pinned version.
+- name: Get the installed Cluster API providers
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}"
+    api_version: clusterctl.cluster.x-k8s.io/v1alpha3
+    kind: Provider
+  register: clusterapi_install_providers
+  when: clusterapi_install_crd.resources | length > 0
+
+- name: Check whether the installed providers match the pinned versions
+  ansible.builtin.set_fact:
+    clusterapi_install_providers_outdated: >-
+      {{
+        clusterapi_install_capi_version | length == 0 or clusterapi_install_capo_version | length == 0
+        or (installed.get('cluster-api') != clusterapi_install_capi_version)
+        or (installed.get('bootstrap-kubeadm') != clusterapi_install_capi_version)
+        or (installed.get('control-plane-kubeadm') != clusterapi_install_capi_version)
+        or (installed.get('infrastructure-' ~ clusterapi_install_infrastructure) != clusterapi_install_capo_version)
+      }}
+  vars:
+    installed: >-
+      {{
+        dict(clusterapi_install_providers.resources | map(attribute='metadata.name')
+             | zip(clusterapi_install_providers.resources | map(attribute='version')))
+      }}
+  when: clusterapi_install_crd.resources | length > 0
+
+# Explicit versions make an upgrade apply the pinned versions, --contract would use the latest.
 - name: Upgrade Cluster API providers
   become: "{{ clusterapi_install_become }}"
-  ansible.builtin.shell: |
-    export CLUSTER_TOPOLOGY={{ clusterapi_install_cluster_topology | lower }}
-    {{ playbook_dir }}/.local/yake-clusterctl upgrade apply --contract {{ clusterapi_install_contract }} --wait-providers --kubeconfig /var/lib/yake/kubeconfig.{{ clusterapi_install_clusterapi_name }}
-  environment: "{{ clusterapi_install_proxy_env }}"
-  args:
-    executable: /bin/bash
+  ansible.builtin.command:
+    argv: >-
+      {{
+        [playbook_dir ~ '/.local/yake-clusterctl', 'upgrade', 'apply', '--wait-providers',
+         '--kubeconfig', '/var/lib/yake/kubeconfig.' ~ clusterapi_install_clusterapi_name]
+        + (['--core', 'cluster-api:' ~ clusterapi_install_capi_version,
+            '--bootstrap', 'kubeadm:' ~ clusterapi_install_capi_version,
+            '--control-plane', 'kubeadm:' ~ clusterapi_install_capi_version,
+            '--infrastructure', clusterapi_install_infrastructure ~ ':' ~ clusterapi_install_capo_version]
+           if clusterapi_install_capi_version | length > 0 and clusterapi_install_capo_version | length > 0
+           else ['--contract', clusterapi_install_contract])
+      }}
+  environment: "{{ {'CLUSTER_TOPOLOGY': clusterapi_install_cluster_topology | lower} | combine(clusterapi_install_proxy_env) }}"
   register: clusterapi_install_upgrade
   changed_when: "'Scaling down' in clusterapi_install_upgrade.stdout"
-  when: clusterapi_install_crd.resources | length > 0
+  when:
+    - clusterapi_install_crd.resources | length > 0
+    - clusterapi_install_providers_outdated | bool
 
 - name: Apply orc controller manifest
   kubernetes.core.k8s:

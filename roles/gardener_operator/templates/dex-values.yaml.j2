@@ -19,7 +19,7 @@ config:
       redirectURIs:
         - https://dashboard.{{ gardener_operator_garden_url }}/auth/callback
       name: Gardener Dashboard
-      secret: {{ gardener_operator_dex.dashboard_secret }}
+      secret: {{ gardener_operator_dex.dashboard_secret | to_json }}
     - id: kube-kubectl
       name: Kubectl
       public: true
@@ -29,9 +29,9 @@ config:
   enablePasswordDB: true
   staticPasswords:
 {% for pw in gardener_operator_dex.static_passwords %}
-    - email: {{ pw.email }}
+    - email: {{ pw.email | to_json }}
       hash: "{{ pw.hash }}"
-      username: {{ pw.username }}
+      username: {{ pw.username | to_json }}
       emailVerified: true
 {% endfor %}
 {% endif %}

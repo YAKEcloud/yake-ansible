@@ -67,6 +67,12 @@
     name: "{{ clusterapi_cluster_openstack_external_network }}"
   register: result_external_network  # noqa: var-naming[no-role-prefix]
 
+- name: Fail if external network not found
+  ansible.builtin.assert:
+    that: result_external_network.networks | length > 0
+    fail_msg: "External network '{{ clusterapi_cluster_openstack_external_network }}' was not found in OpenStack."
+    quiet: true
+
 - name: Set _clusterapi_cluster_openstack_external_network fact
   ansible.builtin.set_fact:
     _clusterapi_cluster_openstack_external_network: "{{ result_external_network.networks | first | d({}) }}"
@@ -103,7 +109,7 @@
     _clusterapi_cluster_worker_server_group_id: "{{ result_worker_server_group.server_group.id }}"
   when: clusterapi_cluster_worker_server_group_enabled | bool
 
-- name: Combine clusterapi_cluster_defaults and clusterapi_cluster_extra
+- name: Set _clusterapi_cluster fact from clusterapi_cluster_extra
   ansible.builtin.set_fact:
     _clusterapi_cluster: "{{ clusterapi_cluster_extra }}"  # noqa: var-naming[no-role-prefix]
 
@@ -180,6 +186,34 @@
     state: present
     wait: true
     src: /var/lib/yake/cloud-secret.yaml
+  no_log: true
+
+- name: Include secrets encryption config tasks
+  ansible.builtin.include_tasks: encryption-config.yml
+  when: clusterapi_cluster_secrets_encryption_enabled | bool
+
+# Without the provider config the API server cannot read Secrets that are stored encrypted.
+- name: Get the secrets encryption config of an existing cluster
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    kind: Secret
+    namespace: default
+    name: "{{ clusterapi_cluster_name }}-encryption-config"
+  register: result_encryption_guard  # noqa: var-naming[no-role-prefix]
+  when: not (clusterapi_cluster_secrets_encryption_enabled | bool)
+  no_log: true
+
+- name: Refuse to disable secrets encryption on a cluster that uses it
+  ansible.builtin.assert:
+    that: result_encryption_guard.resources | length == 0
+    fail_msg: >-
+      clusterapi_cluster_secrets_encryption_enabled is false, but the cluster {{ clusterapi_cluster_name }}
+      already stores its Secrets encrypted (Secret {{ clusterapi_cluster_name }}-encryption-config exists).
+      The API server could not read them without the provider config. Keep the variable true. To turn
+      encryption off on purpose, first decrypt the stored Secrets as described in the Kubernetes documentation
+      ("Decrypt all data"), then delete that Secret.
+    quiet: true
+  when: not (clusterapi_cluster_secrets_encryption_enabled | bool)
 
 - name: Create Kubernetes cluster
   kubernetes.core.k8s:
@@ -201,20 +235,61 @@
       }}
   when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
 
+- name: Determine currently desired KubeadmConfigTemplate names
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_current_config_template_names: >-
+      {{
+        result_cluster_manifest.stdout | from_yaml_all | list
+        | select('defined')
+        | selectattr('kind', 'defined')
+        | selectattr('kind', 'equalto', 'KubeadmConfigTemplate')
+        | map(attribute='metadata.name')
+        | list
+      }}
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
 - name: List existing OpenStackMachineTemplates
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
-    api_version: infrastructure.cluster.x-k8s.io/v1beta1
+    api_version: infrastructure.cluster.x-k8s.io/v1beta2
     kind: OpenStackMachineTemplate
     namespace: default
   register: result_existing_machine_templates  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+# During a rollout the old MachineSets stay around, and a paused rollout or a remediation can still
+# create machines from them. They need the templates they reference, so these are never deleted.
+- name: List existing MachineSets
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    api_version: cluster.x-k8s.io/v1beta2
+    kind: MachineSet
+    namespace: default
+  register: result_existing_machine_sets  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: Determine the templates that MachineSets with replicas still reference
+  ansible.builtin.set_fact:
+    _clusterapi_cluster_referenced_machine_templates: >-
+      {{ active_machine_sets | map(attribute='spec.template.spec.infrastructureRef.name', default='') | list }}
+    _clusterapi_cluster_referenced_config_templates: >-
+      {{ active_machine_sets | map(attribute='spec.template.spec.bootstrap.configRef.name', default='') | list }}
+  vars:
+    cluster_machine_sets: >-
+      {{ result_existing_machine_sets.resources | selectattr('spec.clusterName', 'equalto', clusterapi_cluster_name) | list }}
+    # A MachineSet without replicas counts as active, to be on the safe side.
+    active_machine_sets: >-
+      {{
+        cluster_machine_sets | selectattr('spec.replicas', 'defined') | rejectattr('spec.replicas', 'equalto', 0) | list
+        + cluster_machine_sets | rejectattr('spec.replicas', 'defined') | list
+      }}
   when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
 
 - name: Delete stale OpenStackMachineTemplates no longer referenced
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
     state: absent
-    api_version: infrastructure.cluster.x-k8s.io/v1beta1
+    api_version: infrastructure.cluster.x-k8s.io/v1beta2
     kind: OpenStackMachineTemplate
     namespace: default
     name: "{{ item }}"
@@ -224,6 +299,35 @@
       | map(attribute='metadata.name')
       | select('match', '^' ~ (clusterapi_cluster_name | regex_escape) ~ '-')
       | reject('in', _clusterapi_cluster_current_machine_template_names)
+      | reject('in', _clusterapi_cluster_referenced_machine_templates)
+      | list
+    }}
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: List existing KubeadmConfigTemplates
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    api_version: bootstrap.cluster.x-k8s.io/v1beta2
+    kind: KubeadmConfigTemplate
+    namespace: default
+  register: result_existing_config_templates  # noqa: var-naming[no-role-prefix]
+  when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
+
+- name: Delete stale KubeadmConfigTemplates no longer referenced
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
+    state: absent
+    api_version: bootstrap.cluster.x-k8s.io/v1beta2
+    kind: KubeadmConfigTemplate
+    namespace: default
+    name: "{{ item }}"
+  loop: >-
+    {{
+      result_existing_config_templates.resources
+      | map(attribute='metadata.name')
+      | select('match', '^' ~ (clusterapi_cluster_name | regex_escape) ~ '-md(-[0-9a-f]{8})?$')
+      | reject('in', _clusterapi_cluster_current_config_template_names)
+      | reject('in', _clusterapi_cluster_referenced_config_templates)
       | list
     }}
   when: clusterapi_cluster_stale_machine_template_cleanup_enabled | bool
@@ -237,6 +341,7 @@
     KUBECONFIG: "/var/lib/yake/kubeconfig.{{ clusterapi_cluster_management_cluster_name }}"
   retries: 30
   delay: 10
+  no_log: true
 
 - name: Write kubeconfig
   ansible.builtin.copy:
@@ -425,3 +530,7 @@
     namespace: kube-system
     wait: true
     wait_timeout: 300
+
+- name: Include secrets encryption migration tasks
+  ansible.builtin.include_tasks: encryption-migrate.yml
+  when: clusterapi_cluster_secrets_encryption_enabled | bool

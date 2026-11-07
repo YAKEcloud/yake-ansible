@@ -63,7 +63,13 @@ metadata:
   namespace: garden
 type: Opaque
 stringData:
-  {{ gardener_operator_internal_seed_backup_credentials }}
+{% if gardener_operator_internal_seed_backup_credentials is string %}
+  {{ gardener_operator_internal_seed_backup_credentials | indent(2) }}
+{% else %}
+{% for k, v in gardener_operator_internal_seed_backup_credentials.items() %}
+  {{ k | string | to_json }}: {{ (v | string | lower if v is boolean else v | string) | to_json }}
+{% endfor %}
+{% endif %}
 {% endif %}
 {% if gardener_operator_monitoring.basic_auth.username | d('') and gardener_operator_monitoring.basic_auth.password | d('') %}
 ---
@@ -223,13 +229,13 @@ spec:
         provider:
           region: {{ gardener_operator_openstack_region_name }}
           type: openstack
-          zones: {{ gardener_operator_openstack_zones }}
+          zones: {{ gardener_operator_openstack_zones | to_json }}
         settings:
           loadBalancerServices:
             annotations:
               loadbalancer.openstack.org/class: floatingPool
           excessCapacityReservation:
-            enabled: {{ gardener_operator_internal_seed_excess_capacity_reservation | lower }}
+            enabled: {{ gardener_operator_internal_seed_excess_capacity_reservation | bool | lower }}
           scheduling:
             visible: false
           verticalPodAutoscaler:

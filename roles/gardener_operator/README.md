@@ -31,9 +31,14 @@ This role deploys the Gardener Operator on an existing Kubernetes cluster and co
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `gardener_operator_version` | `1.142.1` | Gardener Operator Helm chart version. |
-| `gardener_operator_garden_url` | `example.com` | Base domain. Wildcard DNS for this domain must point to the garden ingress. |
-| `gardener_operator_kubernetes_version` | `1.36.1` | Kubernetes version for the internal seed shoot. |
+| `gardener_operator_version` | see defaults | Gardener Operator Helm chart version. |
+| `gardener_operator_garden_url` | `example.com` | Base domain. Wildcard DNS for this domain must point to the garden ingress. Must be changed, the run fails with `example.com`. |
+| `gardener_operator_nodes_cidr` | `""` | Nodes CIDR of the garden cluster. Empty detects it from the first node's InternalIP (as /24). Set it if the nodes do not share that /24. |
+| `gardener_operator_ops_toolbelt_version` | see defaults | Image tag of the ops-toolbelt used for dashboard terminals. |
+| `gardener_operator_kubernetes_version` | see defaults | Kubernetes version for the internal seed shoot. |
+| `gardener_operator_login_check_enabled` | `true` | Fail the role if `https://dashboard.<garden_url>/auth` does not redirect to Dex, i.e. a dashboard login would fail (e.g. "Issuer not available"). |
+| `gardener_operator_login_check_validate_certs` | `true` | Verify the TLS certificate of the dashboard during the login check. Set to `false` for ACME staging or a generated CA. |
+| `gardener_operator_virtual_garden_high_availability` | `true` | Sets `spec.virtualCluster.controlPlane.highAvailability` in the Garden: 3 replicas each for etcd main and events (instead of 1), the virtual kube-apiserver and the gardener-apiserver (instead of 2), spread over nodes (and zones). Use at least 3 worker nodes, so that each replica gets its own node. Gardener does not support disabling it again. Switching an existing installation makes the Gardener API unavailable for a few minutes, see [operations](https://github.com/YAKEcloud/yake-ansible/blob/main/docs/operations.md#switching-the-virtual-garden-to-high-availability). |
 | `gardener_operator_networking_type` | `cilium` | Default CNI for shoots: `cilium` or `calico`. |
 | `gardener_operator_garden_cluster_admin_email` | `admin@example.com` | Cluster-admin email for the Gardener dashboard; also the default sole member of `gardener_operator_managed_seeds_project`. |
 | `gardener_operator_managed_seeds_project` | `{name: seeds, members: [{email: gardener_operator_garden_cluster_admin_email, role: admin, roles: [serviceaccountmanager]}]}` | The `name`/`members` of the `garden` namespace Project used internally for `gardener_operator_managed_seeds` (its namespace is always `garden`, not configurable). Same member entry format as `gardener_operator_projects` below. Adding someone to `gardener_operator_dex.static_passwords` does **not** put them here - the two are independent, so a new Dex user gets no project access unless you explicitly add them to a project's member list. |
@@ -90,7 +95,7 @@ With `ca` you can bring your own CA (`gardener_operator_shoot_cert_service_ca_ce
 | `gardener_operator_generated_ca_common_name` | `Gardener CA` | Subject CN of the generated CA. |
 
 > [!WARNING]
-> The generated CA key lies unencrypted (mode `0600`) on the Ansible host and, as part of the issuer configuration, in the cluster. Everyone who has it can issue certificates that your clients trust. For production use your own (intermediate) CA instead. Distribute `ca.crt` to all clients (browsers, `kubectl`, seeds, shoots). Replacing the CA means re-issuing all certificates and re-importing it everywhere: delete the directory and run the role again.
+> The generated CA key lies unencrypted (mode `0600`) on the Ansible host and, as part of the issuer configuration, in the cluster. It is also distributed to all seeds (internal and managed) via the extension values, because every seed issues certificates with it. Certificate and key must be set together or both be empty, otherwise the run fails. Everyone who has it can issue certificates that your clients trust. For production use your own (intermediate) CA instead. Distribute `ca.crt` to all clients (browsers, `kubectl`, seeds, shoots). Replacing the CA means re-issuing all certificates and re-importing it everywhere: delete the directory and run the role again.
 
 ### Cloud Profiles
 
@@ -102,13 +107,14 @@ Key fields per profile:
 |-------|-------------|
 | `name` | Cloud profile name. |
 | `ignore_volume_az` | Set to `true` when the Cinder volume availability zone differs from the Nova compute availability zone (e.g., compute in `AZ1`, volumes in `nova`). Without this, dynamic volume provisioning for shoot/seed control planes (e.g. etcd) fails with `Availability zone '<compute-az>' is invalid` because the CSI driver otherwise derives the volume AZ from the node's compute AZ. Defaults to `false`. |
+| `root_disk_availability_zone` | Optional. Renders `rootDiskAvailabilityZone` in the CloudProfile and sets the Cinder availability zone of the root volumes of workers that use a root disk type (`worker.volume.type`, `machinetypes[].storage.type` or the type of the default storage class). Needed when the Nova and Cinder zones are named differently (e.g. compute in `AZ1`, volumes in `nova`), otherwise the machine controller fails with `Availability zone 'AZ1' is invalid`. An empty string lets Cinder pick its default zone. Not rendered when unset. Requires provider-openstack 1.59.0 or later. |
 | `storageclasses` | Cinder storage classes with type, availability zone, and optional default flag. |
 | `floating_pools` | List of floating pool names available for shoot load balancers. |
 | `loadbalancer_providers` | List of available load balancer providers (e.g., `amphora`, `ovn`). |
 | `keystone_urls` | Keystone URL per region. |
 | `machine_images` | Machine images with versions and per-region Glance IDs. Each version accepts an optional `classification` (`preview`, `supported`, `deprecated`). It is only rendered when set. Marking an old version `deprecated` lets shoots with auto-update enabled move to a newer image in their maintenance window. |
 | `kubernetes_versions` | Available Kubernetes versions with classification (`preview`, `supported`, `deprecated`). |
-| `machinetypes` | Machine type definitions with CPU, GPU, and memory. Optional `storage.size` renders `storage:` in the CloudProfile. The OpenStack extension does not create a boot volume from it: for volume-backed / `disk: 0` flavors (e.g. SCS) `worker.volume.size` has to be set in the Shoot, otherwise Nova rejects the server create. Do not set `storage.type`, it makes the machine controller create the volume itself in the compute AZ, which Cinder rejects when the AZs differ. |
+| `machinetypes` | Machine type definitions with CPU, GPU, and memory. Optional `storage.size` renders `storage:` in the CloudProfile. The OpenStack extension does not create a boot volume from it: for volume-backed / `disk: 0` flavors (e.g. SCS) `worker.volume.size` has to be set in the Shoot, otherwise Nova rejects the server create. `storage.type` makes the machine controller create the root volume itself. When the Nova and Cinder zones differ, set `root_disk_availability_zone` as well. |
 | `bastion` | Optional. Renders `spec.bastion` in the CloudProfile (used by `gardenctl ssh`). Keys: `machine_type` (must exist in `machinetypes`), `machine_image` (must exist in `machine_images`), optional `machine_image_version`. Pick a small flavor with a root disk, the bastion server gets no boot volume, so `disk: 0` flavors fail in Nova. Without it Gardener picks a default. |
 | `regions` | Regions with availability zones. |
 
@@ -142,10 +148,10 @@ The worker subnet for each managed seed is configured under the seed entry. Two 
 **Explicit CIDR:**
 
 ```yaml
-workers_cidr: "10.120.0.0/16"
+workers_cidr: "100.96.0.0/16"
 ```
 
-If `workers_cidr` is not set, it defaults to `10.120.0.0/16`.
+If `workers_cidr` is not set, it defaults to `100.96.0.0/16`.
 
 **Subnet pool allocation** (requires gardener-extension-provider-openstack v1.55.0 or later):
 
@@ -171,7 +177,7 @@ gardener_operator_managed_seeds:
     kubernetes_version: 1.35.3
     floating_pool_name: "public"
     loadbalancer_provider: amphora  # optional, default: amphora
-    workers_cidr: "10.120.0.0/16"  # optional, default: 10.120.0.0/16
+    workers_cidr: "100.96.0.0/16"  # optional, default: 100.96.0.0/16
     openstack:
       auth_url: "https://keystone.example.com:5000"
       project_name: "seed-project"
@@ -203,10 +209,10 @@ Etcd backups for the virtual garden and the internal seed are enabled when the c
 |----------|-------------|
 | `gardener_operator_garden_backup_provider` | Backup provider: `openstack` or `S3`. |
 | `gardener_operator_garden_backup_bucket_name` | Bucket or container name. |
-| `gardener_operator_garden_backup_credentials` | Provider credentials as a YAML string. |
+| `gardener_operator_garden_backup_credentials` | Provider credentials as a YAML string or mapping. |
 | `gardener_operator_internal_seed_backup_provider` | Same for the internal seed. |
 | `gardener_operator_internal_seed_backup_bucket_name` | Bucket or container name. |
-| `gardener_operator_internal_seed_backup_credentials` | Provider credentials as a YAML string. |
+| `gardener_operator_internal_seed_backup_credentials` | Provider credentials as a YAML string or mapping. |
 
 ## Monitoring
 
@@ -219,9 +225,11 @@ Etcd backups for the virtual garden and the internal seed are enabled when the c
 | `gardener_operator_monitoring.basic_auth.username` | `""` | Basic auth username for the remote write endpoint. |
 | `gardener_operator_monitoring.basic_auth.password` | `""` | Basic auth password. Secret is only created when both username and password are set. |
 
-This only covers shoot metrics. Gardener's own seed/garden monitoring (cache, aggregate and seed Prometheus) has no remote write option — it is pull-based: the [aggregate Prometheus](https://gardener.cloud/docs/gardener/monitoring/#aggregate-prometheus) exposes an ingress in each seed's `garden` namespace so an external Prometheus/Cortex can scrape (federate) it instead. There is no role variable for this; set up such scraping directly on the central Prometheus/Cortex side.
+This only covers shoot metrics. Gardener's own seed/garden monitoring (cache, aggregate and seed Prometheus) has no remote write option, it is pull-based: the [aggregate Prometheus](https://gardener.cloud/docs/gardener/monitoring/#aggregate-prometheus) exposes an ingress in each seed's `garden` namespace so an external Prometheus/Cortex can scrape (federate) it instead. There is no role variable for this; set up such scraping directly on the central Prometheus/Cortex side.
 
 ## Files written
+
+The directory `/var/lib/yake/gardener-operator` is `0700` and all files in it are `0600`, because the rendered manifests contain credentials.
 
 | Path | Description |
 |------|-------------|

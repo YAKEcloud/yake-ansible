@@ -2,50 +2,53 @@
 apiVersion: core.gardener.cloud/v1beta1
 kind: CloudProfile
 metadata:
-  name: {{ item.name }}
+  name: {{ item.name | to_json }}
 spec:
   type: openstack
   providerConfig:
     apiVersion: openstack.provider.extensions.gardener.cloud/v1alpha1
     kind: CloudProfileConfig
     ignoreVolumeAZ: {{ item.ignore_volume_az | d(false) | lower }}
+{% if item.root_disk_availability_zone is defined %}
+    rootDiskAvailabilityZone: {{ item.root_disk_availability_zone | to_json }}
+{% endif %}
     storageClasses:
 {% for sc in item.storageclasses %}
-      - name: {{ sc.name }}
-        default: {{ sc.default }}
+      - name: {{ sc.name | to_json }}
+        default: {{ sc.default | bool | lower }}
         provisioner: cinder.csi.openstack.org
         volumeBindingMode: WaitForFirstConsumer
         parameters:
 {% if sc.type is defined and sc.type %}
-          type: {{ sc.type }}
+          type: {{ sc.type | to_json }}
 {% endif %}
-          availability: {{ sc.availability }}
+          availability: {{ sc.availability | to_json }}
 {% endfor %}
     constraints:
       floatingPools:
 {% for fp in item.floating_pools %}
-        - name: {{ fp.name }}
+        - name: {{ fp.name | to_json }}
 {% endfor %}
       loadBalancerProviders:
 {% for lb in item.loadbalancer_providers %}
-        - name: {{ lb.name }}
+        - name: {{ lb.name | to_json }}
 {% endfor %}
     keystoneURLs:
 {% for url in item.keystone_urls %}
-      - region: {{ url.region }}
-        url: "{{ url.url }}"
+      - region: {{ url.region | to_json }}
+        url: {{ url.url | to_json }}
 {% endfor %}
     machineImages:
 {% for mi in item.machine_images %}
-      - name: {{ mi.name }}
+      - name: {{ mi.name | to_json }}
         versions:
 {% for v in mi.versions %}
-          - version: {{ v.version }}
-            image: "{{ v.image }}"
+          - version: {{ v.version | string | to_json }}
+            image: {{ v.image | to_json }}
             regions:
 {% for r in v.regions %}
-              - name: {{ r.name }}
-                id: {{ r.id }}
+              - name: {{ r.name | to_json }}
+                id: {{ r.id | to_json }}
 {% endfor %}
 {% endfor %}
 {% endfor %}
@@ -58,17 +61,17 @@ spec:
   kubernetes:
     versions:
 {% for v in item.kubernetes_versions %}
-      - version: {{ v.version }}
-        classification: {{ v.classification }}
+      - version: {{ v.version | string | to_json }}
+        classification: {{ v.classification | to_json }}
 {% endfor %}
   machineImages:
 {% for mi in item.machine_images %}
-    - name: {{ mi.name }}
+    - name: {{ mi.name | to_json }}
       versions:
 {% for v in mi.versions %}
-        - version: {{ v.version }}
+        - version: {{ v.version | string | to_json }}
 {% if v.classification is defined and v.classification %}
-          classification: {{ v.classification }}
+          classification: {{ v.classification | to_json }}
 {% endif %}
 {% endfor %}
 {% endfor %}
@@ -76,32 +79,32 @@ spec:
   bastion:
 {% if item.bastion.machine_type is defined %}
     machineType:
-      name: {{ item.bastion.machine_type }}
+      name: {{ item.bastion.machine_type | to_json }}
 {% endif %}
 {% if item.bastion.machine_image is defined or item.bastion.machine_image_version is defined %}
     machineImage:
 {% endif %}
 {% if item.bastion.machine_image is defined  %}
-      name: {{ item.bastion.machine_image }}
+      name: {{ item.bastion.machine_image | to_json }}
 {% endif %}
 {% if item.bastion.machine_image_version is defined %}
-      version: "{{ item.bastion.machine_image_version }}"
+      version: {{ item.bastion.machine_image_version | string | to_json }}
 {% endif %}
 {% endif %}
   machineTypes:
 {% for mt in item.machinetypes %}
-    - name: {{ mt.name }}
-      cpu: {{ mt.cpu }}
-      gpu: {{ mt.gpu }}
-      memory: {{ mt.memory }}
+    - name: {{ mt.name | to_json }}
+      cpu: {{ mt.cpu | string | to_json }}
+      gpu: {{ mt.gpu | string | to_json }}
+      memory: {{ mt.memory | to_json }}
 {% if mt.storage is defined and mt.storage.size is defined and mt.storage.size %}
       storage:
-        size: {{ mt.storage.size }}
+        size: {{ mt.storage.size | to_json }}
 {% if mt.storage.type is defined and mt.storage.type %}
-        type: {{ mt.storage.type }}
+        type: {{ mt.storage.type | to_json }}
 {% endif %}
 {% if mt.storage.class is defined and mt.storage.class %}
-        class: {{ mt.storage.class }}
+        class: {{ mt.storage.class | to_json }}
 {% endif %}
 {% endif %}
 {% endfor %}
@@ -109,16 +112,16 @@ spec:
   volumeTypes:
 {% for sc in item.storageclasses %}
 {% if sc.type is defined and sc.type %}
-    - name: {{ sc.type }}
-      class: {{ sc.name }}
+    - name: {{ sc.type | to_json }}
+      class: {{ sc.name | to_json }}
 {% endif %}
 {% endfor %}
 {% endif %}
   regions:
 {% for region in item.regions %}
-    - name: {{ region.name }}
+    - name: {{ region.name | to_json }}
       zones:
 {% for zone in region.zones %}
-        - name: {{ zone }}
+        - name: {{ zone | to_json }}
 {% endfor %}
 {% endfor %}

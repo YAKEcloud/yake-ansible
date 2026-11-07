@@ -2,7 +2,7 @@
 
 All configuration lives in `group_vars/all.yml`. Role defaults provide sensible starting points; see each role's `defaults/main.yml` for the full list of available variables.
 
-Versions listed on this page are the role defaults. They are bumped by Renovate, so check the `defaults/main.yml` of the role for the version that is actually deployed.
+Versions are not listed on this page. They are pinned in the `defaults/main.yml` of each role and kept up to date by Renovate.
 
 ## Global
 
@@ -17,20 +17,22 @@ The `kubectl_install`, `helm_install`, and `clusterctl_install` roles provide th
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `kubectl_install_version` | `v1.37.1` | kubectl version. |
-| `helm_install_version` | `v4.3.0` | Helm version. |
-| `clusterctl_install_version` | `v1.14.3` | clusterctl version. |
+| `kubectl_install_version` | see defaults | kubectl version. |
+| `helm_install_version` | see defaults | Helm version. |
+| `clusterctl_install_version` | see defaults | clusterctl version. |
 
 Each role also exposes `<role>_container_registry` (default `ghcr.io`) and `<role>_container_image` (`yakecloud/kubectl`, `yakecloud/helm`, `yakecloud/clusterctl`) to pull the images from a different registry.
 
-`clusterapi_install_contract` (default `v1beta2`) is the Cluster API contract that `clusterctl upgrade apply` uses to upgrade the providers of an existing management cluster.
+`clusterapi_install_capi_version` (`v1.14.4`, core, kubeadm bootstrap and control plane) and `clusterapi_install_capo_version` (`v0.15.1`, OpenStack) pin the Cluster API providers for `clusterctl init` and `clusterctl upgrade apply`. CAPO must match the vendored ORC manifest. The two pins are used independently by `clusterctl init`: an empty pin lets only that provider float to the latest version. With both pins set, `clusterctl upgrade apply` only runs if an installed provider differs from its pin. If either pin is empty, it runs on every playbook run and upgrades all providers to the latest versions of `clusterapi_install_contract` (default `v1beta2`).
+
+With the `binary` method the downloads of kubectl, Helm and kind are verified against the published sha256 files. clusterctl, gardenctl and gardenlogin publish none and are not verified. Binaries are kept per version (`.local/<tool>-<version>`), so a version change takes effect.
 
 The optional `gardenctl_install` role (tag `gardenctl`) is disabled by default. Set `gardenctl_install_enabled: true` to install [gardenctl](https://github.com/gardener/gardenctl-v2). The container image `ghcr.io/yakecloud/gardenctl` contains gardenctl, gardenlogin, and kubectl; with `binary` gardenctl and gardenlogin are downloaded to `.local/`.
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `gardenctl_install_enabled` | `false` | Install gardenctl. |
-| `gardenctl_install_version` | `v2.17.0` | gardenctl version (container image tag). |
+| `gardenctl_install_version` | see defaults | gardenctl version (container image tag). |
 | `gardenctl_install_garden_name` | `garden` | Identity of the garden in `gardenctl-v2.yaml`. |
 | `gardenctl_install_garden_kubeconfig` | `/var/lib/yake/gardener-operator/kubeconfig.vgarden` | Kubeconfig of the virtual garden. It grants admin access. |
 
@@ -44,13 +46,13 @@ Configured via the `management_cluster` role.
 |----------|---------|-------------|
 | `management_cluster_engine` | `kind` | Cluster engine: `kind` or `k3s`. |
 | `management_cluster_name` | `clusterapi` | Name of the management cluster and prefix for its kubeconfig. |
-| `management_cluster_kind_version` | `v0.33.0` | Version of the kind tool (`ghcr.io/yakecloud/kind`). |
-| `management_cluster_kind_cluster_version` | `v1.37.0` | Kubernetes version for the kind node image (`kindest/node`). |
+| `management_cluster_kind_version` | see defaults | Version of the kind tool (`ghcr.io/yakecloud/kind`). |
+| `management_cluster_kind_cluster_version` | see defaults | Kubernetes version for the kind node image (`kindest/node`). |
 | `management_cluster_kind_upgrade` | `false` | Opt-in: replace a kind cluster running an older Kubernetes version than `management_cluster_kind_cluster_version` (see [Upgrading the kind Management Cluster](operations.md#upgrading-the-kind-management-cluster)). |
 | `management_cluster_kind_upgrade_namespace` | `default` | Namespace of the Cluster API objects that are backed up and restored. |
 | `management_cluster_kind_upgrade_backup_dir` | `/var/lib/yake/backup` | Directory for the backups. |
 | `management_cluster_kind_cluster_api_server_address` | `127.0.0.1` | Address the kind API server listens on. |
-| `management_cluster_k3s_version` | `1.37.0` | k3s version when using the k3s engine. |
+| `management_cluster_k3s_version` | see defaults | k3s version when using the k3s engine, with or without a leading `v`. `+k3s1` is appended unless the value contains a `+k3s<n>` suffix. k3s is installed with Traefik and ServiceLB disabled (a management cluster does not need them). An existing k3s installation keeps its service arguments until its version changes, then they are applied by the reinstall. |
 | `management_cluster_kubeconfig` | `/var/lib/yake/kubeconfig.<name>` | Path of the kubeconfig file. |
 
 The kubeconfig is written to `management_cluster_kubeconfig`, by default `/var/lib/yake/kubeconfig.<management_cluster_name>`.
@@ -72,16 +74,17 @@ The garden cluster is provisioned by the `clusterapi_cluster` role on OpenStack.
 | `clusterapi_cluster_openstack_external_network` | `public` | Name of the external (floating IP) network. |
 | `clusterapi_cluster_openstack_ssh_key_name` | `<cluster name>` | Name of the OpenStack key pair for the nodes. |
 | `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Octavia provider for load balancers created by the cloud controller manager. |
+| `clusterapi_cluster_openstack_loadbalancer_allowed_cidrs` | `[]` | Source CIDRs allowed to reach the API server load balancer (`allowedCIDRs`). Empty allows all. If set, it must include the addresses the cluster is reached from: the management cluster and the Ansible host, and the garden cluster nodes, otherwise Cluster API and the playbook lose access to the API server. |
 
 ### Machines
 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `clusterapi_cluster_name` | `garden` | Name of the garden cluster. |
-| `clusterapi_cluster_kubernetes_version` | `v1.36.5` | Kubernetes version for the garden cluster. |
+| `clusterapi_cluster_kubernetes_version` | see defaults | Kubernetes version for the garden cluster. |
 | `clusterapi_cluster_openstack_image_id` | `""` | Glance image UUID for cluster nodes. |
 | `clusterapi_cluster_openstack_image_name` | `""` | Expected name of the image. Strongly recommended: it is used to verify that the image ID is correct. |
-| `clusterapi_cluster_ntp_servers` | `[]` | NTP servers for the cluster nodes (`systemd-timesyncd`). Empty keeps the image defaults. |
+| `clusterapi_cluster_ntp_servers` | `[]` | NTP servers for the cluster nodes (chrony). Empty keeps the image defaults. |
 | `clusterapi_cluster_control_plane_machine_count` | `3` | Number of control plane nodes. |
 | `clusterapi_cluster_control_plane_machine_flavor` | `SCS-2V-4` | OpenStack flavor for control plane nodes. |
 | `clusterapi_cluster_worker_machine_flavor` | `SCS-4V-8` | OpenStack flavor for worker nodes. |
@@ -149,16 +152,16 @@ clusterapi_cluster_openstack_subnets:
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `clusterapi_cluster_network` | `cilium` | CNI plugin: `cilium` or `calico`. |
-| `clusterapi_cluster_cilium_version` | `1.20.2` | Cilium chart version. |
+| `clusterapi_cluster_cilium_version` | see defaults | Cilium chart version. |
 | `clusterapi_cluster_cilium_helm_values` | see `defaults/main.yml` | Helm values for Cilium. |
-| `clusterapi_cluster_calico_version` | `v3.33.0` | Calico chart version (tigera-operator). |
+| `clusterapi_cluster_calico_version` | see defaults | Calico chart version (tigera-operator). |
 | `clusterapi_cluster_calico_helm_values` | `{}` | Helm values for Calico. |
-| `clusterapi_cluster_metrics_server_version` | `3.14.0` | metrics-server chart version. |
+| `clusterapi_cluster_metrics_server_version` | see defaults | metrics-server chart version. |
 | `clusterapi_cluster_metrics_server_helm_values` | see `defaults/main.yml` | Helm values for metrics-server (2 replicas, `--kubelet-insecure-tls`). |
 
 ### Registry Caches and Host Entries
 
-The nodes pull images through the registry caches at `https://registry.osism.tech/v2/<name>`. The URLs are set per upstream registry through `clusterapi_cluster_container_registry_cache_dockerhub`, `..._pkg`, `..._gcr`, `..._ghcr`, `..._quay` and `..._k8s`.
+The nodes pull images through the registry caches at `https://registry.osism.tech/v2/<name>`. The mirrors need a valid TLS certificate (no `skip_verify`). An empty URL disables a mirror. The URLs are set per upstream registry through `clusterapi_cluster_container_registry_cache_dockerhub`, `..._pkg`, `..._gcr`, `..._ghcr`, `..._quay` and `..._k8s`.
 
 To make additional hostnames resolvable on the nodes (for example for a private registry or Keystone), use `clusterapi_cluster_hosts_entries`:
 
@@ -168,6 +171,14 @@ clusterapi_cluster_hosts_entries:
     hostname: "harbor.example.com"
 ```
 
+### Secrets Encryption
+
+`clusterapi_cluster_secrets_encryption_enabled` (default `true`) encrypts Secrets at rest in the etcd of the garden cluster with `secretbox`. Without it, all Gardener credentials (OpenStack, DNS, CA key, kubeconfigs) are stored in plain text in etcd and in its backups or snapshots.
+
+The key is generated once and kept in the Secret `<name>-encryption-config` in the management cluster (moved along on kind upgrades) and in `/var/lib/yake/encryption-key.<name>` (mode `0600`). **Back up this file.** An existing key is never replaced, rotation is a manual task. Once a cluster stores its Secrets encrypted, the role refuses to run with the variable set to `false`, because the API server could no longer read them. To turn encryption off on purpose, decrypt the stored Secrets first (see "Decrypt all data" in the Kubernetes documentation) and delete the config Secret.
+
+On an existing cluster, enabling it rolls the control plane machines once. After the rollout, the role rewrites all Secrets one time so that they are stored encrypted, and records this with the annotation `yake.cloud/secrets-encrypted` on the config Secret.
+
 ## Gardener Operator
 
 The `gardener_operator` role deploys the Gardener Operator and configures the entire Gardener control plane.
@@ -176,16 +187,21 @@ The `gardener_operator` role deploys the Gardener Operator and configures the en
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `gardener_operator_version` | `1.152.0` | Gardener Operator Helm chart version. |
-| `gardener_operator_kubernetes_version` | `1.36.5` | Kubernetes version for the internal seed shoot. |
+| `gardener_operator_version` | see defaults | Gardener Operator Helm chart version. |
+| `gardener_operator_kubernetes_version` | see defaults | Kubernetes version for the internal seed shoot. |
 | `gardener_operator_cluster_name` | `prod-garden` | Name of the garden cluster. |
-| `gardener_operator_garden_url` | `example.com` | Base domain for the Gardener installation. |
+| `gardener_operator_login_check_enabled` | `true` | Check after the virtual garden is ready that the dashboard login reaches Dex (`https://dashboard.<garden_url>/auth` must redirect to `https://identity.<garden_url>/`). The dashboard backend fetches the OIDC discovery for this, so it covers DNS, network and TLS from inside the cluster. Disable it if the Ansible host cannot reach the dashboard. |
+| `gardener_operator_login_check_validate_certs` | `true` | Verify the TLS certificate of the dashboard during the login check. Set it to `false` for ACME staging or a generated CA, which the Ansible host does not trust. |
+| `gardener_operator_virtual_garden_high_availability` | `true` | Run the virtual garden control plane highly available: 3 replicas each for etcd main and events (instead of 1), the virtual kube-apiserver and the gardener-apiserver (instead of 2), spread over the garden cluster nodes (and zones, if the runtime cluster has several). Use at least 3 worker nodes, so that each replica gets its own node. Cannot be disabled again once enabled. Switching an existing installation makes the Gardener API unavailable for a few minutes, see [operations](operations.md#switching-the-virtual-garden-to-high-availability). |
+| `gardener_operator_garden_url` | `example.com` | Base domain for the Gardener installation. Must be changed, the run fails with `example.com`. |
+| `gardener_operator_nodes_cidr` | `""` | Nodes CIDR of the garden cluster. Empty detects it from the first node's InternalIP (as /24). Set it if the nodes do not share that /24. |
+| `gardener_operator_ops_toolbelt_version` | see defaults | Image tag of the ops-toolbelt for dashboard terminals. |
 | `gardener_operator_garden_cluster_admin_email` | `admin@example.com` | Email address for the Gardener dashboard admin. |
 | `gardener_operator_networking_type` | `cilium` | Default CNI for shoots: `cilium` or `calico`. |
 | `gardener_operator_image_registry` | `europe-docker.pkg.dev` | Registry the Gardener component images are pulled from. |
 | `gardener_operator_gardenlet_image_vector_overwrite` | `""` | Image vector overwrite for all gardenlets, for example to pull images from a private registry. |
 | `gardener_operator_garden_dashboard_frontend_config` | `{}` | Frontend configuration of the Gardener dashboard, for example `externalTools` links on every shoot. Replaces the whole frontend block, see the [dashboard values](https://github.com/gardener/dashboard/blob/master/charts/gardener-dashboard/values.yaml). |
-| `gardener_operator_gardenlet_feature_gates` | `{}` | Feature gates for all gardenlets (internal seed and managed seeds). |
+| `gardener_operator_gardenlet_feature_gates` | `{}` | Feature gates for all gardenlets (internal seed and managed seeds). The gardener-apiserver gate `InPlaceNodeUpdates` (Alpha) is set by the role in the `Garden`; gardenlets do not have this gate. |
 | `gardener_operator_seed_block_cidrs` | `[169.254.169.254/32]` | CIDRs blocked in all shoot clusters via NetworkPolicy. |
 | `gardener_operator_proxy_host` / `gardener_operator_proxy_port` | `""` / `3128` | HTTP proxy for the managed seeds; also allowed through a NetworkPolicy. |
 | `gardener_operator_ntp_servers` | `[]` | NTP servers for all shoot nodes. Injected as a `systemd-timesyncd` drop-in into the OperatingSystemConfigs via Kyverno (no package installation, works with the read-only Garden Linux root). Empty keeps the OS defaults, which are public NTP pools. |
@@ -206,9 +222,9 @@ gardener_operator_dex:
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `gardener_operator_dex_version` | `0.25.2` | Dex Helm chart version. |
-| `gardener_operator_kyverno_version` | `3.9.1` | Kyverno Helm chart version. |
-| `gardener_operator_reflector_version` | `10.0.65` | Reflector Helm chart version. |
+| `gardener_operator_dex_version` | see defaults | Dex Helm chart version. |
+| `gardener_operator_kyverno_version` | see defaults | Kyverno Helm chart version. |
+| `gardener_operator_reflector_version` | see defaults | Reflector Helm chart version. |
 | `gardener_operator_helm_values` | `{}` | Additional Helm values for the Gardener Operator chart. |
 
 ### Projects
@@ -248,19 +264,19 @@ Extension versions are managed by Renovate and follow their respective upstream 
 
 | Variable | Default | Description |
 |----------|---------|-------------|
-| `gardener_operator_provider_openstack_version` | `1.58.0` | OpenStack provider extension version. |
-| `gardener_operator_provider_aws_version` | `1.75.0` | AWS provider extension version (deployed only when DNS type is `aws-route53`). |
-| `gardener_operator_provider_azure_version` | `1.65.1` | Azure provider extension version (deployed only when DNS type is `azure-dns`). |
-| `gardener_operator_provider_gcp_version` | `1.56.0` | GCP provider extension version (deployed only when DNS type is `google-clouddns`). |
-| `gardener_operator_networking_cilium_version` | `1.48.4` | Cilium networking extension version. |
-| `gardener_operator_networking_calico_version` | `1.59.1` | Calico networking extension version. |
-| `gardener_operator_os_gardenlinux_version` | `0.50.0` | GardenLinux OS extension version. |
-| `gardener_operator_os_ubuntu_version` | `1.42.0` | Ubuntu OS extension version. |
-| `gardener_operator_shoot_cert_service_version` | `1.66.0` | Shoot certificate service version. |
-| `gardener_operator_shoot_dns_service_version` | `1.93.0` | Shoot DNS service version. |
-| `gardener_operator_extension_registry_cache_version` | `0.25.0` | Registry cache extension version (deployed only when registry caches or mirrors are configured). |
-| `gardener_operator_shoot_oidc_service_version` | `0.40.0` | Shoot OIDC service extension version (deployed only when `gardener_operator_shoot_oidc_service_enabled` is `true`, default `false`). |
-| `gardener_operator_backup_s3_version` | `0.8.7` | S3 backup extension version (deployed only when a backup provider is set to `S3`). |
+| `gardener_operator_provider_openstack_version` | see defaults | OpenStack provider extension version. |
+| `gardener_operator_provider_aws_version` | see defaults | AWS provider extension version (deployed only when DNS type is `aws-route53`). |
+| `gardener_operator_provider_azure_version` | see defaults | Azure provider extension version (deployed only when DNS type is `azure-dns`). |
+| `gardener_operator_provider_gcp_version` | see defaults | GCP provider extension version (deployed only when DNS type is `google-clouddns`). |
+| `gardener_operator_networking_cilium_version` | see defaults | Cilium networking extension version. |
+| `gardener_operator_networking_calico_version` | see defaults | Calico networking extension version. |
+| `gardener_operator_os_gardenlinux_version` | see defaults | GardenLinux OS extension version. |
+| `gardener_operator_os_ubuntu_version` | see defaults | Ubuntu OS extension version. |
+| `gardener_operator_shoot_cert_service_version` | see defaults | Shoot certificate service version. |
+| `gardener_operator_shoot_dns_service_version` | see defaults | Shoot DNS service version. |
+| `gardener_operator_extension_registry_cache_version` | see defaults | Registry cache extension version (deployed only when registry caches or mirrors are configured). |
+| `gardener_operator_shoot_oidc_service_version` | see defaults | Shoot OIDC service extension version (deployed only when `gardener_operator_shoot_oidc_service_enabled` is `true`, default `false`). |
+| `gardener_operator_backup_s3_version` | see defaults | S3 backup extension version (deployed only when a backup provider is set to `S3`). |
 
 The storage class that the OpenStack provider extension creates for shoot control planes is set with `gardener_operator_provider_openstack_storageclass_name` (default: `default`), `..._storageclass_type` and `..._storageclass_zone` (default: `nova`). Raw Helm values for the extension can be passed with `gardener_operator_provider_openstack_helm_values`.
 
@@ -353,6 +369,19 @@ gardener_operator_cloudprofiles:
         zones:
           - nova
 ```
+
+#### Different compute and volume availability zones
+
+If the Nova and Cinder availability zones are named differently (e.g. compute in `AZ1`, volumes in `nova`), set both fields on the cloud profile. Then shoots and managed seeds can run with compute and volumes in different zones. This also works with root disks of the OpenStack default volume type `__DEFAULT__`:
+
+```yaml
+gardener_operator_cloudprofiles:
+  - name: openstack-a
+    ignore_volume_az: true               # PVs (e.g. etcd) via cinder-csi
+    root_disk_availability_zone: nova    # root volumes of workers
+```
+
+`root_disk_availability_zone` requires provider-openstack 1.59.0 or later. See the [role README](https://github.com/YAKEcloud/yake-ansible/blob/main/roles/gardener_operator/README.md#cloud-profiles) for details.
 
 ### Managed Seeds
 

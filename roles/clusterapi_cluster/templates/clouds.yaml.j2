@@ -2,10 +2,10 @@
 clouds:
   openstack:
     auth:
-      auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
-      application_credential_id: "{{ clusterapi_cluster_openstack_application_credential_id }}"
-      application_credential_secret: "{{ clusterapi_cluster_openstack_application_credential_secret }}"
-    region_name: "{{ clusterapi_cluster_openstack_region_name }}"
+      auth_url: {{ clusterapi_cluster_openstack_auth_url | to_json }}
+      application_credential_id: {{ clusterapi_cluster_openstack_application_credential_id | to_json }}
+      application_credential_secret: {{ clusterapi_cluster_openstack_application_credential_secret | to_json }}
+    region_name: {{ clusterapi_cluster_openstack_region_name | to_json }}
     interface: "public"
     identity_api_version: 3
     auth_type: "v3applicationcredential"

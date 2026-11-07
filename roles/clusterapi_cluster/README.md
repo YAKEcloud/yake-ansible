@@ -15,20 +15,23 @@ This role creates a Kubernetes cluster on OpenStack using Cluster API (CAPO). It
 ## Rolling out flavor/image changes
 
 Cluster API only triggers a rollout of a `MachineDeployment`/`KubeadmControlPlane` when the *name* of the
-referenced `OpenStackMachineTemplate` changes — not when the template's content changes, and labels/annotations
+referenced `OpenStackMachineTemplate` changes, not when the template's content changes, and labels/annotations
 on the template are explicitly ignored for this comparison. To make in-place edits (e.g. bumping
 `clusterapi_cluster_worker_machine_flavor` or a worker's `image_id`) actually roll the machines, this role derives
 the `OpenStackMachineTemplate` name from a hash of its meaningful content (flavor, image, ssh key, root volume,
 server group). Changing any of those values on a re-run produces a new template name, which CAPI picks up as a
-required rollout automatically.
+required rollout automatically. The same applies to the `KubeadmConfigTemplate` of the workers (name
+`<cluster>-md-<hash>`), so changes to NTP, proxy, hosts entries, registry mirrors or the CA roll out to the workers.
 
-`clusterapi_cluster_kubernetes_version` does not need this trick — it's compared directly on
+`clusterapi_cluster_kubernetes_version` does not need this trick, it's compared directly on
 `KubeadmControlPlane`/`MachineDeployment` and already triggers a rollout on change.
 
 Old, no-longer-referenced `OpenStackMachineTemplate` objects left behind after such a rollout (Cluster API doesn't
 garbage-collect them outside of ClusterClass-managed clusters) are deleted automatically on every run: the role
 compares what's currently in the cluster against the freshly generated manifest and removes anything under this
-cluster's name that isn't referenced anymore, so the cluster always matches what `group_vars` describes. Disable
+cluster's name that isn't referenced anymore, so the cluster always matches what `group_vars` describes. Templates
+that a MachineSet with replicas still references (an old MachineSet of a paused rollout, for example) are kept until
+the MachineSet has no replicas left. The same applies to `KubeadmConfigTemplate` objects. Disable
 via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd rather clean these up manually.
 
 ## Requirements
@@ -51,6 +54,7 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_openstack_cacert` | `""` | PEM-encoded CA certificate (optional). |
 | `clusterapi_cluster_openstack_external_network` | `public` | Name of the external network for floating IPs. |
 | `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Load balancer provider for the API server load balancer. |
+| `clusterapi_cluster_openstack_loadbalancer_allowed_cidrs` | `[]` | Source CIDRs allowed to reach the API server load balancer. Empty allows all. If set, include the management cluster, the Ansible host and the garden cluster nodes, otherwise they lose access to the API server. |
 | `clusterapi_cluster_openstack_loadbalancer_monitor_delay` | `5` | Seconds between health probes against each API server LB member. |
 | `clusterapi_cluster_openstack_loadbalancer_monitor_timeout` | `5` | Seconds a health probe waits before timing out. |
 | `clusterapi_cluster_openstack_loadbalancer_monitor_max_retries` | `1` | Successful probes required before a member flips to `ONLINE`. Kept low to shrink the race window where a joining control-plane node hits an LB with zero healthy members ("connection refused" during `kubeadm join --control-plane`). |
@@ -60,7 +64,7 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `clusterapi_cluster_name` | `garden` | Cluster name and prefix for all created resources. |
-| `clusterapi_cluster_kubernetes_version` | `v1.36.1` | Kubernetes version. |
+| `clusterapi_cluster_kubernetes_version` | see defaults | Kubernetes version. |
 
 ### Machines
 
@@ -90,7 +94,10 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_control_plane_server_group_policy` | `soft-anti-affinity` | Server group policy for control-plane machines. `soft-anti-affinity` prefers separate hosts without hard-failing scheduling on clouds with few hypervisors (unlike `anti-affinity`). |
 | `clusterapi_cluster_worker_server_group_enabled` | `true` | Place worker machines in an OpenStack server group so they're spread across hypervisors. |
 | `clusterapi_cluster_worker_server_group_policy` | `soft-anti-affinity` | Server group policy for worker machines. |
-| `clusterapi_cluster_stale_machine_template_cleanup_enabled` | `true` | Delete `OpenStackMachineTemplate` objects no longer referenced after a flavor/image-triggered rollout (see "Rolling out flavor/image changes" below). |
+| `clusterapi_cluster_stale_machine_template_cleanup_enabled` | `true` | Delete `OpenStackMachineTemplate` and `KubeadmConfigTemplate` objects that neither the cluster nor a MachineSet with replicas references after a rollout (see "Rolling out flavor/image changes" below). |
+| `clusterapi_cluster_secrets_encryption_enabled` | `true` | Encrypt Secrets at rest in etcd (`secretbox`). The key is generated once, stored in the Secret `<name>-encryption-config` of the management cluster and in `/var/lib/yake/encryption-key.<name>` (back it up), and never replaced. Enabling it on an existing cluster rolls the control plane once and then rewrites all Secrets one time. |
+
+The health check timeouts accept seconds or a duration made of `h`, `m` and `s` parts (`300s`, `20m`, `1h30m`). They are converted to the `*Seconds` fields of the `cluster.x-k8s.io/v1beta2` MachineHealthCheck.
 
 Worker node deployments support multiple pools across failure domains:
 
@@ -121,7 +128,7 @@ does not expose it on the PV, causing an AZ mismatch.
 
 Two networking approaches are available and are mutually exclusive.
 
-**Managed subnets** — CAPO creates a new network and subnet:
+**Managed subnets:** CAPO creates a new network and subnet:
 
 ```yaml
 clusterapi_cluster_openstack_managed_subnets:
@@ -130,7 +137,7 @@ clusterapi_cluster_openstack_managed_subnets:
       - "1.1.1.1"
 ```
 
-**Existing subnets** — reference a pre-existing subnet by its OpenStack UUID. This is the preferred approach when subnets are allocated from an OpenStack subnet pool, since the pool allocation must happen before cluster creation. DNS nameservers are configured on the subnet in OpenStack and do not need to be set here.
+**Existing subnets:** Reference a pre-existing subnet by its OpenStack UUID. This is the preferred approach when subnets are allocated from an OpenStack subnet pool, since the pool allocation must happen before cluster creation. DNS nameservers are configured on the subnet in OpenStack and do not need to be set here.
 
 ```yaml
 clusterapi_cluster_openstack_subnets:
@@ -144,12 +151,14 @@ Up to two subnets can be listed (one IPv4 and one IPv6 for dual-stack clusters).
 | Variable | Default | Description |
 |----------|---------|-------------|
 | `clusterapi_cluster_network` | `cilium` | CNI plugin: `cilium` or `calico`. |
-| `clusterapi_cluster_cilium_version` | `1.19.3` | Cilium Helm chart version. |
-| `clusterapi_cluster_calico_version` | `v3.32.0` | Calico (tigera-operator) Helm chart version. |
+| `clusterapi_cluster_cilium_version` | see defaults | Cilium Helm chart version. |
+| `clusterapi_cluster_calico_version` | see defaults | Calico (tigera-operator) Helm chart version. |
+
+The `node.cilium.io/agent-not-ready` taint is only set for `cilium`.
 
 ### Container Registry Mirrors
 
-All nodes are configured to pull images through the OSISM registry cache by default. Override these variables to point to your own mirrors:
+All nodes are configured to pull images through the OSISM registry cache by default (TLS is verified). Override these variables to point to your own mirrors, an empty value disables a mirror:
 
 | Variable | Default |
 |----------|---------|

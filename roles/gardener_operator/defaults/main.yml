@@ -4,11 +4,12 @@ gardener_operator_gid: "{{ ansible_facts.user_gid | string }}"
 
 gardener_operator_clusterapi_name: garden
 gardener_operator_proxy_env: "{{ proxy_env | d({}) }}"
+# IPv4 address of the proxy (used as /32 in a NetworkPolicy, a hostname is not supported).
 gardener_operator_proxy_host: ""
 gardener_operator_proxy_port: 3128
 
-# NTP servers for shoot nodes (systemd-timesyncd, injected into OperatingSystemConfigs).
-# Empty keeps the OS defaults.
+# NTP servers for shoot nodes (systemd-timesyncd, injected into OperatingSystemConfigs of
+# the internal seed and all managed seeds via Kyverno). Empty keeps the OS defaults.
 gardener_operator_ntp_servers: []
 
 # renovate: datasource=github-releases depName=gardener/gardener
@@ -52,9 +53,24 @@ gardener_operator_openstack_cacert: ""
 
 gardener_operator_garden_url: example.com
 gardener_operator_cluster_name: prod-garden
-# renovate: datasource=github-releases depName=kubernetes/kubernetes
-gardener_operator_kubernetes_version: '1.36.6'
+# Run the virtual garden control plane highly available (3 replicas of etcd, kube-apiserver and gardener-apiserver,
+# spread over nodes and zones).
+# Once enabled, Gardener does not support disabling it again.
+gardener_operator_virtual_garden_high_availability: true
+# Check at the end of the role that the dashboard login reaches Dex. Disable it if the Ansible host cannot reach
+# https://dashboard.<garden_url>.
+gardener_operator_login_check_enabled: true
+# Verify the certificate of the dashboard. Set to false for ACME staging or a generated CA, which the Ansible host does not trust.
+gardener_operator_login_check_validate_certs: true
+# renovate: datasource=github-releases depName=kubernetes/kubernetes extractVersion=^v(?<version>.+)$
+gardener_operator_kubernetes_version: '1.37.2'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
+# renovate: datasource=docker depName=europe-docker.pkg.dev/gardener-project/releases/gardener/ops-toolbelt
+gardener_operator_ops_toolbelt_version: '0.56.0'
+
+# Optional override of the nodes CIDR of the garden cluster. Empty detects it from the
+# first node's InternalIP (as /24). Set it when the nodes do not share that /24.
+gardener_operator_nodes_cidr: ""
 
 # Optional: Override the gardenlet image vector, e.g. to pull images from a private registry.
 # The value is injected verbatim into Gardenlet.spec.deployment.helm.imageVectorOverwrite.
@@ -183,14 +199,14 @@ gardener_operator_shoot_oidc_service_version: '0.41.0'
 # renovate: datasource=github-releases depName=metal-stack/gardener-extension-backup-s3
 gardener_operator_backup_s3_version: '0.8.7'
 
-# Garden etcd backup — enabled when credentials are non-empty.
+# Garden etcd backup, enabled when credentials are non-empty.
 gardener_operator_garden_backup_provider: openstack
 gardener_operator_garden_backup_region: "{{ gardener_operator_openstack_region_name }}"
 gardener_operator_garden_backup_bucket_name: gardener-operator
 # Look up your credentials scheme for your provider
 gardener_operator_garden_backup_credentials: ""
 
-# Internal seed backup — enabled when credentials are non-empty.
+# Internal seed backup, enabled when credentials are non-empty.
 gardener_operator_internal_seed_backup_provider: openstack
 gardener_operator_internal_seed_backup_region: "{{ gardener_operator_openstack_region_name }}"
 gardener_operator_internal_seed_backup_bucket_name: gardener-internal-seed
@@ -310,7 +326,7 @@ gardener_operator_managed_seeds:
         zones:
           - nova
     settings:
-      # Seed backup — enabled when backup.bucket_name is set.
+      # Seed backup, enabled when backup.bucket_name is set.
       # backup:
       #   provider: openstack
       #   region: region-a

@@ -47,7 +47,13 @@ metadata:
   namespace: garden
 type: Opaque
 stringData:
-  {{ gardener_operator_garden_backup_credentials }}
+{% if gardener_operator_garden_backup_credentials is string %}
+  {{ gardener_operator_garden_backup_credentials | indent(2) }}
+{% else %}
+{% for k, v in gardener_operator_garden_backup_credentials.items() %}
+  {{ k | string | to_json }}: {{ (v | string | lower if v is boolean else v | string) | to_json }}
+{% endfor %}
+{% endif %}
 {% endif %}
 ---
 apiVersion: v1
@@ -109,7 +115,7 @@ metadata:
 type: Opaque
 stringData:
   client_id: dashboard
-  client_secret: {{ gardener_operator_dex.dashboard_secret }}
+  client_secret: {{ gardener_operator_dex.dashboard_secret | to_json }}
 ---
 apiVersion: operator.gardener.cloud/v1alpha1
 kind: Garden
@@ -128,7 +134,6 @@ spec:
       type: {{ gardener_operator_dns_provider_type }}
       secretRef:
         name: dns-credentials
-        namespace: garden
   runtimeCluster:
     ingress:
       domains:
@@ -145,7 +150,7 @@ spec:
       - {{ gardener_operator_services_cidr }}
     provider:
       region: {{ gardener_operator_openstack_region_name }}
-      zones: {{ gardener_operator_openstack_zones }}
+      zones: {{ gardener_operator_openstack_zones | to_json }}
     settings:
       loadBalancerServices:
         annotations:
@@ -155,6 +160,10 @@ spec:
       topologyAwareRouting:
         enabled: false
   virtualCluster:
+{% if gardener_operator_virtual_garden_high_availability | bool %}
+    controlPlane:
+      highAvailability: {}
+{% endif %}
     dns:
       domains:
       - name: garden.{{ gardener_operator_garden_url }}
@@ -185,15 +194,9 @@ spec:
         admissionPlugins:
         - name: ShootVPAEnabledByDefault
         featureGates:
-          CloudProfileCapabilities: true
           InPlaceNodeUpdates: true
-        gardenerScheduler:
-          config:
-            schedulers:
-              shoot:
-                retrySyncPeriod: 15s
-                concurrentSyncs: 5
-                candidateDeterminationStrategy: MinimalDistance
+      gardenerScheduler:
+        strategy: MinimalDistance
       gardenerDashboard:
 {% if gardener_operator_garden_dashboard_frontend_config %}
         frontendConfigMapRef:
@@ -219,7 +222,7 @@ spec:
           - "*.ingress.{{ seed.name }}.{{ gardener_operator_managed_seeds_project.name }}.{{ gardener_operator_garden_url }}"
 {% endfor %}
           container:
-            image: {{ gardener_operator_image_registry }}/gardener-project/releases/gardener/ops-toolbelt:latest
+            image: {{ gardener_operator_image_registry }}/gardener-project/releases/gardener/ops-toolbelt:{{ gardener_operator_ops_toolbelt_version }}
         domain:
           name: dashboard.{{ gardener_operator_garden_url }}
           provider: dns-provider

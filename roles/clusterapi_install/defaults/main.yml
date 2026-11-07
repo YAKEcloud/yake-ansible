@@ -1,8 +1,16 @@
 ---
 clusterapi_install_become: false
 clusterapi_install_infrastructure: openstack
-clusterapi_install_clusterapi_name: clusterapi
+clusterapi_install_clusterapi_name: "{{ management_cluster_name | d('clusterapi') }}"
 clusterapi_install_cluster_topology: true
+# Provider versions, pinned so that runs do not float to the latest releases. CAPO and the
+# vendored files/orc.yaml belong together (CAPO 0.15.1 builds against ORC 2.6.0).
+# Core, kubeadm bootstrap and kubeadm control plane share the cluster-api version.
+# renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
+clusterapi_install_capi_version: 'v1.14.4'
+# renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api-provider-openstack
+clusterapi_install_capo_version: 'v0.15.1'
+# Only used for the upgrade if the provider versions above are empty (floats to the latest).
 clusterapi_install_contract: v1beta2
 clusterapi_install_uid: "{{ ansible_facts.user_uid | string }}"
 clusterapi_install_gid: "{{ ansible_facts.user_gid | string }}"

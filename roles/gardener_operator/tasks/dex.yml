@@ -12,7 +12,7 @@
     dest: /var/lib/yake/gardener-operator/dex-values.yaml
     owner: "{{ gardener_operator_uid }}"
     group: "{{ gardener_operator_gid }}"
-    mode: "0644"
+    mode: "0600"
 
 - name: Allow ingress from the garden Istio ingressgateway to Dex
   kubernetes.core.k8s:
@@ -137,6 +137,21 @@
     values_files:
       - /var/lib/yake/gardener-operator/dex-values.yaml
   environment: "{{ gardener_operator_proxy_env }}"
+  register: gardener_operator_dex_install
+  no_log: true
+
+- name: Wait for the garden wildcard TLS secret
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    api_version: v1
+    kind: Secret
+    name: tls
+    namespace: garden
+  register: gardener_operator_garden_tls  # noqa: var-naming[no-role-prefix]
+  until: gardener_operator_garden_tls.resources | length > 0
+  retries: 30
+  delay: 10
+  no_log: true
 
 - name: Allow reflector to mirror the garden wildcard TLS secret
   kubernetes.core.k8s:

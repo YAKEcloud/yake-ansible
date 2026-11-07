@@ -2,15 +2,16 @@ ARG ALPINE_VERSION=3.24@sha256:3f4d6b32e26703c6082839234f43769d5046b3ac7c9100339
 FROM alpine:${ALPINE_VERSION}
 
 COPY --chmod=0755 entrypoint.sh /entrypoint.sh
-ARG VERSION=v1.14.4  # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
+# renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
+ARG VERSION=v1.14.4
+# Upstream publishes no checksums for clusterctl.
 ADD --chmod=0755 https://github.com/kubernetes-sigs/cluster-api/releases/download/${VERSION}/clusterctl-linux-amd64 /usr/bin/clusterctl
 
 ENV USER_NAME=clusterctl
 ENV USER_ID=1000
 ENV GROUP_ID=1000
 
-RUN apk update --no-cache \
-    && apk upgrade --no-cache --available \
+RUN apk upgrade --no-cache --available \
     && apk add --no-cache \
       dumb-init \
       shadow \

@@ -4,14 +4,14 @@ This document covers day-to-day operations of the platform: upgrading components
 
 ## CI Variables (`group_vars/ci.yml`)
 
-The variables used by the `Yake-Ansible install` GitHub Actions workflow live in `group_vars/ci.yml`, encrypted with [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). Since this repository is public, the file is safe to commit — it's useless without the vault password.
+The variables used by the `Yake-Ansible install` GitHub Actions workflow live in `group_vars/ci.yml`, encrypted with [Ansible Vault](https://docs.ansible.com/ansible/latest/vault_guide/index.html). Since this repository is public, the file is safe to commit: it's useless without the vault password.
 
 The vault password itself is never committed. It lives in:
 
 - **Locally**: `.vault-pass.txt` in the repo root (gitignored).
 - **In CI**: the `ANSIBLE_VAULT_PASSWORD` GitHub Actions secret. The workflow writes it to a temporary `.vault-pass.txt` at the start of the run and passes `--vault-password-file` to `ansible-playbook`.
 
-It is deliberately **not** wired up via `ansible.cfg`'s `vault_password_file` setting, since that would apply to every `ansible-playbook`/`ansible-lint` invocation in the repo — including unrelated syntax checks in CI systems (e.g. ansible-lint) that don't have the password file and don't need it, causing those to fail hard.
+It is deliberately **not** wired up via `ansible.cfg`'s `vault_password_file` setting, since that would apply to every `ansible-playbook`/`ansible-lint` invocation in the repo, including unrelated syntax checks in CI systems (e.g. ansible-lint) that don't have the password file and don't need it, causing those to fail hard.
 
 To view or edit the CI variables:
 
@@ -57,6 +57,25 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.garden
 
 Provider extension versions are separate variables (e.g., `gardener_operator_provider_openstack_version`). Update the relevant version and re-run the playbook with `--tags gardener`. Renovate automatically opens pull requests for version updates.
 
+### Switching the Virtual Garden to High Availability
+
+`gardener_operator_virtual_garden_high_availability` (default `true`) runs etcd main and events of the virtual garden with 3 members each (instead of 1) and the virtual kube-apiserver and the gardener-apiserver with 3 replicas (instead of 2). On an existing installation with a single member, the next playbook run switches it over:
+
+1. etcd-druid restarts the existing member and adds two new members one after another.
+2. While the membership changes, the virtual garden kube-apiserver restarts several times. The Gardener API and the dashboard are unavailable for a few minutes, and `gardener-apiserver`, `gardener-controller-manager`, `gardener-scheduler`, `gardenlet` and `virtual-garden-kube-controller-manager` go into `CrashLoopBackOff`.
+3. Once all members are ready, the Garden returns to `Succeeded` (about 6 minutes in our tests). The crashing pods recover on their own, the `CrashLoopBackOff` can delay this by up to 5 more minutes. The `gardenlet` may log `panic: ... no matches for seedmanagement.gardener.cloud/v1alpha1` until the `gardener-apiserver` is back, this is expected.
+
+Existing shoot clusters keep running, only changes through the Gardener API are delayed. Plan the switch in a maintenance window. It cannot be reverted. To stay on a single member, set `gardener_operator_virtual_garden_high_availability: false` before the run.
+
+Watch the progress with:
+
+```bash
+export KUBECONFIG=/var/lib/yake/kubeconfig.garden
+./.local/yake-kubectl -n garden get etcd
+./.local/yake-kubectl -n garden get pods -l app.kubernetes.io/part-of=virtual-garden-etcd-main
+./.local/yake-kubectl get garden
+```
+
 ### Upgrading the Garden Cluster
 
 Update `clusterapi_cluster_kubernetes_version` and re-run:
@@ -67,11 +86,13 @@ ansible-playbook -i localhost, -c local site.yml --tags garden-cluster
 
 Cluster API performs a rolling upgrade of the control plane nodes followed by worker nodes.
 
+The default of `clusterapi_cluster_kubernetes_version` (and `gardener_operator_kubernetes_version`) moves with this repository, currently to `1.37.2`. If you did not set the variable, the next run upgrades the garden cluster. Pin the variable in `group_vars/all.yml` to stay on your version. The unused variable `clusterapi_cluster_kubeconfig` has been removed.
+
 ### Upgrading Tool Versions
 
 kubectl, Helm, clusterctl, and kind versions are set by `kubectl_install_version`, `helm_install_version`, `clusterctl_install_version`, and `management_cluster_kind_version` respectively. After updating these variables, re-run the playbook with the matching tags (`kubectl`, `helm`, `clusterctl`, `management-cluster`).
 
-On the first run the `clusterapi` step initializes Cluster API with `clusterctl init`. On an existing management cluster it runs `clusterctl upgrade apply --contract <contract>` instead, which brings the Cluster API providers (core, kubeadm bootstrap, kubeadm control plane, OpenStack) to the latest versions available for that contract. The contract is set by `clusterapi_install_contract` (default `v1beta2`). A clusterctl release that supports a newer contract makes the step fail until the variable is raised.
+On the first run the `clusterapi` step initializes Cluster API with `clusterctl init`. On an existing management cluster it runs `clusterctl upgrade apply` instead with the same versions. The provider versions are pinned by `clusterapi_install_capi_version` (core, kubeadm bootstrap, kubeadm control plane) and `clusterapi_install_capo_version` (OpenStack). They have to match the vendored ORC manifest (`files/orc.yaml`). If one of them is empty, `clusterctl upgrade apply --contract <contract>` is used instead and the providers float to the latest versions for that contract, set by `clusterapi_install_contract` (default `v1beta2`). A clusterctl release that supports a newer contract makes the step fail until the variable is raised.
 
 ### Upgrading the kind Management Cluster
 
@@ -86,7 +107,7 @@ It runs after the `clusterapi` step so that the Cluster API providers are curren
 
 The OpenStack resources keep running throughout, only reconciliation pauses for a few minutes. Back up and restore are limited to `management_cluster_kind_upgrade_namespace` (all objects of this repo live in `default`). The cloud secret is carried over because it has the `clusterctl.cluster.x-k8s.io/move` label.
 
-The backup is kept. If the step fails after the old cluster was deleted, the playbook does not restore on a re-run, because the new cluster already has the desired version. Restore manually once Cluster API is installed on the new cluster:
+The backup contains CA keys and credentials and is deleted after the clusters are restored. If the step fails after the old cluster was deleted, it is kept and the playbook does not restore on a re-run, because the new cluster already has the desired version. Restore manually once Cluster API is installed on the new cluster:
 
 ```bash
 ./.local/yake-clusterctl move --from-directory /var/lib/yake/backup/<timestamp> \
@@ -175,7 +196,7 @@ kubectl get secret gardener -n garden -o jsonpath='{.data.kubeconfig}' \
   | base64 -d > /var/lib/yake/gardener-operator/kubeconfig.vgarden
 ```
 
-**1. Delete each managed-seed shoot** — `managedseed`/`shoot` are Gardener API resources, so this
+**1. Delete each managed-seed shoot.** `managedseed`/`shoot` are Gardener API resources, so this
 goes against the virtual garden:
 
 ```bash
@@ -186,10 +207,10 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 # wait until the shoot is fully gone before continuing
 ```
 
-**2. Delete the `internal-seed` gardenlet** — also a virtual garden resource. Unlike
+**2. Delete the `internal-seed` gardenlet.** Also a virtual garden resource. Unlike
 `managed-seed-a`, whose seed registration goes away with the `ManagedSeed` in step 1,
 `internal-seed`'s `Gardenlet` is applied independently and isn't a child of the `Garden`
-resource — deleting `Garden` alone won't remove it, so it needs this separate step. It also fails
+resource. Deleting `Garden` alone won't remove it, so it needs this separate step. It also fails
 as long as any shoot's `spec.seedName` still points at `internal-seed`, which is why it comes
 after step 1 (this is standard Gardener seed-deletion behavior, not something enforced by this
 repo):
@@ -201,7 +222,7 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ./.local/yake-kubectl get seed internal-seed
 ```
 
-**3. Delete the Garden** — `Garden` is reconciled by gardener-operator running on the garden
+**3. Delete the Garden.** `Garden` is reconciled by gardener-operator running on the garden
 cluster itself, so this uses that cluster's own kubeconfig, not the virtual garden:
 
 ```bash
@@ -222,7 +243,7 @@ export KUBECONFIG=/var/lib/yake/kubeconfig.clusterapi
 ./.local/yake-kubectl delete cluster garden
 ./.local/yake-kubectl wait --for=delete cluster/garden --timeout=30m
 ./.local/yake-kind delete cluster --name clusterapi
-docker rm -f $(docker ps -qa)
+docker rm -f kind helm kubectl clusterctl gardenctl
 sudo rm -rf /var/lib/yake/
 ```
 
@@ -244,11 +265,16 @@ the controller mid-reconciliation and leaves those OpenStack resources behind.
 ### OpenStack Resource Cleanup
 
 The `cleanup.yml` playbook removes OpenStack resources left behind after a teardown: servers,
-volumes, floating IPs, load balancers, routers, networks, subnets, security groups, DNS record
-sets, and SSH key pairs. It only ever touches resources it can positively identify as belonging
-to this run's `clusterapi_cluster_name` and `gardener_operator_managed_seeds`, matched by name
-(see `scripts/README.md` for details) — safe to run against a project that also holds unrelated
-infrastructure.
+volumes (including PVC volumes), floating IPs, load balancers (API server and Service LBs),
+routers, ports, networks, subnets, security groups, server groups, SSH key pairs and the DNS
+record sets of the garden URL zone (except SOA/NS). It only touches resources it can positively
+identify as belonging to this run's `clusterapi_cluster_name` and `gardener_operator_managed_seeds`
+(exact CAPO/Gardener names, ownership and attachment, inside the current project; see
+`scripts/README.md` for the rules). The DNS zone is the exception: all its record sets are
+removed, so it must be dedicated to this deployment.
+
+The playbook requires two variables: `cleanup_openstack_cloud` (cloud name in the clouds file)
+and `cleanup_clouds_file` (path to that clouds.yaml, e.g. `/var/lib/yake/clouds.garden.yaml`).
 
 ```bash
 ansible-playbook -i localhost, -c local cleanup.yml -e "@group_vars/all.yml"
@@ -259,9 +285,9 @@ something behind (e.g. a stuck finalizer): rather than tracking down every orpha
 hand, re-running `cleanup.yml` reclaims it.
 
 The OpenStack part can also be run standalone, outside Ansible: `scripts/cleanup-openstack.py`
-(pass `--dry-run` to preview first).
+(pass `--dry-run` to preview first). It exits non-zero if any resource could not be deleted.
 
-**Full local reset** — for a manual test run where you also want the local docker containers,
+**Full local reset.** For a manual test run where you also want the local docker containers,
 images, and `/var/lib/yake/` gone afterwards (not something CI needs, since its runner is
 thrown away anyway):
 

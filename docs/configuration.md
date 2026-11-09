@@ -487,6 +487,8 @@ gardener_operator_internal_seed_backup_credentials: |
 
 An empty `gardener_operator_garden_backup_bucket_name` lets gardener-operator create and own the bucket `garden-<Garden UID>` and delete it with the Garden; the name cannot be changed once the Garden has a backup. A seed's bucket is always named after the seed's UID, so seeds take no bucket name.
 
+A Garden that is rebuilt after its runtime cluster was lost gets a new UID and therefore a new, empty bucket. To restore the virtual garden from the old snapshots instead, set `gardener_operator_garden_backup_bucket_name` to the old name `garden-<old Garden UID>` before the new Garden is created; the snapshots keep the same prefix, so its etcd restores from them. Record the generated name while the landscape runs, for example with `kubectl get backupbuckets.extensions.gardener.cloud` in the runtime cluster. The bucket only survives when the Garden is not deleted, because gardener-operator deletes the bucket it owns together with the Garden.
+
 The internal seed's `excess_capacity_reservation` is controlled by `gardener_operator_internal_seed_excess_capacity_reservation` (default: `"false"`). Only enable it on hosts with more than 16Gi of RAM.
 
 S3-compatible storage is also supported by setting the provider to `S3` and configuring the corresponding credentials.

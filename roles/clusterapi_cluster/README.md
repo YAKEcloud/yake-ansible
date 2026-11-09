@@ -95,7 +95,7 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_worker_server_group_enabled` | `true` | Place worker machines in an OpenStack server group so they're spread across hypervisors. |
 | `clusterapi_cluster_worker_server_group_policy` | `soft-anti-affinity` | Server group policy for worker machines. |
 | `clusterapi_cluster_stale_machine_template_cleanup_enabled` | `true` | Delete `OpenStackMachineTemplate` and `KubeadmConfigTemplate` objects that neither the cluster nor a MachineSet with replicas references after a rollout (see "Rolling out flavor/image changes" below). |
-| `clusterapi_cluster_secrets_encryption_enabled` | `true` | Encrypt Secrets at rest in etcd (`secretbox`). The key is generated once, stored in the Secret `<name>-encryption-config` of the management cluster and in `/var/lib/yake/encryption-key.<name>` (back it up), and never replaced. Enabling it on an existing cluster rolls the control plane once and then rewrites all Secrets one time. |
+| `clusterapi_cluster_secrets_encryption_enabled` | `false` | Encrypt Secrets at rest in etcd (`secretbox`). The key is generated once, stored in the Secret `<name>-encryption-config` of the management cluster and in `/var/lib/yake/encryption-key.<name>` (back it up), and never replaced. Enabling it on an existing cluster rolls the control plane once and then rewrites all Secrets one time. |
 
 The health check timeouts accept seconds or a duration made of `h`, `m` and `s` parts (`300s`, `20m`, `1h30m`). They are converted to the `*Seconds` fields of the `cluster.x-k8s.io/v1beta2` MachineHealthCheck.
 

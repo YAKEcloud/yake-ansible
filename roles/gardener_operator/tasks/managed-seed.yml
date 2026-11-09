@@ -56,8 +56,9 @@
   no_log: true
   when: gardener_operator_managed_seeds | d([]) | length > 0
 
-# Older policy versions added the timesyncd unit without enable, which the node agent reports as unhealthy. The
-# policy only rewrites the unit on the next OSC update, so affected managed seeds need a reconcile.
+# The policy only changes OSCs on their next update. Reconcile managed seeds whose OSCs lack the timesyncd unit
+# (NTP newly enabled) or carry it without enable (older policy versions, reported as unhealthy by the node agent).
+# OSCs can contain proxy credentials, hence no_log.
 - name: Find OperatingSystemConfigs of the managed seeds
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
@@ -65,6 +66,7 @@
     kind: OperatingSystemConfig
     namespace: "shoot--garden--{{ item.name }}"
   register: gardener_operator_managed_seed_oscs
+  no_log: true
   loop: "{{ gardener_operator_managed_seeds }}"
   loop_control:
     label: "{{ item.name }}"
@@ -72,7 +74,7 @@
     - gardener_operator_managed_seeds | d([]) | length > 0
     - gardener_operator_ntp_servers | d([]) | length > 0
 
-- name: Reconcile managed seeds with a timesyncd unit without enable
+- name: Reconcile managed seeds with an outdated timesyncd unit
   kubernetes.core.k8s:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
     state: patched
@@ -85,11 +87,13 @@
         annotations:
           gardener.cloud/operation: reconcile
   loop: "{{ gardener_operator_managed_seed_oscs.results | d([]) }}"
+  no_log: true
   loop_control:
     label: "{{ item.item.name }}"
   when: >-
-    item.resources | d([]) | map(attribute='spec.units', default=[]) | flatten
-    | selectattr('name', 'equalto', 'systemd-timesyncd.service') | rejectattr('enable', 'defined') | list | length > 0
+    item.resources | d([]) | map(attribute='spec.units', default=[])
+    | map('selectattr', 'name', 'equalto', 'systemd-timesyncd.service') | map('selectattr', 'enable', 'defined')
+    | map('list') | select('equalto', []) | list | length > 0
 
 - name: Wait for ManagedSeed to be fully ready
   kubernetes.core.k8s_info:

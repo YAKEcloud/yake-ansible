@@ -238,7 +238,6 @@ spec:
           backup:
             provider: {{ item.settings.backup.provider | to_json }}
             region: {{ item.settings.backup.region | to_json }}
-            bucketName: {{ item.settings.backup.bucket_name | to_json }}
             credentialsRef:
               apiVersion: v1
               kind: Secret

@@ -451,7 +451,6 @@ settings:
   backup:                             # optional, enables etcd backups for shoots on this seed
     provider: openstack
     region: region-a
-    bucket_name: my-backup-bucket
     credentials:
       authURL: "..."
       tenantName: "..."
@@ -481,11 +480,12 @@ gardener_operator_garden_backup_credentials: |
 ```yaml
 gardener_operator_internal_seed_backup_provider: openstack
 gardener_operator_internal_seed_backup_region: "region-a"
-gardener_operator_internal_seed_backup_bucket_name: gardener-internal-seed
 gardener_operator_internal_seed_backup_credentials: |
   authURL: "..."
   ...
 ```
+
+An empty `gardener_operator_garden_backup_bucket_name` lets gardener-operator create and own the bucket `garden-<Garden UID>` and delete it with the Garden; the name cannot be changed once the Garden has a backup. A seed's bucket is always named after the seed's UID, so seeds take no bucket name.
 
 The internal seed's `excess_capacity_reservation` is controlled by `gardener_operator_internal_seed_excess_capacity_reservation` (default: `"false"`). Only enable it on hosts with more than 16Gi of RAM.
 

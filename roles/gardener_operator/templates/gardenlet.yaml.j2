@@ -177,7 +177,6 @@ spec:
         backup:
           provider: {{ gardener_operator_internal_seed_backup_provider }}
           region: {{ gardener_operator_internal_seed_backup_region }}
-          bucketName: {{ gardener_operator_internal_seed_backup_bucket_name }}
           credentialsRef:
             apiVersion: v1
             kind: Secret

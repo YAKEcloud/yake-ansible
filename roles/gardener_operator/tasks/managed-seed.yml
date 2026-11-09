@@ -56,6 +56,41 @@
   no_log: true
   when: gardener_operator_managed_seeds | d([]) | length > 0
 
+# Older policy versions added the timesyncd unit without enable, which the node agent reports as unhealthy. The
+# policy only rewrites the unit on the next OSC update, so affected managed seeds need a reconcile.
+- name: Find OperatingSystemConfigs of the managed seeds
+  kubernetes.core.k8s_info:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    api_version: extensions.gardener.cloud/v1alpha1
+    kind: OperatingSystemConfig
+    namespace: "shoot--garden--{{ item.name }}"
+  register: gardener_operator_managed_seed_oscs
+  loop: "{{ gardener_operator_managed_seeds }}"
+  loop_control:
+    label: "{{ item.name }}"
+  when:
+    - gardener_operator_managed_seeds | d([]) | length > 0
+    - gardener_operator_ntp_servers | d([]) | length > 0
+
+- name: Reconcile managed seeds with a timesyncd unit without enable
+  kubernetes.core.k8s:
+    kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden
+    state: patched
+    api_version: core.gardener.cloud/v1beta1
+    kind: Shoot
+    name: "{{ item.item.name }}"
+    namespace: garden
+    definition:
+      metadata:
+        annotations:
+          gardener.cloud/operation: reconcile
+  loop: "{{ gardener_operator_managed_seed_oscs.results | d([]) }}"
+  loop_control:
+    label: "{{ item.item.name }}"
+  when: >-
+    item.resources | d([]) | map(attribute='spec.units', default=[]) | flatten
+    | selectattr('name', 'equalto', 'systemd-timesyncd.service') | rejectattr('enable', 'defined') | list | length > 0
+
 - name: Wait for ManagedSeed to be fully ready
   kubernetes.core.k8s_info:
     kubeconfig: /var/lib/yake/gardener-operator/kubeconfig.vgarden

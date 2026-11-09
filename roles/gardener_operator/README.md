@@ -203,15 +203,15 @@ gardener_operator_managed_seeds:
 
 ### Backups
 
-Etcd backups for the virtual garden and the internal seed are enabled when the corresponding credentials are set.
+Etcd backups for the virtual garden and the internal seed are enabled when the corresponding credentials are set. An empty `gardener_operator_garden_backup_bucket_name` lets gardener-operator create and own the bucket `garden-<Garden UID>` and delete it with the Garden; the name cannot be changed once the Garden has a backup. A seed's bucket is always named after the seed's UID, so seeds take no bucket name.
 
 | Variable | Description |
 |----------|-------------|
 | `gardener_operator_garden_backup_provider` | Backup provider: `openstack` or `S3`. |
-| `gardener_operator_garden_backup_bucket_name` | Bucket or container name. |
+| `gardener_operator_garden_backup_bucket_name` | Bucket or container name; empty lets gardener-operator manage `garden-<Garden UID>`. Immutable once set. |
 | `gardener_operator_garden_backup_credentials` | Provider credentials as a YAML string or mapping. |
 | `gardener_operator_internal_seed_backup_provider` | Same for the internal seed. |
-| `gardener_operator_internal_seed_backup_bucket_name` | Bucket or container name. |
+| `gardener_operator_internal_seed_backup_bucket_name` | No effect, Gardener names a seed's bucket after the seed UID. |
 | `gardener_operator_internal_seed_backup_credentials` | Provider credentials as a YAML string or mapping. |
 
 ## Monitoring

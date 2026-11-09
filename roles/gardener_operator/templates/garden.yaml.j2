@@ -174,7 +174,9 @@ spec:
         backup:
           provider: {{ gardener_operator_garden_backup_provider }}
           region: {{ gardener_operator_garden_backup_region }}
+{% if gardener_operator_garden_backup_bucket_name | d('') %}
           bucketName: {{ gardener_operator_garden_backup_bucket_name }}
+{% endif %}
           secretRef:
             name: backup-credentials-garden
 {% endif %}

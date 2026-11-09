@@ -202,6 +202,7 @@ gardener_operator_backup_s3_version: '0.8.7'
 # Garden etcd backup, enabled when credentials are non-empty.
 gardener_operator_garden_backup_provider: openstack
 gardener_operator_garden_backup_region: "{{ gardener_operator_openstack_region_name }}"
+# Empty lets gardener-operator create and own the bucket garden-<Garden UID>; immutable once the Garden has a backup.
 gardener_operator_garden_backup_bucket_name: gardener-operator
 # Look up your credentials scheme for your provider
 gardener_operator_garden_backup_credentials: ""
@@ -209,6 +210,7 @@ gardener_operator_garden_backup_credentials: ""
 # Internal seed backup, enabled when credentials are non-empty.
 gardener_operator_internal_seed_backup_provider: openstack
 gardener_operator_internal_seed_backup_region: "{{ gardener_operator_openstack_region_name }}"
+# No effect: Gardener names a seed's backup bucket after the seed UID.
 gardener_operator_internal_seed_backup_bucket_name: gardener-internal-seed
 # Look up your credentials scheme for your provider
 gardener_operator_internal_seed_backup_credentials: ""
@@ -326,11 +328,10 @@ gardener_operator_managed_seeds:
         zones:
           - nova
     settings:
-      # Seed backup, enabled when backup.bucket_name is set.
+      # Seed backup, enabled when backup is set; Gardener names the bucket after the seed UID.
       # backup:
       #   provider: openstack
       #   region: region-a
-      #   bucket_name: bucket-a
       #   credentials:  # provider-specific key/value pairs
       #   # authURL: "https://openstack.a.example.com:5000"
       #   # tenantName: "project-a"

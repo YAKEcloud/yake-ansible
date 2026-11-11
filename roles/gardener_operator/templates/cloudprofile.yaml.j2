@@ -45,11 +45,13 @@ spec:
 {% for v in mi.versions %}
           - version: {{ v.version | string | to_json }}
             image: {{ v.image | to_json }}
+{% if v.regions | d([]) | length > 0 %}
             regions:
 {% for r in v.regions %}
               - name: {{ r.name | to_json }}
                 id: {{ r.id | to_json }}
 {% endfor %}
+{% endif %}
 {% endfor %}
 {% endfor %}
     serverGroupPolicies:

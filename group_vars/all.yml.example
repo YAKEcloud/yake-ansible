@@ -118,10 +118,9 @@ gardener_operator_cloudprofiles:
         versions:
           - version: "2150.14.0"
             # classification: supported
+            # Glance image name. Optional per region: regions: [{name: <region>, id: <image id>}]
+            # (the id must not be empty).
             image: "Garden Linux 2150.14"
-            regions:
-              - name: "{{ clusterapi_cluster_openstack_region_name }}"
-                id: ""
     kubernetes_versions:
       - version: 1.37.2
         classification: supported

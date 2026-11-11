@@ -17,6 +17,8 @@ permissions: {}
       - 'roles/**'
       - 'site.yml'
       - 'cleanup.yml'
+      - 'scripts/cleanup-openstack.py'
+      - 'scripts/update-images.py'
       - 'Giltfile.yaml'
       - 'requirements.txt'
       - 'requirements.yml'
@@ -39,6 +41,8 @@ jobs:
     outputs:
       run: ${{ steps.gate.outputs.run || steps.rel.outputs.run }}
       sha: ${{ steps.gate.outputs.sha }}
+      # The managed seed is built unless the change is irrelevant for it (see check-relevant-changes.sh).
+      seed: ${{ steps.rel.outputs.seed || 'true' }}
     steps:
       - name: Authorize ChatOps command
         id: gate
@@ -90,21 +94,23 @@ jobs:
         run: |
           if [ "${EVENT}" = "workflow_dispatch" ]; then
             echo "run=true" >> "$GITHUB_OUTPUT"
+            echo "seed=true" >> "$GITHUB_OUTPUT"
           elif [ "${HEAD_REPO}" != "${REPO}" ]; then
             echo "::notice::Fork PR: no secrets. A repo admin must comment /ok-to-test to run the install test."
             echo "run=false" >> "$GITHUB_OUTPUT"
           else
             out=$(.github/scripts/check-relevant-changes.sh "${BASE_SHA}" "${HEAD_SHA}")
-            echo "run=${out#relevant=}" >> "$GITHUB_OUTPUT"
+            echo "run=$(sed -n 's/^relevant=//p' <<< "${out}")" >> "$GITHUB_OUTPUT"
+            echo "seed=$(sed -n 's/^seed=//p' <<< "${out}")" >> "$GITHUB_OUTPUT"
           fi
 
   yake-ansible-install:
     needs: [authorize]
     if: needs.authorize.outputs.run == 'true'
     runs-on: ubuntu-latest
-    # At least the sum of the step timeouts below, so the cleanup always gets
-    # its full budget before the job itself times out.
-    timeout-minutes: 210
+    # At least the sum of the step timeouts below (30 setup, 10 image, 125 site.yml, 32 wait,
+    # 5 dump, 47 cleanup = 249), so the cleanup always gets its full budget.
+    timeout-minutes: 250
     permissions:
       contents: read
       statuses: write
@@ -152,12 +158,31 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: printf '%s' "$ANSIBLE_VAULT_PASSWORD" > .vault-pass.txt && chmod 600 .vault-pass.txt
 
-      - name: Run ansible-playbook site.yml
-        timeout-minutes: 92
+      # Skips the upload if the image already exists in the project (the usual case).
+      - name: Provide the Garden Linux image
+        if: needs.authorize.outputs.seed == 'true'
+        timeout-minutes: 10
         run: |
+          ansible -i localhost, -c local localhost -m ansible.builtin.template \
+            -a "src=${PWD}/roles/clusterapi_cluster/templates/clouds.yaml.j2 dest=${RUNNER_TEMP}/clouds.yaml mode=0600" \
+            -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt > /dev/null
+          version=$(sed -n 's/^ci_gardenlinux_version: *"\(.*\)"$/\1/p' group_vars/ci.yml)
+          OS_CLIENT_CONFIG_FILE="${RUNNER_TEMP}/clouds.yaml" OS_CLOUD=openstack \
+            python3 scripts/update-images.py --skip-capi --gardenlinux-version "${version}"
+
+      # Without the seed (irrelevant change) the cloud profile, seed and NTP/Kyverno are switched off.
+      - name: Run ansible-playbook site.yml
+        timeout-minutes: 125
+        env:
+          SEED: ${{ needs.authorize.outputs.seed }}
+        run: |
+          extra='{}'
+          if [ "${SEED}" != "true" ]; then
+            extra='{"gardener_operator_managed_seeds": [], "gardener_operator_cloudprofiles": [], "gardener_operator_ntp_servers": []}'
+          fi
           for attempt in 1 2; do
-            timeout --kill-after=1m 45m \
-              ansible-playbook -i localhost, -c local site.yml -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt \
+            timeout --kill-after=1m 60m \
+              ansible-playbook -i localhost, -c local site.yml -e "@group_vars/ci.yml" -e "${extra}" --vault-password-file .vault-pass.txt \
               && exit 0
             echo "::warning::site.yml attempt ${attempt} failed"
           done
@@ -192,6 +217,10 @@ jobs:
           echo "::endgroup::"
           echo "::group::Extension rollout status"
           ./.local/yake-kubectl --kubeconfig /var/lib/yake/kubeconfig.garden get extensions.operator.gardener.cloud -o wide || true
+          echo "::endgroup::"
+          echo "::group::Managed seed status"
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden get managedseeds,seeds -A -o wide || true
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden -n garden get shoots -o jsonpath='{range .items[*]}{.metadata.name}: {.status.lastOperation.state} {.status.lastOperation.progress}% {.status.lastOperation.description}{"\n"}{range .status.lastErrors[*]}  error: {.description}{"\n"}{end}{end}' || true
           echo "::endgroup::"
           # No pod logs: the logs of this public repository are public.
           echo "::group::Pods that are not ready (all namespaces)"

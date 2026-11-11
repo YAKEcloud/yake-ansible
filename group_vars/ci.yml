@@ -91,14 +91,90 @@ gardener_operator_dex:
 gardener_operator_shoot_cert_service_acme_email: "ci@not-existent.com"
 gardener_operator_shoot_cert_service_acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
 
+# === gardener_operator: NTP and Kyverno ===
+# NTP servers switch Kyverno on (it injects the timesyncd unit into the OperatingSystemConfigs).
+gardener_operator_ntp_servers:
+  - pool.ntp.org
+# Kyverno 3.9.2 ships a webhook with failurePolicy Fail (kyverno/kyverno#18210), which breaks the seed.
+gardener_operator_kyverno_version: '3.9.1'
+
 # === gardener_operator: cloud profiles ===
-gardener_operator_cloudprofiles: []
+# The Garden Linux image is found by name in the project (scripts/update-images.py uploads it if it
+# is missing), so there are no region entries with image IDs. The workflow reads this version.
+ci_gardenlinux_version: "2150.14.0"
+gardener_operator_cloudprofiles:
+  - name: cloudprofile
+    storageclasses:
+      - name: ssd
+        default: "true"
+        type: ssd
+        availability: nova
+    floating_pools:
+      - name: public
+    loadbalancer_providers:
+      - name: amphora
+    keystone_urls:
+      - region: "{{ clusterapi_cluster_openstack_region_name }}"
+        url: "{{ clusterapi_cluster_openstack_auth_url }}"
+    machine_images:
+      - name: gardenlinux
+        versions:
+          - version: "{{ ci_gardenlinux_version }}"
+            image: "Garden Linux {{ ci_gardenlinux_version | regex_replace('\\.0$', '') }}"
+    kubernetes_versions:
+      - version: "{{ clusterapi_cluster_kubernetes_version }}"
+        classification: supported
+    machinetypes:
+      - name: SCS-4V-8
+        cpu: "4"
+        gpu: "0"
+        memory: 8Gi
+        storage:
+          size: 50Gi
+    regions:
+      - name: "{{ clusterapi_cluster_openstack_region_name }}"
+        zones:
+          - nova
 
 # === gardener_operator: projects ===
-gardener_operator_managed_seeds_project: {}
+gardener_operator_managed_seeds_project:
+  name: seeds
+  members:
+    - email: "{{ gardener_operator_garden_cluster_admin_email }}"
+      role: admin
+      roles:
+        - serviceaccountmanager
 
 # === gardener_operator: managed seeds ===
-gardener_operator_managed_seeds: []
+# Two small workers keep the seed fast and cheap. No backup (no S3 in the test project) and no excess
+# capacity reservation.
+gardener_operator_managed_seeds:
+  - name: managed-seed-ci
+    cloudprofile_name: cloudprofile
+    networking_type: cilium
+    kubernetes_version: "{{ clusterapi_cluster_kubernetes_version }}"
+    floating_pool_name: "public"
+    openstack:
+      auth_url: "{{ gardener_operator_openstack_auth_url }}"
+      project_name: "{{ gardener_operator_openstack_project_name }}"
+      domain_name: "{{ gardener_operator_openstack_domain_name }}"
+      region_name: "{{ gardener_operator_openstack_region_name }}"
+      application_credential_id: "{{ gardener_operator_openstack_application_credential_id }}"
+      application_credential_name: "{{ gardener_operator_openstack_application_credential_name }}"
+      application_credential_secret: "{{ gardener_operator_openstack_application_credential_secret }}"
+    workers:
+      - name: worker-4v8
+        machinetype: SCS-4V-8
+        image_name: gardenlinux
+        image_version: "{{ ci_gardenlinux_version }}"
+        minimum: 2
+        maximum: 2
+        volume_type: ssd
+        volume_size: 50Gi
+        zones:
+          - nova
+    settings:
+      excess_capacity_reservation: false
 
 # === cleanup ===
 cleanup_openstack_cloud: openstack

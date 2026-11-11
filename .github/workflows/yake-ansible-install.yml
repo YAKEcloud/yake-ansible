@@ -159,9 +159,9 @@ jobs:
         run: printf '%s' "$ANSIBLE_VAULT_PASSWORD" > .vault-pass.txt && chmod 600 .vault-pass.txt
 
       # Uploads the CAPI image (and, with the seed, the Garden Linux image) if it is missing, which
-      # keeps the test on the versions in ci.yml. The IDs are looked up for the cluster and the cloud
-      # profile: the machine-controller-manager cannot resolve image names on clouds without the
-      # Nova image proxy. find_image fails on zero or several matches.
+      # keeps the test on the versions in ci.yml. The IDs of the images the updater selected go to
+      # the cluster and the cloud profile: the machine-controller-manager cannot resolve image
+      # names on clouds without the Nova image proxy.
       - name: Provide the images
         timeout-minutes: 20
         env:
@@ -171,20 +171,20 @@ jobs:
             -a "src=${PWD}/roles/clusterapi_cluster/templates/clouds.yaml.j2 dest=${RUNNER_TEMP}/clouds.yaml mode=0600" \
             -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt > /dev/null
           export OS_CLIENT_CONFIG_FILE="${RUNNER_TEMP}/clouds.yaml" OS_CLOUD=openstack
-          find_id() {
-            python3 -I -c 'import sys, openstack; print(openstack.connect().image.find_image(sys.argv[1], ignore_missing=False).id)' "$1"
-          }
           k8s=$(sed -n 's/^clusterapi_cluster_kubernetes_version: *//p' group_vars/ci.yml)
+          ids="${RUNNER_TEMP}/image-ids"
           if [ "${SEED}" = "true" ]; then
             gl=$(sed -n 's/^ci_gardenlinux_version: *"\(.*\)"$/\1/p' group_vars/ci.yml)
-            python3 scripts/update-images.py --k8s-version "${k8s}" --gardenlinux-version "${gl}"
-            id=$(find_id "Garden Linux ${gl%.0}")
-            echo "GL_IMAGE_ID=${id}" >> "$GITHUB_ENV"
+            python3 scripts/update-images.py --ids-file "${ids}" --k8s-version "${k8s}" --gardenlinux-version "${gl}"
+            gl_id=$(sed -n 's/^gardenlinux=//p' "${ids}")
+            [ -n "${gl_id}" ] || { echo "::error::No Garden Linux image ID"; exit 1; }
+            echo "GL_IMAGE_ID=${gl_id}" >> "$GITHUB_ENV"
           else
-            python3 scripts/update-images.py --k8s-version "${k8s}" --skip-gardenlinux
+            python3 scripts/update-images.py --ids-file "${ids}" --k8s-version "${k8s}" --skip-gardenlinux
           fi
-          id=$(find_id "ubuntu-capi-image-v${k8s}")
-          echo "CAPI_IMAGE_ID=${id}" >> "$GITHUB_ENV"
+          capi_id=$(sed -n 's/^capi=//p' "${ids}")
+          [ -n "${capi_id}" ] || { echo "::error::No CAPI image ID"; exit 1; }
+          echo "CAPI_IMAGE_ID=${capi_id}" >> "$GITHUB_ENV"
 
       # Without the seed (irrelevant change) the cloud profile, seed and NTP/Kyverno are switched off.
       - name: Run ansible-playbook site.yml

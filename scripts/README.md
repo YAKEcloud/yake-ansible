@@ -56,6 +56,9 @@ python3 scripts/update-images.py --skip-capi --gardenlinux-version 2150.3.0
 # Check what would be uploaded without actually uploading anything
 python3 scripts/update-images.py --dry-run --k8s-version 1.35.4
 
+# Write the IDs of the selected images to a file ('capi=<id>', 'gardenlinux=<id>')
+python3 scripts/update-images.py --ids-file image-ids.txt --k8s-version 1.35.4
+
 # Skip TLS certificate verification for the OpenStack API (for self-signed certificates)
 python3 scripts/update-images.py --insecure --k8s-version 1.35.4
 

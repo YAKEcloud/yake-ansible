@@ -158,7 +158,9 @@ jobs:
           ANSIBLE_VAULT_PASSWORD: ${{ secrets.ANSIBLE_VAULT_PASSWORD }}
         run: printf '%s' "$ANSIBLE_VAULT_PASSWORD" > .vault-pass.txt && chmod 600 .vault-pass.txt
 
-      # Skips the upload if the image already exists in the project (the usual case).
+      # Skips the upload if the image already exists in the project (the usual case). The ID is
+      # looked up for the cloud profile: the machine-controller-manager cannot resolve image names
+      # on clouds without the Nova image proxy. find_image fails on zero or several matches.
       - name: Provide the Garden Linux image
         if: needs.authorize.outputs.seed == 'true'
         timeout-minutes: 10
@@ -167,8 +169,10 @@ jobs:
             -a "src=${PWD}/roles/clusterapi_cluster/templates/clouds.yaml.j2 dest=${RUNNER_TEMP}/clouds.yaml mode=0600" \
             -e "@group_vars/ci.yml" --vault-password-file .vault-pass.txt > /dev/null
           version=$(sed -n 's/^ci_gardenlinux_version: *"\(.*\)"$/\1/p' group_vars/ci.yml)
-          OS_CLIENT_CONFIG_FILE="${RUNNER_TEMP}/clouds.yaml" OS_CLOUD=openstack \
-            python3 scripts/update-images.py --skip-capi --gardenlinux-version "${version}"
+          export OS_CLIENT_CONFIG_FILE="${RUNNER_TEMP}/clouds.yaml" OS_CLOUD=openstack
+          python3 scripts/update-images.py --skip-capi --gardenlinux-version "${version}"
+          image_id=$(python3 -I -c 'import sys, openstack; print(openstack.connect().image.find_image(sys.argv[1], ignore_missing=False).id)' "Garden Linux ${version%.0}")
+          echo "GL_IMAGE_ID=${image_id}" >> "$GITHUB_ENV"
 
       # Without the seed (irrelevant change) the cloud profile, seed and NTP/Kyverno are switched off.
       - name: Run ansible-playbook site.yml
@@ -182,7 +186,7 @@ jobs:
           fi
           for attempt in 1 2; do
             timeout --kill-after=1m 60m \
-              ansible-playbook -i localhost, -c local site.yml -e "@group_vars/ci.yml" -e "${extra}" --vault-password-file .vault-pass.txt \
+              ansible-playbook -i localhost, -c local site.yml -e "@group_vars/ci.yml" -e "${extra}" -e "ci_gardenlinux_image_id=${GL_IMAGE_ID:-}" --vault-password-file .vault-pass.txt \
               && exit 0
             echo "::warning::site.yml attempt ${attempt} failed"
           done

@@ -99,8 +99,8 @@ gardener_operator_ntp_servers:
 gardener_operator_kyverno_version: '3.9.1'
 
 # === gardener_operator: cloud profiles ===
-# The Garden Linux image is found by name in the project (scripts/update-images.py uploads it if it
-# is missing), so there are no region entries with image IDs. The workflow reads this version.
+# The workflow reads this version, uploads the image if it is missing
+# (scripts/update-images.py) and passes its ID as ci_gardenlinux_image_id.
 ci_gardenlinux_version: "2150.14.0"
 gardener_operator_cloudprofiles:
   - name: cloudprofile
@@ -121,6 +121,9 @@ gardener_operator_cloudprofiles:
         versions:
           - version: "{{ ci_gardenlinux_version }}"
             image: "Garden Linux {{ ci_gardenlinux_version | regex_replace('\\.0$', '') }}"
+            regions:
+              - name: "{{ clusterapi_cluster_openstack_region_name }}"
+                id: "{{ ci_gardenlinux_image_id }}"
     kubernetes_versions:
       - version: "{{ clusterapi_cluster_kubernetes_version }}"
         classification: supported

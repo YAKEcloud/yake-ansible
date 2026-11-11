@@ -348,7 +348,6 @@ gardener_operator_cloudprofiles:
         versions:
           - version: 2150.11.0
             image: "Garden Linux 2150.11"
-            # Optional. Without regions the image is found by its name. An entry needs a non-empty id.
             regions:
               - name: region-a
                 id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"

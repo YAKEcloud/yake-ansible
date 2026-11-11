@@ -8,6 +8,10 @@ config:
     http: 0.0.0.0:5556
     allowedOrigins:
       - https://dashboard.{{ gardener_operator_garden_url }}
+{% if gardener_operator_dex.theme | d('') %}
+  frontend:
+    theme: {{ gardener_operator_dex.theme }}
+{% endif %}
   oauth2:
     skipApprovalScreen: true
     responseTypes:

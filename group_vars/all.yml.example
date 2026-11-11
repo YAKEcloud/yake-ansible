@@ -72,6 +72,7 @@ gardener_operator_garden_cluster_admin_email: "demo@example.com"
 # === gardener_operator: authentication (Dex) ===
 gardener_operator_dex:
   dashboard_secret: ""
+  # theme: dark
   static_passwords: []
   # - email: "admin@example.com"
   #   # bcrypt hash of the string "password": $(printf 'password' | htpasswd -BinC 10 admin | cut -d: -f2)

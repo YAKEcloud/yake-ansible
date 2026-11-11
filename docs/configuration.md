@@ -73,7 +73,7 @@ The garden cluster is provisioned by the `clusterapi_cluster` role on OpenStack.
 | `clusterapi_cluster_openstack_cacert` | `""` | PEM-encoded CA certificate for TLS verification. |
 | `clusterapi_cluster_openstack_external_network` | `public` | Name of the external (floating IP) network. |
 | `clusterapi_cluster_openstack_ssh_key_name` | `<cluster name>` | Name of the OpenStack key pair for the nodes. |
-| `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Octavia provider for load balancers created by the cloud controller manager. |
+| `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Octavia provider for the API server load balancer. Load balancers of `LoadBalancer` services are configured with `clusterapi_cluster_lb_provider`. |
 | `clusterapi_cluster_openstack_loadbalancer_allowed_cidrs` | `[]` | Source CIDRs allowed to reach the API server load balancer (`allowedCIDRs`). Empty allows all. If set, it must include the addresses the cluster is reached from: the management cluster and the Ansible host, and the garden cluster nodes, otherwise Cluster API and the playbook lose access to the API server. |
 
 ### Machines
@@ -85,6 +85,8 @@ The garden cluster is provisioned by the `clusterapi_cluster` role on OpenStack.
 | `clusterapi_cluster_openstack_image_id` | `""` | Glance image UUID for cluster nodes. |
 | `clusterapi_cluster_openstack_image_name` | `""` | Expected name of the image. Strongly recommended: it is used to verify that the image ID is correct. |
 | `clusterapi_cluster_ntp_servers` | `[]` | NTP servers for the cluster nodes (chrony). Empty keeps the image defaults. |
+| `clusterapi_cluster_lb_provider` | `""` | Octavia provider (`lb-provider`) the cloud controller uses for new `LoadBalancer` services, for example `amphora` or `ovn`. Empty keeps the cloud controller default (`amphora`) and writes no `[LoadBalancer]` section. Only applies to load balancers created afterward; the cloud controller must be restarted to pick up a changed value. The provider has to exist on the platform. With `ovn`, `manage-security-groups=true` is set as well, so the cloud controller manages the Neutron security groups per `LoadBalancer` service; without it the load balancer is not reachable from outside. Existing load balancers keep their provider and have to be recreated (delete the `Service`) as part of a switch; the cloud controller applies the new method to their pools, which the old provider may reject. When switching away from `ovn`, delete the `LoadBalancer` services first: without `manage-security-groups` the cloud controller removes the security groups of the existing OVN load balancers and they lose external connectivity. |
+| `clusterapi_cluster_lb_method` | `""` | Load balancing algorithm (`lb-method`). Empty keeps the cloud controller default (`ROUND_ROBIN`), or `SOURCE_IP_PORT` for `ovn`, because the `ovn` provider rejects `ROUND_ROBIN` on some platforms. Set it to override. Validated against the provider (`amphora` if empty). |
 | `clusterapi_cluster_control_plane_machine_count` | `3` | Number of control plane nodes. |
 | `clusterapi_cluster_control_plane_machine_flavor` | `SCS-2V-4` | OpenStack flavor for control plane nodes. |
 | `clusterapi_cluster_worker_machine_flavor` | `SCS-4V-8` | OpenStack flavor for worker nodes. |

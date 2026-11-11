@@ -54,6 +54,8 @@ via `clusterapi_cluster_stale_machine_template_cleanup_enabled: false` if you'd 
 | `clusterapi_cluster_openstack_cacert` | `""` | PEM-encoded CA certificate (optional). |
 | `clusterapi_cluster_openstack_external_network` | `public` | Name of the external network for floating IPs. |
 | `clusterapi_cluster_openstack_loadbalancer_provider` | `ovn` | Load balancer provider for the API server load balancer. |
+| `clusterapi_cluster_lb_provider` | `""` | Octavia provider for `LoadBalancer` services (for example `amphora`, `ovn`). Empty keeps the cloud controller default (`amphora`). See `docs/configuration.md`. |
+| `clusterapi_cluster_lb_method` | `""` | Load balancing algorithm. Empty: `ROUND_ROBIN`, or `SOURCE_IP_PORT` for `ovn`. |
 | `clusterapi_cluster_openstack_loadbalancer_allowed_cidrs` | `[]` | Source CIDRs allowed to reach the API server load balancer. Empty allows all. If set, include the management cluster, the Ansible host and the garden cluster nodes, otherwise they lose access to the API server. |
 | `clusterapi_cluster_openstack_loadbalancer_monitor_delay` | `5` | Seconds between health probes against each API server LB member. |
 | `clusterapi_cluster_openstack_loadbalancer_monitor_timeout` | `5` | Seconds a health probe waits before timing out. |

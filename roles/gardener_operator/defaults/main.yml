@@ -22,6 +22,7 @@ gardener_operator_helm_values: {}
 gardener_operator_dex_version: '0.26.0'
 gardener_operator_dex:
   dashboard_secret: ""
+  theme: ""
   static_passwords: []
   # - email: "admin@example.com"
   #   # bcrypt hash of the string "password": $(printf 'password' | htpasswd -BinC 10 admin | cut -d: -f2)

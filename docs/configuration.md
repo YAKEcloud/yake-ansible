@@ -213,6 +213,7 @@ Dex provides OIDC login for the dashboard. It is configured through `gardener_op
 ```yaml
 gardener_operator_dex:
   dashboard_secret: "..."
+  theme: dark              # optional, "light" or "dark"; empty keeps the Dex default (light)
   static_passwords:
     - email: "admin@example.com"
       username: "admin"

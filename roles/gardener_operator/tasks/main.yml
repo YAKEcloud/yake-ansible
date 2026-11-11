@@ -3,6 +3,7 @@
   ansible.builtin.assert:
     that:
       - gardener_operator_dex.dashboard_secret | d('') | string | length > 0
+      - gardener_operator_dex.theme | d('') in ['', 'light', 'dark']
       - gardener_operator_garden_url | d('') | length > 0
       - gardener_operator_garden_url != 'example.com'
       - gardener_operator_openstack_application_credential_id | d('') | length > 0
@@ -11,7 +12,8 @@
         (gardener_operator_shoot_cert_service_ca_certificate | d('') | length > 0) == (gardener_operator_shoot_cert_service_ca_key | d('') | length > 0)
       - gardener_operator_proxy_host | d('') | length == 0 or gardener_operator_proxy_host is match('^((25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])[.]){3}(25[0-5]|2[0-4][0-9]|1[0-9]{2}|[1-9]?[0-9])$')
     fail_msg: >-
-      Missing or invalid values: gardener_operator_dex.dashboard_secret, gardener_operator_garden_url (not example.com)
+      Missing or invalid values: gardener_operator_dex.dashboard_secret, gardener_operator_dex.theme (light, dark or empty),
+      gardener_operator_garden_url (not example.com)
       and the OpenStack application credential id/secret must be set, the cert-service CA certificate and key must be
       set together (or both empty), and gardener_operator_proxy_host must be an IPv4 address (it is used as a /32 in a NetworkPolicy).
     quiet: true

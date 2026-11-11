@@ -10,7 +10,7 @@
 # seed: does the managed seed (cloud profile, project, seed, Kyverno) need to be
 #   built? On by default. Off only if every change is documentation, an image
 #   build, or a kubectl/helm bump (nothing the seed path touches).
-#   Gardener, extension, Kyverno, Dex and Reflector updates always run the seed.
+#   Gardener, extension, Kyverno, Dex updates always run the seed.
 #
 # Usage: check-relevant-changes.sh <base-sha> <head-sha>
 # Writes "relevant=true|false" and "seed=true|false" to stdout (for GITHUB_OUTPUT).

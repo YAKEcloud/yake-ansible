@@ -206,7 +206,7 @@ The `gardener_operator` role deploys the Gardener Operator and configures the en
 | `gardener_operator_proxy_host` / `gardener_operator_proxy_port` | `""` / `3128` | HTTP proxy for the managed seeds; also allowed through a NetworkPolicy. |
 | `gardener_operator_ntp_servers` | `[]` | NTP servers for all shoot nodes. Injected as a `systemd-timesyncd` drop-in into the OperatingSystemConfigs via Kyverno (no package installation, works with the read-only Garden Linux root). Empty keeps the OS defaults, which are public NTP pools. |
 
-### Dex, Kyverno and Reflector
+### Dex and Kyverno
 
 Dex provides OIDC login for the dashboard. It is configured through `gardener_operator_dex`:
 
@@ -224,7 +224,6 @@ gardener_operator_dex:
 |----------|---------|-------------|
 | `gardener_operator_dex_version` | see defaults | Dex Helm chart version. |
 | `gardener_operator_kyverno_version` | see defaults | Kyverno Helm chart version. |
-| `gardener_operator_reflector_version` | see defaults | Reflector Helm chart version. |
 | `gardener_operator_helm_values` | `{}` | Additional Helm values for the Gardener Operator chart. |
 
 ### Projects

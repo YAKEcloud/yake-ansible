@@ -103,25 +103,6 @@
               - port: 9443
                 protocol: TCP
 
-- name: Install reflector
-  kubernetes.core.helm:
-    binary_path: "{{ playbook_dir }}/.local/yake-helm"
-    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-    chart_ref: oci://ghcr.io/emberstack/helm-charts/reflector
-    chart_version: "{{ gardener_operator_reflector_version }}"
-    release_name: reflector
-    release_namespace: kube-system
-    release_state: present
-    wait: true
-    values:
-      resources:
-        requests:
-          cpu: 10m
-          memory: 64Mi
-        limits:
-          memory: 256Mi
-  environment: "{{ gardener_operator_proxy_env }}"
-
 - name: Install dex
   kubernetes.core.helm:
     binary_path: "{{ playbook_dir }}/.local/yake-helm"
@@ -140,46 +121,50 @@
   register: gardener_operator_dex_install
   no_log: true
 
-- name: Wait for the garden wildcard TLS secret
+- name: Read the garden wildcard certificate
   kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-    api_version: v1
-    kind: Secret
+    api_version: cert.gardener.cloud/v1alpha1
+    kind: Certificate
     name: tls
     namespace: garden
-  register: gardener_operator_garden_tls  # noqa: var-naming[no-role-prefix]
-  until: gardener_operator_garden_tls.resources | length > 0
+  register: gardener_operator_dex_wildcard_certificate
+  until: gardener_operator_dex_wildcard_certificate.resources | length > 0
   retries: 30
   delay: 10
-  no_log: true
 
-- name: Allow reflector to mirror the garden wildcard TLS secret
+- name: Request a dedicated certificate for Dex
   kubernetes.core.k8s:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
     state: present
     definition:
-      apiVersion: v1
-      kind: Secret
+      apiVersion: cert.gardener.cloud/v1alpha1
+      kind: Certificate
       metadata:
-        name: tls
+        name: identity-dex
         namespace: garden
-        annotations:
-          reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
-          reflector.v1.k8s.emberstack.com/reflection-allowed-namespaces: virtual-garden-istio-ingress
+        annotations: "{{ gardener_operator_dex_wildcard_certificate.resources[0].metadata.annotations | d({}) | dict2items | selectattr('key', 'match', '^cert\\.gardener\\.cloud/(class|dnsrecord-)') | items2dict }}"
+      spec:
+        dnsNames:
+          - "identity.{{ gardener_operator_garden_url }}"
+        issuerRef:
+          name: "{{ gardener_operator_dex_wildcard_certificate.resources[0].spec.issuerRef.name | d('garden') }}"
+          namespace: "{{ gardener_operator_dex_wildcard_certificate.resources[0].spec.issuerRef.namespace | d('garden') }}"
+        secretRef:
+          name: identity-dex-cert
+          namespace: virtual-garden-istio-ingress
 
-- name: Mirror the wildcard TLS secret for the Dex Istio gateway
-  kubernetes.core.k8s:
+- name: Wait for the Dex certificate
+  kubernetes.core.k8s_info:
     kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
-    state: present
-    definition:
-      apiVersion: v1
-      kind: Secret
-      type: Opaque
-      metadata:
-        name: identity-dex-tls
-        namespace: virtual-garden-istio-ingress
-        annotations:
-          reflector.v1.k8s.emberstack.com/reflects: garden/tls
+    api_version: cert.gardener.cloud/v1alpha1
+    kind: Certificate
+    name: identity-dex
+    namespace: garden
+  register: gardener_operator_dex_certificate
+  until: gardener_operator_dex_certificate.resources | length > 0 and gardener_operator_dex_certificate.resources[0].status.state | d('') == 'Ready'
+  retries: 60
+  delay: 10
 
 - name: Expose Dex via the garden Istio ingressgateway
   kubernetes.core.k8s:
@@ -204,7 +189,7 @@
               protocol: HTTPS
             tls:
               mode: SIMPLE
-              credentialName: identity-dex-tls
+              credentialName: identity-dex-cert
 
 - name: Route the garden Istio ingressgateway to Dex
   kubernetes.core.k8s:
@@ -229,3 +214,23 @@
                   host: identity-dex.garden.svc.cluster.local
                   port:
                     number: 5556
+
+- name: Remove the legacy reflector release
+  kubernetes.core.helm:
+    binary_path: "{{ playbook_dir }}/.local/yake-helm"
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    release_name: reflector
+    release_namespace: kube-system
+    release_state: absent
+    wait: true
+  environment: "{{ gardener_operator_proxy_env }}"
+
+- name: Remove the legacy mirrored Dex TLS secret
+  kubernetes.core.k8s:
+    kubeconfig: "/var/lib/yake/kubeconfig.{{ gardener_operator_clusterapi_name }}"
+    state: absent
+    api_version: v1
+    kind: Secret
+    name: identity-dex-tls
+    namespace: virtual-garden-istio-ingress
+  no_log: true

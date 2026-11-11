@@ -831,6 +831,16 @@ def main() -> None:
         ),
     )
     parser.add_argument(
+        "--ids-file",
+        metavar="FILE",
+        default=None,
+        help=(
+            "Write the IDs of the selected images to FILE as 'capi=<id>' and"
+            " 'gardenlinux=<id>' lines. This is the image the script found (it"
+            " may have a different name) or uploaded."
+        ),
+    )
+    parser.add_argument(
         "--all-stores",
         action="store_true",
         help=(
@@ -898,6 +908,7 @@ def main() -> None:
             )
 
     results = []
+    ids = {}
 
     if not args.skip_capi:
         results.append(
@@ -910,6 +921,7 @@ def main() -> None:
                 all_stores=args.all_stores,
             )
         )
+        ids["capi"] = results[-1][1]
 
     if not args.skip_gardenlinux:
         results.append(
@@ -920,6 +932,13 @@ def main() -> None:
                 all_stores=args.all_stores,
             )
         )
+        ids["gardenlinux"] = results[-1][1]
+
+    if args.ids_file:
+        with open(args.ids_file, "w", encoding="utf-8") as fh:
+            for key, image_id in ids.items():
+                if image_id:
+                    fh.write(f"{key}={image_id}\n")
 
     print("\n=== Summary ===")
     name_width = max((len(name) for name, _ in results), default=0)

@@ -108,9 +108,9 @@ jobs:
     needs: [authorize]
     if: needs.authorize.outputs.run == 'true'
     runs-on: ubuntu-latest
-    # At least the sum of the step timeouts below (30 setup, 20 images, 125 site.yml, 32 wait,
-    # 5 dump, 47 cleanup = 259), so the cleanup always gets its full budget.
-    timeout-minutes: 260
+    # At least the sum of the step timeouts below (30 setup, 40 images, 125 site.yml, 32 wait,
+    # 5 dump, 47 cleanup = 279), so the cleanup always gets its full budget.
+    timeout-minutes: 280
     permissions:
       contents: read
       statuses: write
@@ -163,7 +163,9 @@ jobs:
       # the cluster and the cloud profile: the machine-controller-manager cannot resolve image
       # names on clouds without the Nova image proxy.
       - name: Provide the images
-        timeout-minutes: 20
+        # An upload is rare (new version only). The updater waits up to 60 minutes per image, but
+        # that is the worst case and would push the job to the 360 minute runner limit.
+        timeout-minutes: 40
         env:
           SEED: ${{ needs.authorize.outputs.seed }}
         run: |

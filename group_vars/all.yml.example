@@ -120,10 +120,11 @@ gardener_operator_cloudprofiles:
             # classification: supported
             image: "Garden Linux 2150.14"
             # The Glance image ID is required: the machine-controller-manager cannot resolve the
-            # name on clouds without the Nova image proxy.
+            # name on clouds without the Nova image proxy. Replace the placeholder with the ID of
+            # the image in your cloud (openstack image show "Garden Linux 2150.14" -c id).
             regions:
               - name: "{{ clusterapi_cluster_openstack_region_name }}"
-                id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
+                id: "REPLACE-WITH-GLANCE-IMAGE-ID"
     kubernetes_versions:
       - version: 1.37.2
         classification: supported

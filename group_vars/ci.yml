@@ -17,8 +17,9 @@ clusterapi_cluster_openstack_application_credential_secret: !vault |
   3839
 clusterapi_cluster_openstack_domain_name: "yake"
 clusterapi_cluster_openstack_region_name: "cloudpod-bb"
-clusterapi_cluster_openstack_image_id: "463dc4c0-059b-420c-a62c-17f21aa5f715"
-clusterapi_cluster_openstack_image_name: "ubuntu-capi-image-v1.37.2"
+# The workflow uploads the image for the version above if it is missing (scripts/update-images.py)
+# and passes its ID as clusterapi_cluster_openstack_image_id.
+clusterapi_cluster_openstack_image_name: "ubuntu-capi-image-v{{ clusterapi_cluster_kubernetes_version }}"
 
 clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4"
 clusterapi_cluster_control_plane_machine_count: 1

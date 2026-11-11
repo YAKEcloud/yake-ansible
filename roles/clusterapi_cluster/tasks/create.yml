@@ -61,6 +61,27 @@
     - clusterapi_cluster_openstack_image_name | d('') | length > 0
     - _clusterapi_cluster_image_info.images[0].name != clusterapi_cluster_openstack_image_name
 
+- name: Fail if the load balancer method is not supported by the ovn provider
+  ansible.builtin.fail:
+    msg: >-
+      clusterapi_cluster_lb_method '{{ clusterapi_cluster_lb_method }}' is not supported by the ovn provider.
+      Use SOURCE_IP_PORT or SOURCE_IP (newer platforms only), or leave it empty.
+  when:
+    - clusterapi_cluster_lb_provider | d('') == 'ovn'
+    - clusterapi_cluster_lb_method | d('') | length > 0
+    - clusterapi_cluster_lb_method not in ['SOURCE_IP_PORT', 'SOURCE_IP']
+
+- name: Fail if the load balancer method is not supported by the amphora provider
+  ansible.builtin.fail:
+    msg: >-
+      clusterapi_cluster_lb_method '{{ clusterapi_cluster_lb_method }}' is not supported by the amphora provider
+      (also used if no provider is set, as it is the cloud controller default).
+      Use ROUND_ROBIN, LEAST_CONNECTIONS or SOURCE_IP, or leave it empty.
+  when:
+    - clusterapi_cluster_lb_provider | d('') in ['', 'amphora', 'amphorav2']
+    - clusterapi_cluster_lb_method | d('') | length > 0
+    - clusterapi_cluster_lb_method not in ['ROUND_ROBIN', 'LEAST_CONNECTIONS', 'SOURCE_IP']
+
 - name: Get external network ID
   openstack.cloud.networks_info:
     cloud: "{{ clusterapi_cluster_openstack_cloud }}"

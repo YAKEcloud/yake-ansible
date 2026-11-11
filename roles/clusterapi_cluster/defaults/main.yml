@@ -21,6 +21,12 @@ clusterapi_cluster_container_registry_cache_k8s: https://registry.osism.tech/v2/
 # NTP servers for the nodes (chrony). Empty keeps the image defaults.
 clusterapi_cluster_ntp_servers: []
 
+# Octavia provider and algorithm for LoadBalancer services (cloud controller).
+# Empty provider: the cloud controller default (amphora) applies.
+# Empty method: the cloud controller default (ROUND_ROBIN), or SOURCE_IP_PORT for ovn.
+clusterapi_cluster_lb_provider: ""
+clusterapi_cluster_lb_method: ""
+
 clusterapi_cluster_hosts_entries: []
 # clusterapi_cluster_hosts_entries:
 #   - ip: "12.34.56.54"

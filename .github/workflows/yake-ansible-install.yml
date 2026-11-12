@@ -104,8 +104,36 @@ jobs:
             echo "seed=$(sed -n 's/^seed=//p' <<< "${out}")" >> "$GITHUB_OUTPUT"
           fi
 
-  yake-ansible-install:
+  # One install test at a time (shared OpenStack project). GitHub keeps at most
+  # one pending run per concurrency group and cancels the others, so the queue
+  # is built here: a run waits until all runs that started before it are done.
+  queue:
     needs: [authorize]
+    if: needs.authorize.outputs.run == 'true'
+    runs-on: ubuntu-latest
+    timeout-minutes: 350
+    permissions:
+      actions: read
+    steps:
+      - name: Wait for the runs that started earlier
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          api="repos/${GITHUB_REPOSITORY}/actions"
+          started=$(gh api "${api}/runs/${RUN_ID}" --jq .run_started_at)
+          while :; do
+            ahead=$(gh api "${api}/workflows/yake-ansible-install.yml/runs?per_page=100" --jq \
+              "[.workflow_runs[] | select(.id != ${RUN_ID}
+                and (.status == \"in_progress\" or .status == \"queued\" or .status == \"pending\")
+                and (.run_started_at < \"${started}\" or (.run_started_at == \"${started}\" and .id < ${RUN_ID})))] | length") || ahead=""
+            [ "${ahead}" = "0" ] && break
+            echo "Waiting for ${ahead:-an unknown number of} earlier run(s)."
+            sleep 60
+          done
+
+  yake-ansible-install:
+    needs: [authorize, queue]
     if: needs.authorize.outputs.run == 'true'
     runs-on: ubuntu-latest
     # At least the sum of the step timeouts below (30 setup, 40 images, 125 site.yml, 32 wait,
@@ -114,12 +142,6 @@ jobs:
     permissions:
       contents: read
       statuses: write
-    # One install test at a time (shared OpenStack project). GitHub keeps at
-    # most one pending run per group: a newer run replaces a pending one, the
-    # replaced run is cancelled and has to be triggered again if still needed.
-    concurrency:
-      group: "yake-ansible-install"
-      cancel-in-progress: false
     env:
       STATUS_SHA: ${{ needs.authorize.outputs.sha }}
     steps:

@@ -173,7 +173,6 @@ gardener_operator_managed_seeds_project:
 #         role: admin
 
 # === gardener_operator: managed seeds ===
-# Pull-through caches for the nodes of the managed seeds (optional).
 # gardener_operator_managed_seeds_registry_mirrors:
 #   - upstream: docker.io
 #     host: "https://registry.osism.cloud/v2/dockerhub"

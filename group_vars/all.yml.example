@@ -14,7 +14,7 @@ management_cluster_engine: kind
 # === clusterapi_cluster ===
 clusterapi_cluster_kubernetes_version: "1.37.2"
 # clusterapi_cluster_ntp_servers: [ntp.example.com]
-# clusterapi_cluster_lb_provider: ovn
+clusterapi_cluster_lb_provider: ovn
 
 clusterapi_cluster_openstack_auth_url: "https://keystone.example.com/v3"
 clusterapi_cluster_openstack_application_credential_id: ""
@@ -111,7 +111,7 @@ gardener_operator_cloudprofiles:
     floating_pools:
       - name: public
     loadbalancer_providers:
-      - name: amphora
+      - name: ovn
     keystone_urls:
       - region: "{{ clusterapi_cluster_openstack_region_name }}"
         url: "{{ clusterapi_cluster_openstack_auth_url }}"
@@ -179,6 +179,7 @@ gardener_operator_managed_seeds:
     networking_type: cilium
     kubernetes_version: 1.37.2
     floating_pool_name: "public"
+    loadbalancer_provider: ovn
     openstack:
       auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
       project_name: "{{ gardener_operator_openstack_project_name }}"

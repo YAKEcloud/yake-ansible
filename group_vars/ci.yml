@@ -36,8 +36,6 @@ clusterapi_cluster_worker_root_volume_size: "20"
 clusterapi_cluster_root_volume_availability_zone: nova
 clusterapi_cluster_secrets_encryption_enabled: true
 
-# ovn needs no amphora VM per load balancer, which keeps the test fast. The API server load balancer
-# already uses ovn by default.
 clusterapi_cluster_lb_provider: ovn
 
 # === gardener_operator: OpenStack credentials ===
@@ -154,8 +152,6 @@ gardener_operator_managed_seeds_project:
         - serviceaccountmanager
 
 # === gardener_operator: managed seeds ===
-# Pull-through caches for the nodes of the managed seeds, so that they do not download every image from the
-# internet again in each run. The same caches the garden cluster nodes use (clusterapi_cluster defaults).
 gardener_operator_managed_seeds_registry_mirrors:
   - upstream: docker.io
     host: "https://registry.osism.cloud/v2/dockerhub"

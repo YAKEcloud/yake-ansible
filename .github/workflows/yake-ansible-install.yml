@@ -280,6 +280,9 @@ jobs:
           echo "::group::Managed seed status"
           ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden get managedseeds,seeds -A -o wide || true
           ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden -n garden get shoots -o jsonpath='{range .items[*]}{.metadata.name}: {.status.lastOperation.state} {.status.lastOperation.progress}% {.status.lastOperation.description}{"\n"}{range .status.lastErrors[*]}  error: {.description}{"\n"}{end}{end}' || true
+          # Conditions that are not True explain why a seed or shoot is not ready
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden get seeds -o jsonpath='{range .items[*]}{.metadata.name}:{"\n"}{range .status.conditions[?(@.status!="True")]}  {.type}={.status} ({.reason}) {.message}{"\n"}{end}{end}' || true
+          ./.local/yake-kubectl --kubeconfig /var/lib/yake/gardener-operator/kubeconfig.vgarden -n garden get shoots -o jsonpath='{range .items[*]}{.metadata.name}:{"\n"}{range .status.conditions[?(@.status!="True")]}  {.type}={.status} ({.reason}) {.message}{"\n"}{end}{end}' || true
           echo "::endgroup::"
           # No pod logs: the logs of this public repository are public.
           echo "::group::Pods that are not ready (all namespaces)"

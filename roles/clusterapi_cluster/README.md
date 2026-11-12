@@ -164,12 +164,12 @@ All nodes are configured to pull images through the OSISM registry cache by defa
 
 | Variable | Default |
 |----------|---------|
-| `clusterapi_cluster_container_registry_cache_dockerhub` | `https://registry.osism.cloud/v2/dockerhub` |
-| `clusterapi_cluster_container_registry_cache_k8s` | `https://registry.osism.cloud/v2/k8s` |
-| `clusterapi_cluster_container_registry_cache_ghcr` | `https://registry.osism.cloud/v2/ghcr` |
-| `clusterapi_cluster_container_registry_cache_gcr` | `https://registry.osism.cloud/v2/gcr` |
-| `clusterapi_cluster_container_registry_cache_quay` | `https://registry.osism.cloud/v2/quay` |
-| `clusterapi_cluster_container_registry_cache_pkg` | `https://registry.osism.cloud/v2/pkg` |
+| `clusterapi_cluster_container_registry_cache_dockerhub` | `https://registry.osism.tech/v2/dockerhub` |
+| `clusterapi_cluster_container_registry_cache_k8s` | `https://registry.osism.tech/v2/k8s` |
+| `clusterapi_cluster_container_registry_cache_ghcr` | `https://registry.osism.tech/v2/ghcr` |
+| `clusterapi_cluster_container_registry_cache_gcr` | `https://registry.osism.tech/v2/gcr` |
+| `clusterapi_cluster_container_registry_cache_quay` | `https://registry.osism.tech/v2/quay` |
+| `clusterapi_cluster_container_registry_cache_pkg` | `https://registry.osism.tech/v2/pkg` |
 
 ## Files written
 

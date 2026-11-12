@@ -170,7 +170,7 @@ Configurable per cluster: `cilium` (default) or `calico`. Set via `clusterapi_cl
 
 ## Container Registry
 
-Nodes pull images through configurable mirrors. Defaults point to `registry.osism.cloud`. Override via `clusterapi_cluster_container_registry_cache_*` variables.
+Nodes pull images through configurable mirrors. Defaults point to `registry.osism.tech`. Override via `clusterapi_cluster_container_registry_cache_*` variables.
 
 ## OpenStack Quota
 

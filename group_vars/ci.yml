@@ -158,17 +158,23 @@ gardener_operator_managed_seeds_project:
 # internet again in each run. The same caches the garden cluster nodes use (clusterapi_cluster defaults).
 gardener_operator_managed_seeds_registry_mirrors:
   - upstream: docker.io
-    host: "https://registry.osism.tech/v2/dockerhub"
+    host: "https://registry.osism.cloud/v2/dockerhub"
+    override_path: true
   - upstream: europe-docker.pkg.dev
-    host: "https://registry.osism.tech/v2/pkg"
+    host: "https://registry.osism.cloud/v2/pkg"
+    override_path: true
   - upstream: gcr.io
-    host: "https://registry.osism.tech/v2/gcr"
+    host: "https://registry.osism.cloud/v2/gcr"
+    override_path: true
   - upstream: ghcr.io
-    host: "https://registry.osism.tech/v2/ghcr"
+    host: "https://registry.osism.cloud/v2/ghcr"
+    override_path: true
   - upstream: quay.io
-    host: "https://registry.osism.tech/v2/quay"
+    host: "https://registry.osism.cloud/v2/quay"
+    override_path: true
   - upstream: registry.k8s.io
-    host: "https://registry.osism.tech/v2/k8s"
+    host: "https://registry.osism.cloud/v2/k8s"
+    override_path: true
 
 # Two small workers keep the seed fast and cheap. No backup (no S3 in the test project) and no excess
 # capacity reservation.

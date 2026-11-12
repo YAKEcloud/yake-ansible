@@ -10,7 +10,7 @@ config:
       - https://dashboard.{{ gardener_operator_garden_url }}
 {% if gardener_operator_dex.theme | d('') %}
   frontend:
-    theme: {{ gardener_operator_dex.theme }}
+    theme: {{ gardener_operator_dex.theme | to_json }}
 {% endif %}
   oauth2:
     skipApprovalScreen: true

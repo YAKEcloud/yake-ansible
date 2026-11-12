@@ -397,6 +397,7 @@ Each entry in `gardener_operator_managed_seeds` creates a shoot cluster and regi
 | `kubernetes_version` | Yes | Kubernetes version for the seed shoot. |
 | `floating_pool_name` | Yes | OpenStack floating pool for the seed's load balancer. |
 | `loadbalancer_provider` | No | Load balancer provider (default: `amphora`). Alternatives: `haproxy`, `ovn`. |
+| `serialize_image_pulls` | No | Whether the kubelets of the seed nodes pull images one at a time (Gardener default: `true`). `false` lets the pulls run in parallel, so that one slow image does not block all other pods of a node. |
 | `internal_domain` | No | Internal domain of the seed (default: `internal.<gardener_operator_garden_url>`). |
 | `workers_cidr` | No | Worker subnet CIDR (default: `100.96.0.0/16`). Mutually exclusive with `subnet_pool`. |
 | `subnet_pool` | No | Allocate the worker subnet from an OpenStack subnet pool instead of using an explicit CIDR. |

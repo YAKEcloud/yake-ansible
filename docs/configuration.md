@@ -161,7 +161,7 @@ clusterapi_cluster_openstack_subnets:
 
 ### Registry Caches and Host Entries
 
-The nodes pull images through the registry caches at `https://registry.osism.tech/v2/<name>`. The mirrors need a valid TLS certificate (no `skip_verify`). An empty URL disables a mirror. The URLs are set per upstream registry through `clusterapi_cluster_container_registry_cache_dockerhub`, `..._pkg`, `..._gcr`, `..._ghcr`, `..._quay` and `..._k8s`.
+The nodes pull images through the registry caches at `https://registry.osism.cloud/v2/<name>`. The registry provides caches for `dockerhub`, `pkg`, `gcr`, `ghcr`, `quay` and `k8s`. The mirrors need a valid TLS certificate (no `skip_verify`). An empty URL disables a mirror. The URLs are set per upstream registry through `clusterapi_cluster_container_registry_cache_dockerhub`, `..._pkg`, `..._gcr`, `..._ghcr`, `..._quay` and `..._k8s`.
 
 To make additional hostnames resolvable on the nodes (for example for a private registry or Keystone), use `clusterapi_cluster_hosts_entries`:
 

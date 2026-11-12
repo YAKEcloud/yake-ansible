@@ -179,6 +179,7 @@ gardener_operator_managed_seeds:
     kubernetes_version: "{{ clusterapi_cluster_kubernetes_version }}"
     floating_pool_name: "public"
     loadbalancer_provider: ovn
+    serialize_image_pulls: false
     openstack:
       auth_url: "{{ gardener_operator_openstack_auth_url }}"
       project_name: "{{ gardener_operator_openstack_project_name }}"

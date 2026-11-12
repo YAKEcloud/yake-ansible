@@ -186,6 +186,10 @@ spec:
     type: {{ item.networking_type | to_json }}
   kubernetes:
     version: {{ item.kubernetes_version | string | to_json }}
+{% if item.serialize_image_pulls is defined %}
+    kubelet:
+      serializeImagePulls: {{ item.serialize_image_pulls | bool | to_json }}
+{% endif %}
   maintenance:
     autoUpdate:
       kubernetesVersion: true

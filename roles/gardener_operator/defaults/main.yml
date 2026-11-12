@@ -301,6 +301,8 @@ gardener_operator_managed_seeds:
     # internal_domain: foo.example.com
     # Optional: load balancer provider (default: amphora); alternatives: haproxy, ovn
     # loadbalancer_provider: amphora
+    # Optional: pull images in parallel on the seed nodes (Gardener default: true, one at a time)
+    # serialize_image_pulls: false
     # Optional: use an explicit worker CIDR (default: 100.96.0.0/16)
     # workers_cidr: "100.96.0.0/16"
     # Optional: use a subnet pool instead of an explicit CIDR (mutually exclusive with workers_cidr)

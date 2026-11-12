@@ -17,11 +17,8 @@ clusterapi_cluster_openstack_application_credential_secret: !vault |
   3839
 clusterapi_cluster_openstack_domain_name: "yake"
 clusterapi_cluster_openstack_region_name: "cloudpod-bb"
-# The workflow uploads the image for the version above if it is missing (scripts/update-images.py)
-# and passes the ID of the image it selected as clusterapi_cluster_openstack_image_id. The name is
-# not set because the selected image may have another name.
 
-clusterapi_cluster_control_plane_machine_flavor: "SCS-2V-4"
+clusterapi_cluster_control_plane_machine_flavor: "SCS-4V-8"
 clusterapi_cluster_control_plane_machine_count: 1
 clusterapi_cluster_worker_machine_flavor: "SCS-8V-16"
 clusterapi_cluster_worker_machine_deployments:
@@ -32,7 +29,7 @@ clusterapi_cluster_worker_machine_deployments:
 
 clusterapi_cluster_root_volume_type: "ssd"
 clusterapi_cluster_control_plane_root_volume_size: "20"
-clusterapi_cluster_worker_root_volume_size: "20"
+clusterapi_cluster_worker_root_volume_size: "40"
 clusterapi_cluster_root_volume_availability_zone: nova
 clusterapi_cluster_secrets_encryption_enabled: true
 
@@ -54,10 +51,7 @@ gardener_operator_provider_openstack_storageclass_type: ssd
 
 # === gardener_operator: garden cluster ===
 gardener_operator_garden_url: "botany.yake.cloud"
-# The DNS search domain of the test cloud (bb.cloudpods.site) answers with SERVFAIL, so the dashboard
-# cannot reach Dex. Remove this line once the platform DNS is fixed.
 gardener_operator_login_check_enabled: false
-# The Let's Encrypt staging certificate of the test is not trusted by the runner.
 gardener_operator_login_check_validate_certs: false
 gardener_operator_cluster_name: "botany-yake-cloud"
 gardener_operator_virtual_garden_high_availability: true
@@ -89,21 +83,16 @@ gardener_operator_dex:
       username: "admin"
 
 # === gardener_operator: certificates ===
-# CI uses ACME (DNS-01 via Designate) against the Let's Encrypt staging endpoint, like most real
-# installations. The staging CA is not trusted by clients, which is fine for the test.
 gardener_operator_shoot_cert_service_acme_email: "ci@not-existent.com"
 gardener_operator_shoot_cert_service_acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"
 
 # === gardener_operator: NTP and Kyverno ===
-# NTP servers switch Kyverno on (it injects the timesyncd unit into the OperatingSystemConfigs).
 gardener_operator_ntp_servers:
   - pool.ntp.org
 # Kyverno 3.9.2 ships a webhook with failurePolicy Fail (kyverno/kyverno#18210), which breaks the seed.
 gardener_operator_kyverno_version: '3.9.1'
 
 # === gardener_operator: cloud profiles ===
-# The workflow reads this version, uploads the image if it is missing
-# (scripts/update-images.py) and passes its ID as ci_gardenlinux_image_id.
 ci_gardenlinux_version: "2150.14.0"
 gardener_operator_cloudprofiles:
   - name: cloudprofile
@@ -136,7 +125,7 @@ gardener_operator_cloudprofiles:
         gpu: "0"
         memory: 8Gi
         storage:
-          size: 50Gi
+          size: 30Gi
     regions:
       - name: "{{ clusterapi_cluster_openstack_region_name }}"
         zones:
@@ -172,8 +161,6 @@ gardener_operator_managed_seeds_registry_mirrors:
     host: "https://registry.osism.cloud/v2/k8s"
     override_path: true
 
-# Two small workers keep the seed fast and cheap. No backup (no S3 in the test project) and no excess
-# capacity reservation.
 gardener_operator_managed_seeds:
   - name: managed-seed-ci
     cloudprofile_name: cloudprofile
@@ -196,9 +183,9 @@ gardener_operator_managed_seeds:
         image_name: gardenlinux
         image_version: "{{ ci_gardenlinux_version }}"
         minimum: 2
-        maximum: 2
+        maximum: 3
         volume_type: ssd
-        volume_size: 50Gi
+        volume_size: 30Gi
         zones:
           - nova
     settings:

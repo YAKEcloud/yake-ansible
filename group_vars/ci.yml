@@ -154,6 +154,22 @@ gardener_operator_managed_seeds_project:
         - serviceaccountmanager
 
 # === gardener_operator: managed seeds ===
+# Pull-through caches for the nodes of the managed seeds, so that they do not download every image from the
+# internet again in each run. The same caches the garden cluster nodes use (clusterapi_cluster defaults).
+gardener_operator_managed_seeds_registry_mirrors:
+  - upstream: docker.io
+    host: "https://registry.osism.tech/v2/dockerhub"
+  - upstream: europe-docker.pkg.dev
+    host: "https://registry.osism.tech/v2/pkg"
+  - upstream: gcr.io
+    host: "https://registry.osism.tech/v2/gcr"
+  - upstream: ghcr.io
+    host: "https://registry.osism.tech/v2/ghcr"
+  - upstream: quay.io
+    host: "https://registry.osism.tech/v2/quay"
+  - upstream: registry.k8s.io
+    host: "https://registry.osism.tech/v2/k8s"
+
 # Two small workers keep the seed fast and cheap. No backup (no S3 in the test project) and no excess
 # capacity reservation.
 gardener_operator_managed_seeds:

@@ -123,10 +123,11 @@ jobs:
           api="repos/${GITHUB_REPOSITORY}/actions"
           started=$(gh api "${api}/runs/${RUN_ID}" --jq .run_started_at)
           while :; do
-            ahead=$(gh api "${api}/workflows/yake-ansible-install.yml/runs?per_page=100" --jq \
-              "[.workflow_runs[] | select(.id != ${RUN_ID}
-                and (.status == \"in_progress\" or .status == \"queued\" or .status == \"pending\")
-                and (.run_started_at < \"${started}\" or (.run_started_at == \"${started}\" and .id < ${RUN_ID})))] | length") || ahead=""
+            runs=$(for s in in_progress queued pending; do
+              gh api --paginate "${api}/workflows/yake-ansible-install.yml/runs?status=${s}&per_page=100" || exit 1
+            done) &&
+            ahead=$(jq -s "[.[].workflow_runs[] | select(.id != ${RUN_ID}
+                and (.run_started_at < \"${started}\" or (.run_started_at == \"${started}\" and .id < ${RUN_ID})))] | length" <<< "${runs}") || ahead=""
             [ "${ahead}" = "0" ] && break
             echo "Waiting for ${ahead:-an unknown number of} earlier run(s)."
             sleep 60
@@ -140,11 +141,29 @@ jobs:
     # 5 dump, 47 cleanup = 279), so the cleanup always gets its full budget.
     timeout-minutes: 280
     permissions:
+      actions: read
       contents: read
       statuses: write
     env:
       STATUS_SHA: ${{ needs.authorize.outputs.sha }}
     steps:
+      # "Re-run failed jobs" does not run the queue job again. Stop if another install test is running.
+      - name: Check that no other install test is running
+        timeout-minutes: 5
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.run_id }}
+        run: |
+          api="repos/${GITHUB_REPOSITORY}/actions"
+          for s in in_progress queued pending; do
+            gh api --paginate "${api}/workflows/yake-ansible-install.yml/runs?status=${s}&per_page=100" --jq '.workflow_runs[].id'
+          done | sort -u | { grep -vx "${RUN_ID}" || true; } | while read -r id; do
+            gh api "${api}/runs/${id}/jobs" --jq '.jobs[] | select(.name == "yake-ansible-install" and .status == "in_progress") | "run '"${id}"'"'
+          done > "${RUNNER_TEMP}/busy.txt"
+          if [ -s "${RUNNER_TEMP}/busy.txt" ]; then
+            echo "::error::Another install test is running ($(paste -sd, "${RUNNER_TEMP}/busy.txt")). Run this again later."
+            exit 1
+          fi
       - name: Report pending status
         if: github.event_name == 'issue_comment'
         timeout-minutes: 2

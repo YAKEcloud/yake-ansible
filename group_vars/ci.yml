@@ -36,6 +36,10 @@ clusterapi_cluster_worker_root_volume_size: "20"
 clusterapi_cluster_root_volume_availability_zone: nova
 clusterapi_cluster_secrets_encryption_enabled: true
 
+# ovn needs no amphora VM per load balancer, which keeps the test fast. The API server load balancer
+# already uses ovn by default.
+clusterapi_cluster_lb_provider: ovn
+
 # === gardener_operator: OpenStack credentials ===
 gardener_operator_openstack_auth_url: "{{ clusterapi_cluster_openstack_auth_url }}"
 gardener_operator_openstack_project_name: "yake-001"
@@ -113,7 +117,7 @@ gardener_operator_cloudprofiles:
     floating_pools:
       - name: public
     loadbalancer_providers:
-      - name: amphora
+      - name: ovn
     keystone_urls:
       - region: "{{ clusterapi_cluster_openstack_region_name }}"
         url: "{{ clusterapi_cluster_openstack_auth_url }}"
@@ -158,6 +162,7 @@ gardener_operator_managed_seeds:
     networking_type: cilium
     kubernetes_version: "{{ clusterapi_cluster_kubernetes_version }}"
     floating_pool_name: "public"
+    loadbalancer_provider: ovn
     openstack:
       auth_url: "{{ gardener_operator_openstack_auth_url }}"
       project_name: "{{ gardener_operator_openstack_project_name }}"

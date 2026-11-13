@@ -104,7 +104,7 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ```
 
 !!! note "Adapt the values"
-    The machine type, image, version, floating pool, zone and network ranges in the example are placeholders. Use the values of your cloud profile. The simplest way to get a correct manifest is to create a cluster in the dashboard once and copy its YAML. The managed seeds that yake-ansible creates use the same fields, you can compare with your `gardener_operator_managed_seeds` configuration.
+    The machine type, image, version, floating pool, load balancer provider, zone and network ranges in the example are placeholders. The role defaults list `amphora` as load balancer provider, so use `amphora` or add `ovn` to your cloud profile. Use the values of your cloud profile. The simplest way to get a correct manifest is to create a cluster in the dashboard once and copy its YAML. The managed seeds that yake-ansible creates use the same fields, you can compare with your `gardener_operator_managed_seeds` configuration.
 
 ## 5. Use the cluster
 

@@ -6,6 +6,7 @@
     </a>
     <label class="md-header__button md-icon" for="__drawer">
       {% include ".icons/material/menu.svg" %}
+      <span class="md-visually-hidden">{{ lang.t('nav') }}</span>
     </label>
     <a href="{{ nav.homepage.url | url }}" class="yake-title">{{ config.site_name }}</a>
     <a href="{{ ((nav.items | last).children | first).url | url }}" class="yake-docs">{{ (nav.items | last).title }}</a>
@@ -13,6 +14,7 @@
     {% include "partials/javascripts/palette.html" %}
     <label class="md-header__button md-icon" for="__search">
       {% include ".icons/material/magnify.svg" %}
+      <span class="md-visually-hidden">{{ lang.t('search') }}</span>
     </label>
     {% include "partials/search.html" %}
     <div class="md-header__source">

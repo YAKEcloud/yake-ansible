@@ -50,6 +50,10 @@ Data may be processed in the United States. GitHub's data protection practices a
 
 We do not use analytics or tracking tools and do not set cookies. Your choice of light or dark mode is stored locally in your browser (local storage) and is not transmitted to us. The search runs entirely in your browser.
 
+## Repository information
+
+The repository link in the header shows the latest release and the number of stars and forks of the project. To display them, your browser queries the GitHub API (api.github.com) when you open a page. GitHub, the same provider as the hosting, receives your IP address and the usual request data for this. The legal basis is our legitimate interest according to Art. 6 (1) lit. f GDPR in showing current project information. The result is kept temporarily in the session storage of your browser. The site works without this information.
+
 ## Your rights
 
 You have the right to access, rectification, erasure, restriction of processing and data portability. You may object to processing based on legitimate interests (Art. 6 (1) lit. f GDPR) at any time. Consent you have given can be withdrawn at any time with effect for the future.

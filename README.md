@@ -5,7 +5,7 @@
   </picture>
 </p>
 
-<h1 align="center">yake-ansible</h1>
+<h1 align="center">YAKE.ansible</h1>
 
 <p align="center">
   <strong>Gardener on OpenStack, from zero to a working landscape</strong>

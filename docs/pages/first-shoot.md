@@ -60,6 +60,7 @@ spec:
     name: openstack-a
   region: RegionOne
   credentialsBindingName: openstack-credentials   # the binding that holds your credentials
+  purpose: evaluation
   provider:
     type: openstack
     infrastructureConfig:
@@ -81,6 +82,8 @@ spec:
             version: "2150.15.0"
         minimum: 1
         maximum: 3
+        volume:
+          size: 50Gi
         zones:
           - nova
   networking:
@@ -88,6 +91,10 @@ spec:
     nodes: 10.250.0.0/16
   kubernetes:
     version: "1.37.2"
+  maintenance:
+    autoUpdate:
+      kubernetesVersion: true
+      machineImageVersion: true
 ```
 
 ```bash
@@ -97,7 +104,7 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ```
 
 !!! note "Adapt the values"
-    The machine type, image, version, floating pool, zone and network ranges in the example are placeholders. Use the values of your cloud profile. The managed seeds that yake-ansible creates use the same fields, you can compare with your `gardener_operator_managed_seeds` configuration.
+    The machine type, image, version, floating pool, zone and network ranges in the example are placeholders. Use the values of your cloud profile. The simplest way to get a correct manifest is to create a cluster in the dashboard once and copy its YAML. The managed seeds that yake-ansible creates use the same fields, you can compare with your `gardener_operator_managed_seeds` configuration.
 
 ## 5. Use the cluster
 

@@ -123,6 +123,8 @@ export KUBECONFIG=~/Downloads/kubeconfig-demo.yaml
 kubectl get nodes
 ```
 
+This needs a `kubectl` on your `PATH`. With the `binary` install method, `./.local/yake-kubectl` is the `kubectl` binary. The Docker wrapper cannot read files outside its container.
+
 ## 6. Delete the cluster
 
 Delete the cluster in the dashboard. With `kubectl` against the virtual garden, Gardener requires a confirmation first:

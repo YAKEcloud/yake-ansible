@@ -119,6 +119,7 @@ gardener_operator_managed_seeds:
     networking_type: cilium
     kubernetes_version: 1.37.2
     floating_pool_name: "public"
+    loadbalancer_provider: ovn
     openstack:
       auth_url: "https://keystone.example.com:5000"
       project_name: "my-project"

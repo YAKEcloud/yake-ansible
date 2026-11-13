@@ -122,7 +122,7 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 
 Releases follow Gardener: `v1.155.1-0` is the first release for Gardener `1.155.1`, `-1`, `-2`, … are fixes to this repository. A new release is published automatically for every new Gardener version. The notes list the Gardener changes first, then the changes in this repository.
 
-Each release is tested with its Gardener version, and that means the Gardener installation only. Seeds, shoots and everything else you run on top are outside the test scope.
+Each release is tested with its Gardener version, and that means the Gardener installation only: management cluster, garden cluster, Gardener Operator, extensions and the managed seed. Shoots and everything else you run on top are outside the test scope.
 
 Pin a release with `git checkout <tag>`. To run another Gardener version, set `gardener_operator_version` in your `all.yml`. This works, but is not tested. Only the newest Gardener version is maintained.
 

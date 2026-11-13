@@ -44,7 +44,7 @@ yake-ansible deploys a multi-layer Kubernetes platform where each layer is manag
 
 ### Control Host
 
-The control host is the machine from which you run the Ansible playbooks. It does not need to be a server; a workstation or CI runner is sufficient. For production, we recommend a dedicated VM on OpenStack (see [Getting Started](getting-started.md#control-host-requirements)). The following tools are installed locally by yake-ansible and invoked through wrapper scripts in `.local/`:
+The control host is the machine from which you run the Ansible playbooks. It does not need to be a server; a workstation or CI runner is sufficient. For production, we recommend a dedicated VM on OpenStack (see [Getting Started](requirements.md#control-host-requirements)). The following tools are installed locally by yake-ansible and invoked through wrapper scripts in `.local/`:
 
 - `yake-kubectl`
 - `yake-helm`
@@ -67,7 +67,7 @@ The kubeconfig for the garden cluster is saved to `/var/lib/yake/kubeconfig.gard
 
 ### Gardener Operator and Virtual Garden
 
-The [Gardener Operator](https://github.com/gardener/gardener/tree/master/docs/operator) is deployed on the garden cluster via Helm. It bootstraps the virtual garden, which is the Gardener control plane running inside the garden cluster. The virtual garden consists of:
+The [Gardener Operator](https://github.com/gardener/gardener/blob/master/docs/concepts/operator.md) is deployed on the garden cluster via Helm. It bootstraps the virtual garden, which is the Gardener control plane running inside the garden cluster. The virtual garden consists of:
 
 - A dedicated etcd for the Gardener API
 - The Gardener API server (`gardener-apiserver`)

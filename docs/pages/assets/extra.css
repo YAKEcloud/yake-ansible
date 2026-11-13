@@ -1,4 +1,37 @@
+/* Self-hosted fonts (IBM Plex, SIL Open Font License, see assets/fonts) */
+@font-face {
+  font-family: "IBM Plex Sans";
+  font-style: normal;
+  font-weight: 100 700;
+  font-display: swap;
+  src: url("fonts/ibm-plex-sans-latin-wght-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("fonts/ibm-plex-mono-latin-400-normal.woff2") format("woff2");
+}
+
+@font-face {
+  font-family: "IBM Plex Mono";
+  font-style: normal;
+  font-weight: 600;
+  font-display: swap;
+  src: url("fonts/ibm-plex-mono-latin-600-normal.woff2") format("woff2");
+}
+
+:root {
+  --md-text-font: "IBM Plex Sans";
+  --md-code-font: "IBM Plex Mono";
+}
+
 [data-md-color-scheme="default"] {
+  --md-default-fg-color: #13151a;
+  --md-default-fg-color--light: rgba(19, 21, 26, 0.8);
+  --md-default-fg-color--lighter: rgba(19, 21, 26, 0.5);
   --md-primary-fg-color: #2e8555;
   --md-primary-fg-color--light: #33925d;
   --md-primary-fg-color--dark: #29784c;
@@ -6,6 +39,10 @@
 }
 
 [data-md-color-scheme="slate"] {
+  --md-default-fg-color: #f4f5f7;
+  --md-default-fg-color--light: rgba(244, 245, 247, 0.82);
+  --md-default-fg-color--lighter: rgba(244, 245, 247, 0.5);
+  --md-code-fg-color: #f4f5f7;
   --md-primary-fg-color: #25c2a0;
   --md-primary-fg-color--light: #29d5b0;
   --md-primary-fg-color--dark: #1fa588;
@@ -58,7 +95,8 @@ html:has(.yake-hero) {
   margin: 1.5rem auto 0;
 }
 
-.md-content:has(.yake-hero) .md-content__button {
+.md-content:has(.yake-hero) .md-content__button,
+.md-content:has(.yake-hero) .headerlink {
   display: none;
 }
 
@@ -81,38 +119,15 @@ html:has(.yake-hero) {
   }
 }
 
+/* The feature cards are not clickable, so no hover effect */
+.md-typeset .grid.yake-cards > ul > li:hover,
+.md-typeset .grid.yake-cards > ul > li:focus-within {
+  border-color: var(--md-default-fg-color--lightest);
+  box-shadow: none;
+}
+
 [data-md-color-scheme="default"] .md-header .md-logo img {
   filter: invert(1);
-}
-
-/* Header: title and Docs link (see docs/overrides/partials/header.html) */
-.yake-title,
-.yake-docs {
-  color: inherit;
-  font-size: 0.85rem;
-}
-
-.yake-title {
-  font-weight: 700;
-}
-
-.yake-docs {
-  margin: 0 auto 0 1rem;
-}
-
-[data-md-color-scheme="slate"] .yake-title,
-[data-md-color-scheme="slate"] .yake-docs {
-  color: #fff;
-}
-
-[data-md-color-scheme] .yake-title:hover,
-[data-md-color-scheme] .yake-docs:hover {
-  color: var(--md-primary-fg-color);
-}
-
-/* The theme's own tab row is not used, the header has the Docs link */
-.md-container > .md-tabs {
-  display: none;
 }
 
 /* No gap between the header and the hero banner */
@@ -129,6 +144,16 @@ html:has(.yake-hero) {
 }
 
 /* Header color as on the previous site (dark scheme) */
-[data-md-color-scheme="slate"] .md-header {
+[data-md-color-scheme="slate"] .md-header,
+[data-md-color-scheme="slate"] .md-tabs {
   background-color: #242526;
+}
+
+/* Bold navigation text */
+.md-tabs__link {
+  font-weight: 600;
+}
+
+.md-nav--primary .md-nav__link {
+  font-weight: 500;
 }

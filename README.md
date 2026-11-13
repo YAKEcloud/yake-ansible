@@ -77,7 +77,7 @@ See [docs/pages/architecture.md](docs/pages/architecture.md) for a detailed desc
 
 ## Requirements
 
-- OpenStack tenant with sufficient quota (see [docs/pages/getting-started.md](docs/pages/getting-started.md#openstack-requirements))
+- OpenStack tenant with sufficient quota (see [docs/pages/requirements.md](docs/pages/requirements.md#openstack-requirements))
 - Python 3.12 or later on the control host
 - Docker for the default install method
 
@@ -162,7 +162,8 @@ The documentation is also published at <https://yake.cloud/>.
 |----------|-------------|
 | [Architecture](docs/pages/architecture.md) | Layer model, component roles, and data flow |
 | [Networking](docs/pages/networking.md) | Network topology, ports, IP ranges, DNS, VPN |
-| [Getting Started](docs/pages/getting-started.md) | OpenStack requirements, installation, first run |
+| [Requirements](docs/pages/requirements.md) | OpenStack quota and control host requirements |
+| [Installation](docs/pages/getting-started.md) | Installation, configuration, first run |
 | [Configuration](docs/pages/configuration.md) | Complete variable reference for all roles |
 | [Operations](docs/pages/operations.md) | Upgrades, cleanup, troubleshooting |
 

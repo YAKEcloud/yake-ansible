@@ -15,41 +15,50 @@ Copyright &copy; 2026 23 Technologies GmbH &middot;
 
 nav = [
   { "Home" = "index.md" },
-  { "Docs" = [
-    "getting-started.md",
-    "architecture.md",
-    "networking.md",
-    "configuration.md",
-    "operations.md",
+  { "Get started" = [
+    "requirements.md",
+    { "Installation" = "getting-started.md" },
   ] },
+  { "Concepts" = ["architecture.md", "networking.md"] },
+  { "Operate" = ["configuration.md", "operations.md"] },
 ]
 
 [project.theme]
 variant = "modern"
 font = false
-custom_dir = "overrides"
 logo = "assets/logo.svg"
 favicon = "assets/favicon.ico"
 features = [
   "navigation.tabs",
   "navigation.sections",
+  "navigation.path",
+  "navigation.footer",
   "navigation.top",
   "content.code.copy",
   "content.action.edit",
   "search.suggest",
+  "search.highlight",
 ]
+
+[[project.theme.palette]]
+media = "(prefers-color-scheme)"
+toggle.icon = "lucide/sun-moon"
+toggle.name = "Switch to light mode"
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme: light)"
 scheme = "default"
-toggle.icon = "lucide/moon"
+toggle.icon = "lucide/sun"
 toggle.name = "Switch to dark mode"
 
 [[project.theme.palette]]
 media = "(prefers-color-scheme: dark)"
 scheme = "slate"
-toggle.icon = "lucide/sun"
-toggle.name = "Switch to light mode"
+toggle.icon = "lucide/moon-star"
+toggle.name = "Switch to system preference"
+
+[project.plugins.minify]
+minify_html = true
 
 [project.markdown_extensions]
 admonition = {}

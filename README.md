@@ -24,7 +24,7 @@
 </p>
 
 <p align="center">
-  <a href="https://yakecloud.github.io/yake-ansible/">Documentation</a> &middot;
+  <a href="https://yake.cloud/">Documentation</a> &middot;
   <a href="#architecture">Architecture</a> &middot;
   <a href="#installation">Installation</a> &middot;
   <a href="#usage">Usage</a> &middot;
@@ -156,7 +156,7 @@ The minimum Gardener version is `1.142.0`. Since then, nginx-ingress is no longe
 
 ## Documentation
 
-The documentation is also published at <https://yakecloud.github.io/yake-ansible/>.
+The documentation is also published at <https://yake.cloud/>.
 
 | Document | Description |
 |----------|-------------|

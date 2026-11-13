@@ -15,3 +15,120 @@
   --md-default-bg-color: #1b1b1d;
   --md-hue: 240;
 }
+
+[data-md-color-scheme="default"] img[src$="#only-dark"],
+[data-md-color-scheme="slate"] img[src$="#only-light"] {
+  display: none;
+}
+
+html:has(.yake-hero) {
+  overflow-x: clip;
+}
+
+.yake-hero {
+  text-align: center;
+  padding: 3rem 1.5rem 2rem;
+  margin: 0 calc(50% - 50vw) 2rem;
+  width: 100vw;
+  background: var(--md-primary-fg-color);
+  color: var(--md-primary-bg-color);
+}
+
+.yake-hero h1 {
+  margin-bottom: 0.2rem;
+  color: inherit;
+}
+
+.yake-hero .md-button,
+.yake-hero .md-button:hover {
+  color: var(--md-primary-bg-color);
+  border: 0.1rem solid var(--md-primary-bg-color);
+  background-color: transparent;
+}
+
+.yake-hero .md-button--primary,
+.yake-hero .md-button--primary:hover {
+  color: var(--md-primary-fg-color);
+  background-color: var(--md-primary-bg-color);
+}
+
+.yake-hero .yake-overview {
+  display: block;
+  max-width: min(100%, 62rem);
+  margin: 1.5rem auto 0;
+}
+
+.md-content:has(.yake-hero) .md-content__button {
+  display: none;
+}
+
+.yake-alasca {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: 2rem;
+  align-items: center;
+}
+
+@media (max-width: 44.9375em) {
+  .yake-alasca {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (min-width: 60em) {
+  .md-typeset .grid.yake-cards {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+[data-md-color-scheme="default"] .md-header .md-logo img {
+  filter: invert(1);
+}
+
+/* Header: title and Docs link (see docs/overrides/partials/header.html) */
+.yake-title,
+.yake-docs {
+  color: inherit;
+  font-size: 0.85rem;
+}
+
+.yake-title {
+  font-weight: 700;
+}
+
+.yake-docs {
+  margin: 0 auto 0 1rem;
+}
+
+[data-md-color-scheme="slate"] .yake-title,
+[data-md-color-scheme="slate"] .yake-docs {
+  color: #fff;
+}
+
+[data-md-color-scheme] .yake-title:hover,
+[data-md-color-scheme] .yake-docs:hover {
+  color: var(--md-primary-fg-color);
+}
+
+/* The theme's own tab row is not used, the header has the Docs link */
+.md-container > .md-tabs {
+  display: none;
+}
+
+/* No gap between the header and the hero banner */
+.md-main__inner:has(.yake-hero) {
+  margin-top: 0;
+}
+
+.md-content__inner:has(.yake-hero) {
+  padding-top: 0;
+}
+
+.md-content__inner:has(.yake-hero)::before {
+  display: none;
+}
+
+/* Header color as on the previous site (dark scheme) */
+[data-md-color-scheme="slate"] .md-header {
+  background-color: #242526;
+}

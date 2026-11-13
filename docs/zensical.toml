@@ -1,27 +1,37 @@
 [project]
-site_name = "yake-ansible"
+site_name = "YAKE.ansible"
 site_description = "Gardener-based Kubernetes platform on OpenStack"
-site_url = "https://yakecloud.github.io/yake-ansible/"
+site_url = "https://yake.cloud/"
 repo_url = "https://github.com/YAKEcloud/yake-ansible"
 repo_name = "YAKEcloud/yake-ansible"
 edit_uri = "edit/main/docs/pages/"
 docs_dir = "pages"
 extra_css = ["assets/extra.css"]
+copyright = """
+Copyright &copy; 2026 23 Technologies GmbH &middot;
+<a href="/legals/">Legals</a> &middot;
+<a href="/privacy-policy/">Privacy policy</a>
+"""
 
 nav = [
   { "Home" = "index.md" },
-  { "Getting Started" = "getting-started.md" },
-  { "Architecture" = "architecture.md" },
-  { "Networking" = "networking.md" },
-  { "Configuration" = "configuration.md" },
-  { "Operations" = "operations.md" },
+  { "Docs" = [
+    "getting-started.md",
+    "architecture.md",
+    "networking.md",
+    "configuration.md",
+    "operations.md",
+  ] },
 ]
 
 [project.theme]
 variant = "modern"
+font = false
+custom_dir = "overrides"
 logo = "assets/logo.svg"
 favicon = "assets/favicon.ico"
 features = [
+  "navigation.tabs",
   "navigation.sections",
   "navigation.top",
   "content.code.copy",
@@ -43,6 +53,8 @@ toggle.name = "Switch to light mode"
 
 [project.markdown_extensions]
 admonition = {}
+attr_list = {}
+md_in_html = {}
 tables = {}
 toc.permalink = true
 pymdownx.highlight = {}

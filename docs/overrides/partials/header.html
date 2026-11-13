@@ -1,0 +1,22 @@
+{#- Minimal header: logo and title link to home, plus one link to the docs. -#}
+<header class="md-header" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="{{ lang.t('header') }}">
+    <a href="{{ nav.homepage.url | url }}" title="{{ config.site_name | e }}" class="md-header__button md-logo" aria-label="{{ config.site_name }}" data-md-component="logo">
+      {% include "partials/logo.html" %}
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      {% include ".icons/material/menu.svg" %}
+    </label>
+    <a href="{{ nav.homepage.url | url }}" class="yake-title">{{ config.site_name }}</a>
+    <a href="{{ ((nav.items | last).children | first).url | url }}" class="yake-docs">{{ (nav.items | last).title }}</a>
+    {% include "partials/palette.html" %}
+    {% include "partials/javascripts/palette.html" %}
+    <label class="md-header__button md-icon" for="__search">
+      {% include ".icons/material/magnify.svg" %}
+    </label>
+    {% include "partials/search.html" %}
+    <div class="md-header__source">
+      {% include "partials/source.html" %}
+    </div>
+  </nav>
+</header>

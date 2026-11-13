@@ -59,8 +59,7 @@ Besides the practical development work, ALASCA also acts as a provider of knowle
 
 <div markdown>
 
-[![ALASCA](assets/logo-alasca.png#only-light){ width="300" }](https://alasca.cloud/)
-[![ALASCA](assets/logo-alasca_dark.png#only-dark){ width="300" }](https://alasca.cloud/)
+[![ALASCA](assets/logo-alasca.png#only-light){ width="300" }![ALASCA](assets/logo-alasca_dark.png#only-dark){ width="300" }](https://alasca.cloud/)
 
 </div>
 

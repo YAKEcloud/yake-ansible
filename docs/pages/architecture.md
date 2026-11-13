@@ -4,41 +4,8 @@ yake-ansible deploys a multi-layer Kubernetes platform where each layer is manag
 
 ## Overview
 
-```
-  +----------------------------------------------------------------+
-  |  Control Host                                                  |
-  |  +----------------------------------------------------------+  |
-  |  |  Management Cluster (kind/k3s)                           |  |
-  |  |  +- Cluster API + CAPO                                   |  |
-  |  +----------------------------------------------------------+  |
-  +-----------------------+----------------------------------------+
-                          |  provisions via OpenStack API
-                          v
-  +-----------------------+----------------------------------------+
-  |  Garden Cluster  (OpenStack)                                   |
-  |                                                                |
-  |  +- Gardener Operator                                          |
-  |      +- Virtual Garden                                         |
-  |          +- gardener-apiserver, etcd                           |
-  |          +- dashboard, dex                                     |
-  |          +- Internal Seed                                      |
-  |          |  (the garden cluster itself)                        |
-  |          +- Managed Seed objects                               |
-  +-----------------------+----------------------------------------+
-         ^                |  creates as OS shoots
-         |                v
-  +------+---------------------------------------------------------+
-  |  Managed Seed  (OpenStack)                                     |
-  |                                                                |
-  |  +- Gardenlet                                                  |
-  |      connects back to virtual                                  |
-  |      garden API (TLS outbound)                                 |
-  |      runs shoot control planes                                 |
-  |                                                                |
-  |  +- Shoot Clusters  (OpenStack)                                |
-  |      worker nodes on OpenStack VMs                             |
-  +----------------------------------------------------------------+
-```
+![Layers of the platform](assets/architecture-light.svg#only-light)
+![Layers of the platform](assets/architecture-dark.svg#only-dark)
 
 ## Layers
 

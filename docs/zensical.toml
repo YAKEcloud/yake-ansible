@@ -7,6 +7,7 @@ repo_name = "YAKEcloud/yake-ansible"
 edit_uri = "edit/main/docs/pages/"
 docs_dir = "pages"
 extra_css = ["assets/extra.css"]
+extra_javascript = ["assets/a11y.js"]
 copyright = """
 Copyright &copy; 2026 23 Technologies GmbH &middot;
 <a href="/legals/">Legals</a> &middot;

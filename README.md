@@ -1,4 +1,38 @@
-# yake-ansible
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo.svg">
+    <img src="docs/assets/logo-black.svg" alt="YAKE" width="160">
+  </picture>
+</p>
+
+<h1 align="center">yake-ansible</h1>
+
+<p align="center">
+  <strong>Gardener on OpenStack, from zero to a working landscape</strong>
+</p>
+
+<p align="center">
+  Ansible automation for the YAKE platform: management cluster, Cluster API, garden cluster, Gardener Operator.
+</p>
+
+<p align="center">
+  <a href="https://github.com/YAKEcloud/yake-ansible/releases/latest"><img src="https://img.shields.io/github/v/release/YAKEcloud/yake-ansible?label=release" alt="Latest release"></a>
+  <a href="https://github.com/YAKEcloud/yake-ansible/actions/workflows/docs.yml"><img src="https://github.com/YAKEcloud/yake-ansible/actions/workflows/docs.yml/badge.svg?branch=main" alt="Docs"></a>
+  <a href="https://github.com/YAKEcloud/yake-ansible/actions/workflows/build-container-images.yml"><img src="https://github.com/YAKEcloud/yake-ansible/actions/workflows/build-container-images.yml/badge.svg?branch=main" alt="Build container images"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/github/license/YAKEcloud/yake-ansible" alt="License"></a>
+  <a href="https://docs.renovatebot.com/"><img src="https://img.shields.io/badge/renovate-enabled-brightgreen?logo=renovatebot" alt="Renovate"></a>
+</p>
+
+<p align="center">
+  <a href="https://yakecloud.github.io/yake-ansible/">Documentation</a> &middot;
+  <a href="#architecture">Architecture</a> &middot;
+  <a href="#installation">Installation</a> &middot;
+  <a href="#usage">Usage</a> &middot;
+  <a href="#releases">Releases</a> &middot;
+  <a href="https://yake.cloud">yake.cloud</a>
+</p>
+
+---
 
 yake-ansible automates the deployment of a Gardener-based Kubernetes platform on OpenStack. It provisions a local management cluster, initializes Cluster API with the OpenStack provider, creates a dedicated garden cluster, and installs the Gardener Operator with cloud profiles, managed seeds, and all required extensions.
 

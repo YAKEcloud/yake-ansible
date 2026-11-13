@@ -78,7 +78,7 @@ See [docs/pages/architecture.md](docs/pages/architecture.md) for a detailed desc
 ## Requirements
 
 - OpenStack tenant with sufficient quota (see [docs/pages/requirements.md](docs/pages/requirements.md#openstack-requirements))
-- Python 3.12 or later on the control host
+- Python 3.13 or later on the control host
 - Docker for the default install method
 
 ## Installation

@@ -43,7 +43,7 @@ The control host is the machine from which you run the Ansible playbooks.
 
 For production, we recommend a dedicated VM on OpenStack as control host, which is also where the management cluster runs. This is how YAKE is operated. It is not a requirement: any other machine works as well, for example a workstation for tests.
 
-- Python 3.12 or later (required by the pinned `ansible-core`)
+- Python 3.13 or later (required by the pinned `ansible-core`)
 - Docker (required for the default `docker` install method)
 - Network access to the OpenStack APIs
 - Network access to the internet (for pulling container images and Helm charts)

@@ -4,7 +4,8 @@ site_description = "Gardener-based Kubernetes platform on OpenStack"
 site_url = "https://yakecloud.github.io/yake-ansible/"
 repo_url = "https://github.com/YAKEcloud/yake-ansible"
 repo_name = "YAKEcloud/yake-ansible"
-edit_uri = "edit/main/docs/"
+edit_uri = "edit/main/docs/pages/"
+docs_dir = "pages"
 extra_css = ["assets/extra.css"]
 
 nav = [

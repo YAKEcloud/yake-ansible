@@ -1,7 +1,7 @@
 <p align="center">
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/logo.svg">
-    <img src="docs/assets/logo-black.svg" alt="YAKE" width="160">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/pages/assets/logo.svg">
+    <img src="docs/pages/assets/logo-black.svg" alt="YAKE" width="160">
   </picture>
 </p>
 
@@ -73,11 +73,11 @@ The result is a fully operational Gardener installation that can manage Kubernet
   +----------------------------------------------------------------+
 ```
 
-See [docs/architecture.md](docs/architecture.md) for a detailed description of each layer and [docs/networking.md](docs/networking.md) for ports, IP ranges, and traffic flows.
+See [docs/pages/architecture.md](docs/pages/architecture.md) for a detailed description of each layer and [docs/pages/networking.md](docs/pages/networking.md) for ports, IP ranges, and traffic flows.
 
 ## Requirements
 
-- OpenStack tenant with sufficient quota (see [docs/getting-started.md](docs/getting-started.md#openstack-requirements))
+- OpenStack tenant with sufficient quota (see [docs/pages/getting-started.md](docs/pages/getting-started.md#openstack-requirements))
 - Python 3.12 or later on the control host
 - Docker for the default install method
 
@@ -95,7 +95,7 @@ ansible-galaxy install -f -r requirements.yml
 
 Copy `group_vars/all.yml.example` to `group_vars/all.yml` and fill in your values. At minimum, configure the OpenStack credentials, the garden URL, a cloud profile, and at least one managed seed.
 
-See [docs/configuration.md](docs/configuration.md) for a complete variable reference.
+See [docs/pages/configuration.md](docs/pages/configuration.md) for a complete variable reference.
 
 ## Usage
 
@@ -160,11 +160,11 @@ The documentation is also published at <https://yakecloud.github.io/yake-ansible
 
 | Document | Description |
 |----------|-------------|
-| [Architecture](docs/architecture.md) | Layer model, component roles, and data flow |
-| [Networking](docs/networking.md) | Network topology, ports, IP ranges, DNS, VPN |
-| [Getting Started](docs/getting-started.md) | OpenStack requirements, installation, first run |
-| [Configuration](docs/configuration.md) | Complete variable reference for all roles |
-| [Operations](docs/operations.md) | Upgrades, cleanup, troubleshooting |
+| [Architecture](docs/pages/architecture.md) | Layer model, component roles, and data flow |
+| [Networking](docs/pages/networking.md) | Network topology, ports, IP ranges, DNS, VPN |
+| [Getting Started](docs/pages/getting-started.md) | OpenStack requirements, installation, first run |
+| [Configuration](docs/pages/configuration.md) | Complete variable reference for all roles |
+| [Operations](docs/pages/operations.md) | Upgrades, cleanup, troubleshooting |
 
 ## Scripts
 

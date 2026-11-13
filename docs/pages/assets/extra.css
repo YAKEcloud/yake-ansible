@@ -135,7 +135,11 @@ html:has(.yake-hero) {
   display: grid;
   grid-template-columns: 2fr 1fr;
   gap: 2rem;
-  align-items: center;
+  align-items: start;
+}
+
+.yake-alasca p:first-child {
+  margin-top: 0;
 }
 
 @media (max-width: 44.9375em) {

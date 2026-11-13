@@ -4,67 +4,8 @@ This document describes the network topology, required ports, and DNS configurat
 
 ## Network Topology
 
-```
-  Internet / Corporate Network
-          |  HTTPS :443
-          v
-  +----------------------------------------------------------------+
-  |  OpenStack External Network ("public")                         |
-  |                                                                |
-  |  +---------------------------+  +---------------------------+  |
-  |  |  Floating IP              |  |  Floating IP              |  |
-  |  |  API Server LB  :443      |  |  Ingress LB  :443 / :80   |  |
-  |  +-------------+-------------+  +-------------+-------------+  |
-  +----------------+------------------------------+----------------+
-                   |                              |
-                   v                              v
-  +----------------+------------------------------+----------------+
-  |  Neutron Network -- Garden Cluster            |                |
-  |  Nodes: 172.28.0.0/24   (default)             |                |
-  |                                               |                |
-  |  +------------------------+  +----------------v-------------+  |
-  |  |  Control Plane  x3     |  |  Istio Ingress Gateway       |  |
-  |  |  kube-apiserver  :6443 |  |  dashboard.<domain>  :443    |  |
-  |  |  etcd            :2379 |  |  identity.<domain>   :443    |  |
-  |  +------------------------+  |  garden.<domain>     :443    |  |
-  |                              +------------------------------+  |
-  |  Pod CIDR:     10.244.0.0/16                                   |
-  |  Service CIDR: extracted from kube-apiserver at deploy time    |
-  |                                                                |
-  |  +----------------------------------------------------------+  |
-  |  |  Virtual Garden  (in-cluster, no separate OS network)    |  |
-  |  |  Services: 100.64.0.0/13                                 |  |
-  |  |  gardener-apiserver  etcd  dex (:5556)  dashboard        |  |
-  |  +----------------------------------------------------------+  |
-  +----------------------------------------------------------------+
-       ^  gardenlet TLS outbound :443 --> virtual garden API
-       |
-  +----+-----------------------------------------------------------+
-  |  Neutron Network -- Managed Seed  (one network per seed)       |
-  |  Nodes:    100.96.0.0/16  (default)                            |
-  |  Pods:     100.72.0.0/16                                       |
-  |  Services: 100.80.0.0/13                                       |
-  |                                                                |
-  |  +----------------------------------------------------------+  |
-  |  |  Shoot-A control plane  (pods in namespace on the seed)  |  |
-  |  |  kube-apiserver  :443   <-- own Floating IP + LB         |  |
-  |  |  etcd, kcm, scheduler   in-cluster only                  |  |
-  |  |  vpn-seed-server  :8132 <-- reachable from shoot workers |  |
-  |  +------------------------------+---------------------------+  |
-  +---------------------------------+------------------------------+
-                                    |  encrypted VPN tunnel (:8132)
-                                    v
-  +---------------------------------+------------------------------+
-  |  Neutron Network -- Shoot-A                                    |
-  |  Nodes:    100.97.0.0/16                                       |
-  |  Pods:     100.73.0.0/16                                       |
-  |  Services: 100.88.0.0/13                                       |
-  |                                                                |
-  |  Worker Nodes                                                  |
-  |  +- vpn-shoot-client    outbound to vpn-seed-server :8132      |
-  |  +- konnectivity-agent  API server <-> kubelet traffic         |
-  +----------------------------------------------------------------+
-```
+![Network topology](assets/networking-light.svg#only-light)
+![Network topology](assets/networking-dark.svg#only-dark)
 
 ## Layer Overview
 

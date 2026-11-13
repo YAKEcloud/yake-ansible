@@ -40,38 +40,12 @@ The result is a fully operational Gardener installation that can manage Kubernet
 
 ## Architecture
 
-```
-  +----------------------------------------------------------------+
-  |  Control Host                                                  |
-  |  +----------------------------------------------------------+  |
-  |  |  Management Cluster (kind/k3s)                           |  |
-  |  |  Cluster API + CAPO                                      |  |
-  |  +----------------------------------------------------------+  |
-  +-----------------------+----------------------------------------+
-                          |  provisions via OpenStack API
-                          v
-  +-----------------------+----------------------------------------+
-  |  Garden Cluster (OpenStack)                                    |
-  |  Gardener Operator                                             |
-  |  +- Virtual Garden                                             |
-  |      +- gardener-apiserver, etcd                               |
-  |      +- dashboard, dex (OIDC)                                  |
-  |      +- Internal Seed (this cluster)                           |
-  |      +- Managed Seeds (registered shoots)                      |
-  +-----------------------+----------------------------------------+
-         ^                |
-         |                |  gardenlet connects back (TLS :443)
-  +------+---------------------------------------------------------+
-  |  Managed Seed (OpenStack)                                      |
-  |  +- Gardenlet                                                  |
-  |  +- Shoot control planes (per shoot)                           |
-  |      kube-apiserver exposed via own LB                         |
-  |      VPN tunnel to shoot workers                               |
-  |                                                                |
-  |  +- Shoot Clusters  (OpenStack)                                |
-  |      worker nodes, own Neutron network                         |
-  +----------------------------------------------------------------+
-```
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="docs/pages/assets/architecture-dark.svg">
+    <img src="docs/pages/assets/architecture-light.svg" alt="Layers of the platform: control host with the management cluster, garden cluster, managed seed and shoot clusters" width="640">
+  </picture>
+</p>
 
 See [docs/pages/architecture.md](docs/pages/architecture.md) for a detailed description of each layer and [docs/pages/networking.md](docs/pages/networking.md) for ports, IP ranges, and traffic flows.
 
@@ -146,7 +120,7 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 
 ## Releases
 
-Releases follow Gardener: `v1.152.0-0` is the first release for Gardener `1.152.0`, `-1`, `-2`, … are fixes to this repository. A new release is published automatically for every new Gardener version. The notes list the Gardener changes first, then the changes in this repository.
+Releases follow Gardener: `v1.155.1-0` is the first release for Gardener `1.155.1`, `-1`, `-2`, … are fixes to this repository. A new release is published automatically for every new Gardener version. The notes list the Gardener changes first, then the changes in this repository.
 
 Each release is tested with its Gardener version, and that means the Gardener installation only. Seeds, shoots and everything else you run on top are outside the test scope.
 
@@ -166,6 +140,12 @@ The documentation is also published at <https://yake.cloud/>.
 | [Installation](docs/pages/getting-started.md) | Installation, configuration, first run |
 | [Configuration](docs/pages/configuration.md) | Complete variable reference for all roles |
 | [Operations](docs/pages/operations.md) | Upgrades, cleanup, troubleshooting |
+| [How it works](docs/pages/overview.md) | Playbook flow, tags, and where the state lives |
+| [Your first shoot cluster](docs/pages/first-shoot.md) | Create and use a shoot cluster |
+| [Security](docs/pages/security.md) | Secrets, credentials, certificates, network isolation |
+| [Releases](docs/pages/releases.md) | Versioning, tested scope, minimum Gardener version |
+| [Scripts](docs/pages/scripts.md) | Image upload and OpenStack cleanup |
+| [Glossary](docs/pages/glossary.md) | Gardener and Cluster API terms |
 
 ## Scripts
 

@@ -109,7 +109,7 @@ Download the kubeconfig in the dashboard, or target the shoot with `gardenctl` i
 kubectl get nodes
 ```
 
-The first command points `gardenctl` at the shoot. The second opens a shell in which `kubectl` works for the targeted cluster. If you use the downloaded kubeconfig instead:
+The first command points `gardenctl` at the shoot. The second opens a shell in which `kubectl` works for the targeted cluster. This works with the default Docker method of `gardenctl_install_method`. With the `binary` method, there is no wrapper shell, use the downloaded kubeconfig instead:
 
 ```bash
 export KUBECONFIG=~/Downloads/kubeconfig-demo.yaml
@@ -121,6 +121,7 @@ kubectl get nodes
 Delete the cluster in the dashboard. With `kubectl` against the virtual garden, Gardener requires a confirmation first:
 
 ```bash
+export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ./.local/yake-kubectl -n garden-demo annotate shoot demo confirmation.gardener.cloud/deletion=true --overwrite
 ./.local/yake-kubectl -n garden-demo delete shoot demo
 ```

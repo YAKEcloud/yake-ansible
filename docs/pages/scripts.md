@@ -19,7 +19,7 @@ python3 scripts/update-images.py --k8s-version 1.37
 ```
 
 - Existing images are detected by name, by properties and by a scan for the version in the name, so a re-run does not upload duplicates. Only active images count.
-- Downloads are verified with SHA-256 where a checksum is published.
+- Local downloads are verified with SHA-256 where a checksum is published. The CAPI image is imported by Glance itself (`web-download`) and is not verified by the script. Use `--no-web-download` to download it locally and verify it.
 - Images are uploaded with `visibility=community`, so other projects can use them by ID.
 - With `--ids-file` the script writes the image IDs to a file, which you can use for your configuration.
 
@@ -33,7 +33,10 @@ Deletes the OpenStack resources that were created for a yake-ansible garden clus
 export OS_CLOUD=mycloud
 
 # Check first
-python3 scripts/cleanup-openstack.py --garden-url gardener.example.com --dry-run
+python3 scripts/cleanup-openstack.py \
+  --garden-url gardener.example.com \
+  --seed-names managed-seed-a,managed-seed-b \
+  --dry-run
 
 # Garden cluster and two managed seeds
 python3 scripts/cleanup-openstack.py \
@@ -41,7 +44,9 @@ python3 scripts/cleanup-openstack.py \
   --seed-names managed-seed-a,managed-seed-b
 ```
 
-!!! warning "DNS records are deleted per zone"
-    DNS record sets are deleted per Designate zone, not per project. A zone shared with other projects loses their records as well. Use `--preserve-dns-type` to keep further record types. `SOA` and `NS` are always kept.
+!!! warning "Check the dry run first"
+    - DNS record sets are deleted per Designate zone, not per project. A zone shared with other projects loses their records as well. Use `--preserve-dns-type` to keep further record types. `SOA` and `NS` are always kept.
+    - Nova key pairs belong to a user, not to a project. The key pair named like the cluster is deleted for the user of the credentials.
+    - A server without addresses, for example in `ERROR`, is matched by name only. A cluster `garden-prod` next to `garden` in the same project could be hit by this.
 
 Use the script as the last step of a teardown, after the Gardener resources are gone. The order is described in [Operations](operations.md#cleanup).

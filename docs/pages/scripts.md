@@ -19,7 +19,7 @@ python3 scripts/update-images.py --k8s-version 1.37
 ```
 
 - Existing images are detected by name, by properties and by a scan for the version in the name, so a re-run does not upload duplicates. Only active images count.
-- Local downloads are verified with SHA-256 where a checksum is published. The CAPI image is imported by Glance itself (`web-download`) and is not verified by the script. Use `--no-web-download` to download it locally and verify it.
+- Local downloads are verified with SHA-256 where a checksum is published. The CAPI image is imported by Glance itself (`web-download`) and is not verified by the script. Use `--no-web-download` to download a new CAPI image locally and verify it. An image that already exists is skipped and not verified.
 - Images are uploaded with `visibility=community`, so other projects can use them by ID.
 - With `--ids-file` the script writes the image IDs to a file, which you can use for your configuration.
 
@@ -47,6 +47,7 @@ python3 scripts/cleanup-openstack.py \
 !!! warning "Check the dry run first"
     - DNS record sets are deleted per Designate zone, not per project. A zone shared with other projects loses their records as well. Use `--preserve-dns-type` to keep further record types. `SOA` and `NS` are always kept.
     - Nova key pairs belong to a user, not to a project. The key pair named like the cluster is deleted for the user of the credentials.
+    - Load balancers are deleted together with their listeners and pools. The dry run lists only the load balancers.
     - A server without addresses, for example in `ERROR`, is matched by name only. A cluster `garden-prod` next to `garden` in the same project could be hit by this.
 
 Use the script as the last step of a teardown, after the Gardener resources are gone. The order is described in [Operations](operations.md#cleanup).

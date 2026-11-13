@@ -82,20 +82,20 @@ gardener_operator_cloudprofiles:
     floating_pools:
       - name: public
     loadbalancer_providers:
-      - name: amphora
+      - name: ovn
     keystone_urls:
       - region: region-a
         url: "https://keystone.example.com:5000"
     machine_images:
       - name: gardenlinux
         versions:
-          - version: 2150.11.0
-            image: "Garden Linux 2150.11"
+          - version: 2150.15.0
+            image: "Garden Linux 2150.15"
             regions:
               - name: region-a
                 id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
     kubernetes_versions:
-      - version: 1.36.5
+      - version: 1.37.2
         classification: supported
     machinetypes:
       - name: SCS-4V-8
@@ -117,7 +117,7 @@ gardener_operator_managed_seeds:
   - name: seed-a
     cloudprofile_name: openstack-a
     networking_type: cilium
-    kubernetes_version: 1.36.5
+    kubernetes_version: 1.37.2
     floating_pool_name: "public"
     openstack:
       auth_url: "https://keystone.example.com:5000"
@@ -131,7 +131,7 @@ gardener_operator_managed_seeds:
       - name: worker-4v16
         machinetype: SCS-4V-16
         image_name: gardenlinux
-        image_version: 2150.11.0
+        image_version: 2150.15.0
         minimum: 3
         maximum: 15
         volume_type: ssd
@@ -168,11 +168,12 @@ Once the configuration is complete, run the full setup:
 ansible-playbook -i localhost, -c local site.yml
 ```
 
-On hosts where `sudo` requires a password, add `--ask-become-pass`.
+!!! tip "Sudo with a password"
+    On hosts where `sudo` requires a password, add `--ask-become-pass`.
 
-Individual steps can be run with tags: `kubectl`, `helm`, `clusterctl`, `management-cluster`, `clusterapi`, `garden-cluster` and `gardener`.
+Individual steps can be run with tags: `kubectl`, `helm`, `clusterctl`, `management-cluster`, `clusterapi`, `garden-cluster` and `gardener`. See [How it works](overview.md) for the full list.
 
-The playbook takes approximately 15 to 30 minutes to complete, depending on OpenStack provisioning speed.
+The playbook takes approximately 15 to 30 minutes to complete, depending on OpenStack provisioning speed. You can follow the progress in the output of each play.
 
 ## Validating the Deployment
 
@@ -198,3 +199,5 @@ export KUBECONFIG=/var/lib/yake/gardener-operator/kubeconfig.vgarden
 ```
 
 All seeds should show `Ready` status. Cloud profiles should list the machines, images, and regions you configured.
+
+Next, [create your first shoot cluster](first-shoot.md).

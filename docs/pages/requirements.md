@@ -35,6 +35,9 @@ The following OpenStack services must be available:
 
 ### Cinder Volume Attachments
 
+!!! warning "Check the volume attachment limit"
+    Some clouds allow only a few volumes per instance, which blocks seeds and shoots.
+
 Each VM must support attaching a large number of Cinder volumes simultaneously. Gardener attaches multiple volumes per node: for root disks, etcd storage, and PersistentVolumes of shoot clusters running on the seed. Ensure your OpenStack environment does not impose a low limit on the number of volumes attachable per instance. If necessary, coordinate with your OpenStack administrator to raise the limit.
 
 ## Control Host Requirements

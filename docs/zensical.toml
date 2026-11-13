@@ -18,9 +18,21 @@ nav = [
   { "Get started" = [
     "requirements.md",
     { "Installation" = "getting-started.md" },
+    { "First shoot cluster" = "first-shoot.md" },
   ] },
-  { "Concepts" = ["architecture.md", "networking.md"] },
-  { "Operate" = ["configuration.md", "operations.md"] },
+  { "Concepts" = [
+    "overview.md",
+    "architecture.md",
+    "networking.md",
+    "glossary.md",
+  ] },
+  { "Operate" = [
+    "configuration.md",
+    "operations.md",
+    "security.md",
+    "releases.md",
+    "scripts.md",
+  ] },
 ]
 
 [project.theme]

@@ -85,7 +85,7 @@ The garden cluster is provisioned by the `clusterapi_cluster` role on OpenStack.
 | `clusterapi_cluster_openstack_image_id` | `""` | Glance image UUID for cluster nodes. |
 | `clusterapi_cluster_openstack_image_name` | `""` | Expected name of the image. Strongly recommended: it is used to verify that the image ID is correct. |
 | `clusterapi_cluster_ntp_servers` | `[]` | NTP servers for the cluster nodes (chrony). Empty keeps the image defaults. |
-| `clusterapi_cluster_lb_provider` | `""` | Octavia provider (`lb-provider`) the cloud controller uses for new `LoadBalancer` services, for example `amphora` or `ovn`. Empty keeps the cloud controller default (`amphora`) and writes no `[LoadBalancer]` section. Only applies to load balancers created afterward; the cloud controller must be restarted to pick up a changed value. The provider has to exist on the platform. With `ovn`, `manage-security-groups=true` is set as well, so the cloud controller manages the Neutron security groups per `LoadBalancer` service; without it the load balancer is not reachable from outside. Existing load balancers keep their provider and have to be recreated (delete the `Service`) as part of a switch; the cloud controller applies the new method to their pools, which the old provider may reject. When switching away from `ovn`, delete the `LoadBalancer` services first: without `manage-security-groups` the cloud controller removes the security groups of the existing OVN load balancers and they lose external connectivity. |
+| `clusterapi_cluster_lb_provider` | `""` | Octavia provider (`lb-provider`) the cloud controller uses for new `LoadBalancer` services, for example `amphora` or `ovn`. We recommend `ovn`. Empty keeps the cloud controller default (`amphora`) and writes no `[LoadBalancer]` section. Only applies to load balancers created afterward; the cloud controller must be restarted to pick up a changed value. The provider has to exist on the platform. With `ovn`, `manage-security-groups=true` is set as well, so the cloud controller manages the Neutron security groups per `LoadBalancer` service; without it the load balancer is not reachable from outside. Existing load balancers keep their provider and have to be recreated (delete the `Service`) as part of a switch; the cloud controller applies the new method to their pools, which the old provider may reject. When switching away from `ovn`, delete the `LoadBalancer` services first: without `manage-security-groups` the cloud controller removes the security groups of the existing OVN load balancers and they lose external connectivity. |
 | `clusterapi_cluster_lb_method` | `""` | Load balancing algorithm (`lb-method`). Empty keeps the cloud controller default (`ROUND_ROBIN`), or `SOURCE_IP_PORT` for `ovn`, because the `ovn` provider rejects `ROUND_ROBIN` on some platforms. Set it to override. Validated against the provider (`amphora` if empty). |
 | `clusterapi_cluster_control_plane_machine_count` | `3` | Number of control plane nodes. |
 | `clusterapi_cluster_control_plane_machine_flavor` | `SCS-2V-4` | OpenStack flavor for control plane nodes. |
@@ -177,7 +177,10 @@ clusterapi_cluster_hosts_entries:
 
 `clusterapi_cluster_secrets_encryption_enabled` (default `false`, enabled in `group_vars/all.yml.example`) encrypts Secrets at rest in the etcd of the garden cluster with `secretbox`. Without it, all Gardener credentials (OpenStack, DNS, CA key, kubeconfigs) are stored in plain text in etcd and in its backups or snapshots. It is recommended, but opt-in, because it cannot simply be disabled again.
 
-The key is generated once and kept in the Secret `<name>-encryption-config` in the management cluster (moved along on kind upgrades) and in `/var/lib/yake/encryption-key.<name>` (mode `0600`). **Back up this file.** An existing key is never replaced, rotation is a manual task. Once a cluster stores its Secrets encrypted, the role refuses to run with the variable set to `false`, because the API server could no longer read them. To turn encryption off on purpose, decrypt the stored Secrets first (see "Decrypt all data" in the Kubernetes documentation) and delete the config Secret.
+!!! warning "Back up the key"
+    Back up `/var/lib/yake/encryption-key.<name>`. Without it, you cannot read the encrypted Secrets any more.
+
+The key is generated once and kept in the Secret `<name>-encryption-config` in the management cluster (moved along on kind upgrades) and in `/var/lib/yake/encryption-key.<name>` (mode `0600`). An existing key is never replaced, rotation is a manual task. Once a cluster stores its Secrets encrypted, the role refuses to run with the variable set to `false`, because the API server could no longer read them. To turn encryption off on purpose, decrypt the stored Secrets first (see "Decrypt all data" in the Kubernetes documentation) and delete the config Secret.
 
 On an existing cluster, enabling it rolls the control plane machines once. After the rollout, the role rewrites all Secrets one time so that they are stored encrypted, and records this with the annotation `yake.cloud/secrets-encrypted` on the config Secret.
 
@@ -341,20 +344,20 @@ gardener_operator_cloudprofiles:
     floating_pools:
       - name: public
     loadbalancer_providers:
-      - name: amphora
+      - name: ovn
     keystone_urls:
       - region: region-a
         url: "https://keystone.example.com:5000"
     machine_images:
       - name: gardenlinux
         versions:
-          - version: 2150.11.0
-            image: "Garden Linux 2150.11"
+          - version: 2150.15.0
+            image: "Garden Linux 2150.15"
             regions:
               - name: region-a
                 id: "6ed7d8aa-e770-4061-a8d7-461a83e41c31"
     kubernetes_versions:
-      - version: 1.36.5
+      - version: 1.37.2
         classification: supported
     machinetypes:
       - name: SCS-4V-8
@@ -365,7 +368,7 @@ gardener_operator_cloudprofiles:
     bastion:
       machine_type: SCS-4V-8
       machine_image: gardenlinux
-      machine_image_version: 2150.11.0  # optional
+      machine_image_version: 2150.15.0  # optional
     regions:
       - name: region-a
         zones:
@@ -396,7 +399,7 @@ Each entry in `gardener_operator_managed_seeds` creates a shoot cluster and regi
 | `networking_type` | Yes | CNI: `cilium` or `calico`. |
 | `kubernetes_version` | Yes | Kubernetes version for the seed shoot. |
 | `floating_pool_name` | Yes | OpenStack floating pool for the seed's load balancer. |
-| `loadbalancer_provider` | No | Load balancer provider (default: `amphora`). Alternatives: `haproxy`, `ovn`. |
+| `loadbalancer_provider` | No | Load balancer provider (default: `amphora`). We recommend `ovn`. Alternatives: `haproxy`. |
 | `serialize_image_pulls` | No | Whether the kubelets of the seed nodes pull images one at a time (Gardener default: `true`). `false` lets the pulls run in parallel, so that one slow image does not block all other pods of a node. |
 | `internal_domain` | No | Internal domain of the seed (default: `internal.<gardener_operator_garden_url>`). |
 | `workers_cidr` | No | Worker subnet CIDR (default: `100.96.0.0/16`). Mutually exclusive with `subnet_pool`. |
@@ -437,7 +440,7 @@ workers:
   - name: worker-4v16
     machinetype: SCS-4V-16
     image_name: gardenlinux
-    image_version: 2150.11.0
+    image_version: 2150.15.0
     minimum: 3
     maximum: 15
     volume_type: ssd       # optional

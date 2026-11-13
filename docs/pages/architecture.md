@@ -44,7 +44,7 @@ yake-ansible deploys a multi-layer Kubernetes platform where each layer is manag
 
 ### Control Host
 
-The control host is the machine from which you run the Ansible playbooks. It does not need to be a server; a workstation or CI runner is sufficient. The following tools are installed locally by yake-ansible and invoked through wrapper scripts in `.local/`:
+The control host is the machine from which you run the Ansible playbooks. It does not need to be a server; a workstation or CI runner is sufficient. For production, we recommend a dedicated VM on OpenStack (see [Getting Started](getting-started.md#control-host-requirements)). The following tools are installed locally by yake-ansible and invoked through wrapper scripts in `.local/`:
 
 - `yake-kubectl`
 - `yake-helm`

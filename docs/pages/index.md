@@ -67,7 +67,7 @@ Besides the practical development work, ALASCA also acts as a provider of knowle
 
 ## Support
 
-When you build your productive Gardener environment on YAKE, you also get support from the engineers at 23 Technologies. From simple configuration questions to advanced Gardener operations, we are by your side.
+When you build your productive Gardener environment on YAKE, you also get support from the engineers at [23 Technologies](https://23technologies.cloud). From simple configuration questions to advanced Gardener operations, we are by your side.
 
 ## Legacy: YAKE with Flux
 

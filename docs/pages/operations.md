@@ -24,15 +24,9 @@ Commit the resulting (still encrypted) diff normally. If you use `ansible-vault`
 
 If the vault password ever needs to be rotated, generate a new one, run `ansible-vault rekey group_vars/ci.yml`, update `.vault-pass.txt` locally, and update the `ANSIBLE_VAULT_PASSWORD` secret in the repository settings.
 
-## Releases
-
-Releases follow Gardener: `v1.152.0-0` is the first release for Gardener `1.152.0`; `-1`, `-2`, ... are fixes to this repository. A new release is published automatically for every new Gardener version. The release notes list the Gardener changes first, then the changes in this repository.
-
-Each release is tested with its Gardener version, and that means the Gardener installation only. Seeds, shoots and everything else you run on top are outside the test scope.
-
-Pin a release with `git checkout <tag>`. To run another Gardener version, set `gardener_operator_version` in your `all.yml`. This works, but is not tested. Only the newest Gardener version is maintained.
-
 ## Upgrading
+
+Releases follow Gardener, see [Releases](releases.md) for the versioning and the tested scope.
 
 All playbooks are idempotent. Re-running a playbook with an updated version variable upgrades the corresponding component.
 
@@ -65,7 +59,8 @@ Provider extension versions are separate variables (e.g., `gardener_operator_pro
 2. While the membership changes, the virtual garden kube-apiserver restarts several times. The Gardener API and the dashboard are unavailable for a few minutes, and `gardener-apiserver`, `gardener-controller-manager`, `gardener-scheduler`, `gardenlet` and `virtual-garden-kube-controller-manager` go into `CrashLoopBackOff`.
 3. Once all members are ready, the Garden returns to `Succeeded` (about 6 minutes in our tests). The crashing pods recover on their own, the `CrashLoopBackOff` can delay this by up to 5 more minutes. The `gardenlet` may log `panic: ... no matches for seedmanagement.gardener.cloud/v1alpha1` until the `gardener-apiserver` is back, this is expected.
 
-Existing shoot clusters keep running, only changes through the Gardener API are delayed. Plan the switch in a maintenance window. It cannot be reverted.
+!!! warning "Plan a maintenance window"
+    Existing shoot clusters keep running, only changes through the Gardener API are delayed. The switch cannot be reverted.
 
 Watch the progress with:
 
@@ -86,7 +81,7 @@ ansible-playbook -i localhost, -c local site.yml --tags garden-cluster
 
 Cluster API performs a rolling upgrade of the control plane nodes followed by worker nodes.
 
-The default of `clusterapi_cluster_kubernetes_version` (and `gardener_operator_kubernetes_version`) moves with this repository, currently to `1.37.2`. If you did not set the variable, the next run upgrades the garden cluster. Pin the variable in `group_vars/all.yml` to stay on your version. The unused variable `clusterapi_cluster_kubeconfig` has been removed.
+The default of `clusterapi_cluster_kubernetes_version` (and `gardener_operator_kubernetes_version`) moves with this repository when new Kubernetes versions are released. If you did not set the variable, the next run upgrades the garden cluster. Pin the variable in `group_vars/all.yml` to stay on your version. The unused variable `clusterapi_cluster_kubeconfig` has been removed.
 
 ### Upgrading Tool Versions
 
@@ -96,7 +91,10 @@ On the first run the `clusterapi` step initializes Cluster API with `clusterctl 
 
 ### Upgrading the kind Management Cluster
 
-kind clusters cannot be upgraded in place and an existing cluster is never touched by a changed `management_cluster_kind_cluster_version` (also not when Renovate bumps it). To replace it, set `management_cluster_kind_upgrade: true` and run the playbook, or only the step with `--tags management-cluster-upgrade`. The step does nothing if the running Kubernetes version is not older than the configured one.
+!!! note "kind clusters are replaced, not upgraded"
+    An existing cluster is never touched by a changed `management_cluster_kind_cluster_version`, also not when Renovate bumps it.
+
+To replace the cluster, set `management_cluster_kind_upgrade: true` and run the playbook, or only the step with `--tags management-cluster-upgrade`. The step does nothing if the running Kubernetes version is not older than the configured one.
 
 It runs after the `clusterapi` step so that the Cluster API providers are current, then:
 

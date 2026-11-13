@@ -92,7 +92,7 @@ gardener_operator_dex:
 
 # === gardener_operator: certificates ===
 # Use "ca" to sign with a CA instead of ACME. Without a certificate and key, a
-# self-signed CA is generated (see docs/configuration.md).
+# self-signed CA is generated (see docs/pages/configuration.md).
 # gardener_operator_shoot_cert_service_issuer_type: ca
 gardener_operator_shoot_cert_service_acme_email: "operations@example.com"
 gardener_operator_shoot_cert_service_acme_server: "https://acme-staging-v02.api.letsencrypt.org/directory"

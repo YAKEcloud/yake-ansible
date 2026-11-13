@@ -182,4 +182,4 @@ Nodes pull images through configurable mirrors. Defaults point to `registry.osis
 | Load balancers | 2 | 2 | 1 |
 | Security groups | 3–5 | 3–5 | 3–5 |
 
-See [getting-started.md](getting-started.md#openstack-requirements) for full quota requirements.
+See [requirements.md](requirements.md#openstack-requirements) for full quota requirements.

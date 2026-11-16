@@ -44,3 +44,7 @@ Germany
 ## Consumer dispute resolution
 
 We are neither willing nor obliged to participate in dispute resolution proceedings before a consumer arbitration board.
+
+## Credits
+
+The ALASCA logo is © ALASCA e.V. and used unaltered under the [ALASCA Logos and Artwork Usage Policy](https://gitlab.com/alasca.cloud/governance/logos-and-artwork/-/blob/main/05-Guidelines/Alasca-Logos-and-Artwork-Usage-Policy.md).

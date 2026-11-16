@@ -4,8 +4,6 @@ yake-ansible is a single playbook, `site.yml`, that you run on the [control host
 
 ## The playbook
 
-<div class="yake-nowrap" markdown>
-
 | Tag | Role | What it does |
 |-----|------|--------------|
 | `kubectl` | `kubectl_install` | Installs `kubectl` and a wrapper script `.local/yake-kubectl`. |
@@ -17,8 +15,6 @@ yake-ansible is a single playbook, `site.yml`, that you run on the [control host
 | `garden-cluster` | `clusterapi_cluster` | Creates the garden cluster on OpenStack through Cluster API. |
 | `gardener` | `gardener_operator` | Installs the Gardener Operator and creates the Garden with cloud profiles, managed seeds and extensions. |
 | `gardenctl` | `gardenctl_install` | Installs `gardenctl` and a wrapper script `.local/yake-gardenctl`. |
-
-</div>
 
 The roles are documented in the [configuration reference](configuration.md), one section per role.
 

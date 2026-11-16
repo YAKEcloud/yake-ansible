@@ -1,0 +1,3 @@
+The ALASCA logos in this directory are (c) ALASCA e.V. and are used unaltered under the ALASCA Logos and Artwork Usage Policy:
+https://gitlab.com/alasca.cloud/governance/logos-and-artwork/-/blob/main/05-Guidelines/Alasca-Logos-and-Artwork-Usage-Policy.md
+Source: https://gitlab.com/alasca.cloud/governance/logos-and-artwork (01-ALASCA-Logo, CC BY-ND 4.0)

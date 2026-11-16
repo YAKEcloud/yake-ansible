@@ -1,0 +1,13 @@
+{% extends "main.html" %}
+{% block content %}
+  <div class="yake-404">
+    <h1>Page not found</h1>
+    <img src="{{ 'assets/404-light.svg#only-light' | url }}" alt="The YAKE yak stands on an empty meadow">
+    <img src="{{ 'assets/404-dark.svg#only-dark' | url }}" alt="The YAKE yak stands on an empty meadow">
+    <p>Nothing here but grass. Even our yak has no idea where this page went. It may have moved with the new documentation, or it went out to graze.</p>
+    <p>No need to yak about it, let us get you back on the trail.</p>
+    <p>
+      <a class="md-button md-button--primary" href="{{ '.' | url }}">Back to the start page</a>
+    </p>
+  </div>
+{% endblock %}

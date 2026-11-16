@@ -65,7 +65,7 @@ gardener_operator_login_check_validate_certs: true
 gardener_operator_kubernetes_version: '1.37.2'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
 # renovate: datasource=docker depName=europe-docker.pkg.dev/gardener-project/releases/gardener/ops-toolbelt
-gardener_operator_ops_toolbelt_version: '0.56.0'
+gardener_operator_ops_toolbelt_version: '0.57.0'
 
 # Optional override of the nodes CIDR of the garden cluster. Empty detects it from the
 # first node's InternalIP (as /24). Set it when the nodes do not share that /24.

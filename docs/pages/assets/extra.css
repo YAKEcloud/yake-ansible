@@ -289,6 +289,12 @@ html:has(.yake-hero) {
   margin: 1rem 0;
 }
 
-.md-main__inner:has(.yake-404) .md-sidebar {
+.md-main__inner:has(.yake-404) .md-sidebar--secondary {
   display: none;
+}
+
+@media (min-width: 76.25em) {
+  .md-main__inner:has(.yake-404) .md-sidebar--primary {
+    display: none;
+  }
 }

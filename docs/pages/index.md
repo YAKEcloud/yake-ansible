@@ -45,30 +45,38 @@ The result is a fully operational Gardener installation that can manage Kubernet
 
 </div>
 
-## A project by ALASCA
-
 <div class="yake-alasca" markdown>
 
 <div markdown>
 
-In January 2024, YAKE found its new home at [ALASCA](https://alasca.cloud/), a non-profit organisation for the development of operational, open cloud infrastructures. ALASCA's mission revolves around open source tools that enable and simplify the development and operation of customised cloud infrastructures.
+## A project by ALASCA
 
-Besides the practical development work, ALASCA also acts as a provider of knowledge on these topics, for example with the ALASCA Tech Talks. With a strong, motivated community and the combined expertise of its members, ALASCA drives digital sovereignty in Germany and Europe, also in collaboration with other open source initiatives.
+In January 2024, YAKE found its new home at [ALASCA](https://alasca.cloud/), a non-profit organisation for the development of operational, open cloud infrastructures. ALASCA builds open source tools that make it easier to run customised cloud infrastructures, shares its knowledge, for example in the ALASCA Tech Talks, and drives digital sovereignty in Germany and Europe together with a strong community.
+
+[Visit alasca.cloud](https://alasca.cloud/){ .md-button }
 
 </div>
 
 <div markdown>
 
-[![ALASCA](assets/logo-alasca.png#only-light){ width="300" }![ALASCA](assets/logo-alasca_dark.png#only-dark){ width="300" }](https://alasca.cloud/)
+[![ALASCA](assets/ALASCA-Logo-black-claim-EN.svg#only-light){ width="320" }![ALASCA](assets/ALASCA-Logo-white-claim-EN.svg#only-dark){ width="320" }](https://alasca.cloud/)
 
 </div>
 
 </div>
 
-## Support
+<div class="grid cards yake-cards yake-cards--two" markdown>
 
-When you build your productive Gardener environment on YAKE, you also get support from the engineers at [23 Technologies](https://23technologies.cloud). From simple configuration questions to advanced Gardener operations, we are by your side.
+-   **Support**
 
-## Legacy: YAKE with Flux
+    ---
 
-The previous, Flux-based YAKE installer and its documentation live on in the [YAKEcloud/yake](https://github.com/YAKEcloud/yake) repository.
+    When you build your productive Gardener environment on YAKE, you also get support from the engineers at [23 Technologies](https://23technologies.cloud). From simple configuration questions to advanced Gardener operations, we are by your side.
+
+-   **Legacy: YAKE with Flux**
+
+    ---
+
+    The previous, Flux-based YAKE installer and its documentation live on in the [YAKEcloud/yake](https://github.com/YAKEcloud/yake) repository.
+
+</div>

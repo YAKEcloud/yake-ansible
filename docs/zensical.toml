@@ -7,9 +7,9 @@ repo_name = "YAKEcloud/yake-ansible"
 edit_uri = "edit/main/docs/pages/"
 docs_dir = "pages"
 extra_css = ["assets/extra.css"]
-extra_javascript = ["assets/a11y.js"]
+extra_javascript = ["assets/site.js"]
 copyright = """
-Copyright &copy; 2026 23 Technologies GmbH &middot;
+&copy; 2024-<span data-year>2026</span> 23 Technologies GmbH &middot;
 <a href="/legals/">Legals</a> &middot;
 <a href="/privacy-policy/">Privacy policy</a>
 """
@@ -39,6 +39,7 @@ nav = [
 [project.theme]
 variant = "modern"
 font = false
+custom_dir = "overrides"
 logo = "assets/logo.svg"
 favicon = "assets/favicon.ico"
 features = [

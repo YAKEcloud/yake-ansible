@@ -59,7 +59,7 @@ In January 2024, YAKE found its new home at [ALASCA](https://alasca.cloud/), a n
 
 <div markdown>
 
-[![ALASCA](assets/ALASCA-Logo-black-claim-EN.svg#only-light){ width="320" }![ALASCA](assets/ALASCA-Logo-white-claim-EN.svg#only-dark){ width="320" }](https://alasca.cloud/)
+[![ALASCA](assets/ALASCA-Logo-black-claim-EN.svg#only-light){ width="400" }![ALASCA](assets/ALASCA-Logo-white-claim-EN.svg#only-dark){ width="400" }](https://alasca.cloud/)
 
 </div>
 

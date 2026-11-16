@@ -1,6 +1,7 @@
 ---
 title: Privacy policy
 hide:
+  - navigation
   - toc
 ---
 

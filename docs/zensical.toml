@@ -37,14 +37,12 @@ nav = [
 ]
 
 [project.theme]
-variant = "modern"
 font = false
 custom_dir = "overrides"
 logo = "assets/logo.svg"
 favicon = "assets/favicon.ico"
 features = [
   "navigation.tabs",
-  "navigation.sections",
   "navigation.path",
   "navigation.footer",
   "navigation.top",

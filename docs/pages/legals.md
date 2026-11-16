@@ -1,6 +1,7 @@
 ---
 title: Legals
 hide:
+  - navigation
   - toc
 ---
 

@@ -87,11 +87,6 @@
   --md-hue: 165;
 }
 
-[data-md-color-scheme="default"] img[src$="#only-dark"],
-[data-md-color-scheme="slate"] img[src$="#only-light"] {
-  display: none;
-}
-
 .md-typeset .md-button:where(:not(.md-button--primary)),
 .md-typeset .md-button:where(:not(.md-button--primary)):hover {
   color: var(--md-default-fg-color);

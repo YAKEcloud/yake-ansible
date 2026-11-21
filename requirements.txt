@@ -1,4 +1,4 @@
-PyYAML==6.0.3
+PyYAML==6.0.4
 ansible-core==2.22.0
 docker==7.2.0
 kubernetes==37.0.3

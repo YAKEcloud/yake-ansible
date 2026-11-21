@@ -9,7 +9,7 @@ clusterapi_install_cluster_topology: true
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api
 clusterapi_install_capi_version: 'v1.14.4'
 # renovate: datasource=github-releases depName=kubernetes-sigs/cluster-api-provider-openstack
-clusterapi_install_capo_version: 'v0.15.1'
+clusterapi_install_capo_version: 'v0.15.2'
 # Only used for the upgrade if the provider versions above are empty (floats to the latest).
 clusterapi_install_contract: v1beta2
 clusterapi_install_uid: "{{ ansible_facts.user_uid | string }}"

@@ -2,7 +2,7 @@ PyYAML==6.0.4
 ansible-core==2.22.0
 docker==7.2.0
 kubernetes==37.0.3
-openstacksdk==4.24.1
+openstacksdk==4.25.0
 python-gilt==2.2.5
 requests==2.34.2
 yq==4.4.5

@@ -62,7 +62,7 @@ gardener_operator_login_check_enabled: true
 # Verify the certificate of the dashboard. Set to false for ACME staging or a generated CA, which the Ansible host does not trust.
 gardener_operator_login_check_validate_certs: true
 # renovate: datasource=github-releases depName=kubernetes/kubernetes extractVersion=^v(?<version>.+)$
-gardener_operator_kubernetes_version: '1.37.2'
+gardener_operator_kubernetes_version: '1.37.3'
 gardener_operator_image_registry: "europe-docker.pkg.dev"
 # renovate: datasource=docker depName=europe-docker.pkg.dev/gardener-project/releases/gardener/ops-toolbelt
 gardener_operator_ops_toolbelt_version: '0.57.0'

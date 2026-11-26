@@ -19,22 +19,33 @@ import sys
 import tarfile
 import tempfile
 import time
+import xml.etree.ElementTree as ET
+from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import openstack
 import requests
 import urllib3
+from keystoneauth1.exceptions import ClientException
 from keystoneauth1.exceptions.connection import ConnectionError as OSConnectionError
+from openstack.exceptions import SDKException
 
 CAPI_BASE_URL = "https://nbg1.your-objectstorage.com/osism/openstack-k8s-capi-images"
 GARDENLINUX_REPO = "gardenlinux/gardenlinux"
+GARDENLINUX_S3 = "https://gardenlinux-github-releases.s3.amazonaws.com"
 # adjust if you need metal_prod or _usi variant
 GARDENLINUX_FLAVOR = "openstack-gardener_prod"
 IMAGE_VISIBILITY = "community"
 VERSION_RE = re.compile(r"v?\d+\.\d+(\.\d+)?")
 UBUNTU_VERSION_RE = re.compile(r"\d{4}")
+CAPI_OS_BASE_RE = {"ubuntu": UBUNTU_VERSION_RE, "debian": re.compile(r"\d{1,2}")}
 SHA256_RE = re.compile(r"[0-9a-f]{64}")
+
+# Errors expected from the cloud and the network, instead of catching Exception.
+_API_ERRORS = (SDKException, ClientException, requests.RequestException)
+# Additionally expected while downloading, unpacking and uploading an image.
+_SYNC_ERRORS = (*_API_ERRORS, OSError, RuntimeError, tarfile.TarError)
 
 
 def _has_version(text: str, version: str) -> bool:
@@ -52,18 +63,18 @@ def _short_gl_version(version: str) -> str:
 
 
 def find_capi_image(
-    conn: Any, patch_version: str
+    conn: Any, patch_version: str, os_name: str = "ubuntu"
 ) -> tuple[Any, str] | tuple[None, None]:
     """
     Look for an existing, active CAPI image using three strategies, in order:
-      1. Exact Glance name match  (ubuntu-capi-image-v1.35.4)
+      1. Exact Glance name match  (ubuntu-capi-image-v1.35.4, debian-capi-image-v1.37.2)
       2. Custom property 'kube_version' set by this script on previous uploads
       3. Fuzzy name scan — finds images uploaded manually under any name,
          as long as 'capi' and 'v<patch>' appear somewhere in the image name.
     Returns (image, strategy_description) or (None, None).
     """
     patch = patch_version.lstrip("v")
-    canonical_name = f"ubuntu-capi-image-v{patch}"
+    canonical_name = f"{os_name}-capi-image-v{patch}"
     kube_version = f"v{patch}"
 
     # 1. Exact name
@@ -76,7 +87,11 @@ def find_capi_image(
     # 2. Property: kube_version (set by this script) — verify after fetch since
     #    Glance may ignore unknown property filters and return all images
     for img in conn.image.images(kube_version=kube_version, status="active"):
-        if img.status == "active" and img.get("kube_version") == kube_version:
+        if (
+            img.status == "active"
+            and img.get("kube_version") == kube_version
+            and img.get("os_distro") in (None, os_name)
+        ):
             return img, f"kube_version property '{kube_version}'"
 
     # 3. Fuzzy name scan
@@ -85,6 +100,7 @@ def find_capi_image(
         if (
             img.status == "active"
             and "capi" in name_lower
+            and ("debian" in name_lower) == (os_name == "debian")
             and _has_version(name_lower, f"v{patch}")
         ):
             return img, f"fuzzy name match ('capi' + 'v{patch}' in '{img.name}')"
@@ -92,32 +108,41 @@ def find_capi_image(
     return None, None
 
 
-def resolve_capi_series(minor: str) -> tuple[str, str]:
-    """Resolve a Kubernetes minor version (e.g. '1.36') to the Ubuntu base
-    and current patch it's currently built on, via the series' 'last-X'
-    pointer file, which osism updates on every publish. The pointer file's
-    path also carries the Ubuntu version (e.g. series v1.37+ moved from
-    ubuntu-2404 to ubuntu-2604), so this is the only reliable way to learn
-    it — it isn't a function of the Kubernetes version alone.
-    Returns (ubuntu_version, patch), e.g. ('2604', '1.37.0').
+def resolve_capi_series(minor: str, os_name: str = "ubuntu") -> tuple[str, str]:
+    """Resolve a Kubernetes minor version (e.g. '1.36') to the OS base
+    and current patch it's currently built on, via the series' pointer
+    file ('last-X' for Ubuntu, 'last-debian-X' for Debian), which osism
+    updates on every publish. The pointer file's path also carries the OS
+    version (e.g. series v1.37+ moved from ubuntu-2404 to ubuntu-2604), so
+    this is the only reliable way to learn it, it isn't a function of the
+    Kubernetes version alone.
+    Returns (base_version, patch), e.g. ('2604', '1.37.0') or ('13', '1.37.2').
     """
-    url = f"{CAPI_BASE_URL}/last-{minor}"
+    pointer = f"last-{minor}" if os_name == "ubuntu" else f"last-{os_name}-{minor}"
+    url = f"{CAPI_BASE_URL}/{pointer}"
     resp = requests.get(url, timeout=30)
+    if resp.status_code in (403, 404):
+        raise RuntimeError(
+            f"No {os_name} image is published for series v{minor} ({url})."
+            " osism publishes Debian images for Kubernetes v1.37 and newer."
+        )
     resp.raise_for_status()
     # format: "YYYY-MM-DD ubuntu-2404-kube-vX.YY/ubuntu-2404-kube-vX.YY.Z.qcow2"
     line = resp.text.strip()
     try:
         path = line.split(maxsplit=1)[1]
         dirname = path.split("/", 1)[0]  # e.g. "ubuntu-2604-kube-v1.37"
-        ubuntu_version = dirname.split("-")[1]
+        os_in_path, base_version = dirname.split("-")[:2]
         patch = Path(path).stem.rsplit("-v", 1)[-1]
     except (IndexError, ValueError) as exc:
         raise RuntimeError(f"Could not parse pointer file '{url}': {line!r}") from exc
-    if not UBUNTU_VERSION_RE.fullmatch(ubuntu_version) or not re.fullmatch(
-        r"\d+\.\d+\.\d+", patch
+    if (
+        os_in_path != os_name
+        or not CAPI_OS_BASE_RE[os_name].fullmatch(base_version)
+        or not re.fullmatch(r"\d+\.\d+\.\d+", patch)
     ):
         raise RuntimeError(f"Unexpected content in pointer file '{url}': {line!r}")
-    return ubuntu_version, patch
+    return base_version, patch
 
 
 def find_gardenlinux_image(
@@ -295,7 +320,7 @@ def _delete_image_quietly(conn: Any, image: Any) -> None:
     """Remove the record of a failed upload so it cannot block the next run."""
     try:
         conn.image.delete_image(image, ignore_missing=True)
-    except Exception as exc:
+    except _API_ERRORS as exc:
         print(f"      could not delete failed image {image.id}: {exc}", file=sys.stderr)
 
 
@@ -384,7 +409,7 @@ def upload_from_file(
 ) -> Any:
     progress = _Progress(f"↑ {name}", path.stat().st_size)
     image = None
-    with open(path, "rb") as fh:
+    with path.open("rb") as fh:
         try:
             image = conn.image.create_image(
                 name=name,
@@ -421,7 +446,7 @@ def download_file(url: str, dest: Path, label: str = "") -> str:
         resp.raise_for_status()
         total = int(resp.headers.get("content-length", 0)) or None
         progress = _Progress(f"↓ {label}", total)
-        with open(dest, "wb") as fh:
+        with dest.open("wb") as fh:
             for chunk in resp.iter_content(chunk_size=65536):
                 fh.write(chunk)
                 digest.update(chunk)
@@ -493,10 +518,11 @@ def ensure_all_stores(conn: Any, image: Any, dry_run: bool = False) -> Any:
 def sync_capi_image(
     conn: Any,
     k8s_version: str,
-    ubuntu_version: str | None = None,
+    base_version: str | None = None,
     dry_run: bool = False,
     web_download: bool = True,
     all_stores: bool = False,
+    os_name: str = "ubuntu",
 ) -> tuple[str, str | None]:
     print("\n=== CAPI Image ===")
 
@@ -505,16 +531,16 @@ def sync_capi_image(
     minor = version if bare_minor else ".".join(version.split(".")[:2])
 
     resolved_patch = ""
-    if ubuntu_version is None or bare_minor:
-        # The Ubuntu base isn't a function of the Kubernetes version alone
-        # (e.g. v1.37+ moved from ubuntu-2404 to ubuntu-2604) — the 'last-X'
-        # pointer file is the only reliable source for it. Also needed here
+    if base_version is None or bare_minor:
+        # The OS base isn't a function of the Kubernetes version alone
+        # (e.g. v1.37+ moved from ubuntu-2404 to ubuntu-2604), the pointer
+        # file is the only reliable source for it. Also needed here
         # to resolve a bare minor to its current patch, for naming/dedup.
         print(f"  Resolving current build for series v{minor} ...")
-        resolved_ubuntu_version, resolved_patch = resolve_capi_series(minor)
-        if ubuntu_version is None:
-            ubuntu_version = resolved_ubuntu_version
-        print(f"  Resolved: v{minor} → ubuntu-{ubuntu_version}, v{resolved_patch}")
+        resolved_base_version, resolved_patch = resolve_capi_series(minor, os_name)
+        if base_version is None:
+            base_version = resolved_base_version
+        print(f"  Resolved: v{minor} → {os_name}-{base_version}, v{resolved_patch}")
 
     if bare_minor:
         # Still download the series file — it's rebuilt (and overwritten) on
@@ -522,16 +548,16 @@ def sync_capi_image(
         # patch, so it's the only URL that's guaranteed to be current. The
         # create-once per-patch file can lag behind it.
         patch = resolved_patch
-        filename = f"ubuntu-{ubuntu_version}-kube-v{minor}.qcow2"
+        filename = f"{os_name}-{base_version}-kube-v{minor}.qcow2"
     else:
         # Exact patch requested: fetch that immutable, create-once file.
         patch = version
-        filename = f"ubuntu-{ubuntu_version}-kube-v{patch}.qcow2"
+        filename = f"{os_name}-{base_version}-kube-v{patch}.qcow2"
 
-    canonical_name = f"ubuntu-capi-image-v{patch}"
-    url = f"{CAPI_BASE_URL}/ubuntu-{ubuntu_version}-kube-v{minor}/{filename}"
+    canonical_name = f"{os_name}-capi-image-v{patch}"
+    url = f"{CAPI_BASE_URL}/{os_name}-{base_version}-kube-v{minor}/{filename}"
 
-    existing, strategy = find_capi_image(conn, patch)
+    existing, strategy = find_capi_image(conn, patch, os_name)
     if existing:
         print(f"  [SKIP]   {canonical_name}  — found via {strategy}  ({existing.id})")
         if all_stores:
@@ -552,7 +578,7 @@ def sync_capi_image(
 
     extra_props = {
         "os_purpose": "k8snode",
-        "os_distro": "ubuntu",
+        "os_distro": os_name,
         "kube_version": f"v{patch}",
         "image_description": "https://github.com/osism/k8s-capi-images",
         "image_source": url,
@@ -588,7 +614,7 @@ def sync_capi_image(
                 )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
-    except Exception as exc:  # keep syncing the remaining images
+    except _SYNC_ERRORS as exc:  # keep syncing the remaining images
         print(f"  [ERROR]  {canonical_name}: {exc}", file=sys.stderr)
         return canonical_name, None
 
@@ -614,7 +640,32 @@ def _find_flavor_asset(release: dict[str, Any]) -> tuple[str, str, str | None] |
     return None
 
 
-def _iter_gardenlinux_releases(max_pages: int = 5, per_page: int = 100):
+def _find_s3_asset(tag: str) -> tuple[str, str, str | None] | None:
+    """Return (url, name, None) of the OpenStack qcow2 image of a release in the
+    public release bucket, or None. Recent releases have no GitHub assets, they only
+    link to this bucket (and the .raw link of the release notes does not exist).
+    The bucket publishes no checksum, the ETag of the multipart upload is no digest."""
+    resp = requests.get(
+        GARDENLINUX_S3,
+        params={
+            "list-type": "2",
+            "prefix": f"objects/{GARDENLINUX_FLAVOR}-amd64-{tag}-",
+        },
+        timeout=30,
+    )
+    resp.raise_for_status()
+    for element in ET.fromstring(resp.content).iter(
+        "{http://s3.amazonaws.com/doc/2006-03-01/}Key"
+    ):
+        key = element.text or ""
+        if key.endswith(".qcow2"):
+            return f"{GARDENLINUX_S3}/{key}", key.rsplit("/", 1)[-1], None
+    return None
+
+
+def _iter_gardenlinux_releases(
+    max_pages: int = 5, per_page: int = 100
+) -> Iterator[dict[str, Any]]:
     for page in range(1, max_pages + 1):
         resp = requests.get(
             f"https://api.github.com/repos/{GARDENLINUX_REPO}/releases",
@@ -635,10 +686,7 @@ def fetch_gardenlinux_release(
     version: str | None = None,
 ) -> tuple[str, str, str, str | None]:
     if version:
-        url = (
-            f"https://api.github.com/repos/{GARDENLINUX_REPO}"
-            f"/releases/tags/{version}"
-        )
+        url = f"https://api.github.com/repos/{GARDENLINUX_REPO}/releases/tags/{version}"
         resp = requests.get(
             url,
             headers={"Accept": "application/vnd.github+json"},
@@ -647,11 +695,11 @@ def fetch_gardenlinux_release(
         resp.raise_for_status()
         release = resp.json()
         tag = release["tag_name"].lstrip("v")
-        asset = _find_flavor_asset(release)
+        asset = _find_flavor_asset(release) or _find_s3_asset(tag)
         if not asset:
             raise RuntimeError(
                 f"No matching GardenLinux asset for flavor '{GARDENLINUX_FLAVOR}'"
-                f" (amd64) in release {tag}.\n"
+                f" (amd64) in release {tag}, neither on GitHub nor in the release bucket.\n"
                 f"Set GARDENLINUX_FLAVOR at the top of the script to one of the"
                 f" available variants."
             )
@@ -673,7 +721,7 @@ def fetch_gardenlinux_release(
         version_key = (int(parts[0]), int(parts[1]))
         if best is not None and version_key <= best[0]:
             continue
-        asset = _find_flavor_asset(release)
+        asset = _find_flavor_asset(release) or _find_s3_asset(tag)
         if asset:
             best = (version_key, tag, asset)
 
@@ -704,6 +752,7 @@ def sync_gardenlinux_image(
     version: str | None = None,
     dry_run: bool = False,
     all_stores: bool = False,
+    web_download: bool = True,
 ) -> tuple[str, str | None]:
     print("\n=== GardenLinux Images ===")
 
@@ -714,16 +763,24 @@ def sync_gardenlinux_image(
 
     existing, strategy = find_gardenlinux_image(conn, tag)
     if existing:
-        print(
-            f"  [SKIP]   '{canonical_name}'"
-            f"  — found via {strategy}  ({existing.id})"
-        )
+        print(f"  [SKIP]   '{canonical_name}'  — found via {strategy}  ({existing.id})")
         if all_stores:
             existing = ensure_all_stores(conn, existing, dry_run=dry_run)
         return canonical_name, existing.id
 
+    # A bare qcow2 can be fetched by Glance itself. Archives must be unpacked
+    # locally first.
+    direct = web_download and asset_name.endswith(".qcow2")
+    extra_props = {
+        "os_distro": "gardenlinux",
+        "os_version": tag,
+        "architecture": "amd64",
+    }
+
     if dry_run:
-        if all_stores:
+        if direct:
+            method = "web-download import"
+        elif all_stores:
             method = "download, upload and import"
         else:
             method = "download and upload"
@@ -732,36 +789,49 @@ def sync_gardenlinux_image(
 
     print(f"  [UPLOAD] {canonical_name}")
     try:
-        with tempfile.TemporaryDirectory() as tmp:
-            archive = Path(tmp) / asset_name
-            actual = download_file(asset_url, archive, asset_name)
-            if asset_sha256:
-                verify_checksum(asset_name, actual, asset_sha256)
-            else:
+        if direct:
+            if not asset_sha256:
                 print(
                     f"    [WARN] no published checksum for {asset_name}, not verified"
                 )
-
-            print("    → extracting archive ...")
-            image_path = extract_image(archive, tmp)
-            disk_format = "raw" if image_path.suffix == ".raw" else "qcow2"
-            print(f"    → format: {disk_format}  file: {image_path.name}")
-
-            image = upload_from_file(
+            image = upload_via_web_download(
                 conn,
                 canonical_name,
-                image_path,
-                disk_format=disk_format,
-                extra_props={
-                    "os_distro": "gardenlinux",
-                    "os_version": tag,
-                    "architecture": "amd64",
-                },
+                asset_url,
+                extra_props=extra_props,
                 all_stores=all_stores,
             )
+        else:
+            with tempfile.TemporaryDirectory() as tmp:
+                archive = Path(tmp) / asset_name
+                actual = download_file(asset_url, archive, asset_name)
+                if asset_sha256:
+                    verify_checksum(asset_name, actual, asset_sha256)
+                else:
+                    print(
+                        f"    [WARN] no published checksum for {asset_name},"
+                        " not verified"
+                    )
+
+                if asset_name.endswith(".tar.xz"):
+                    print("    → extracting archive ...")
+                    image_path = extract_image(archive, tmp)
+                else:
+                    image_path = archive
+                disk_format = "raw" if image_path.suffix == ".raw" else "qcow2"
+                print(f"    → format: {disk_format}  file: {image_path.name}")
+
+                image = upload_from_file(
+                    conn,
+                    canonical_name,
+                    image_path,
+                    disk_format=disk_format,
+                    extra_props=extra_props,
+                    all_stores=all_stores,
+                )
         print(f"  [DONE]   {canonical_name}")
         return canonical_name, image.id
-    except Exception as exc:  # keep syncing the remaining images
+    except _SYNC_ERRORS as exc:  # keep syncing the remaining images
         print(f"  [ERROR]  {canonical_name}: {exc}", file=sys.stderr)
         return canonical_name, None
 
@@ -784,6 +854,15 @@ def main() -> None:
             "Kubernetes version for the CAPI image: a full patch (1.35.4)"
             " or a bare minor (1.35), which is resolved to its current"
             " patch automatically (required unless --skip-capi)"
+        ),
+    )
+    parser.add_argument(
+        "--os",
+        choices=sorted(CAPI_OS_BASE_RE),
+        default="ubuntu",
+        help=(
+            "Operating system of the CAPI image (default: ubuntu)."
+            " Debian images exist for Kubernetes v1.37 and newer."
         ),
     )
     parser.add_argument(
@@ -825,9 +904,9 @@ def main() -> None:
         help=(
             "Disable the OpenStack 'web-download' image import method and fall"
             " back to downloading the image locally before uploading it."
-            " Use this if web-download is disabled on your cloud. Only"
-            " affects the CAPI image; GardenLinux images are always"
-            " downloaded locally since they ship as tar.xz archives."
+            " Use this if web-download is disabled on your cloud. GardenLinux"
+            " images shipped as tar.xz archives are always downloaded locally,"
+            " only a plain qcow2 (release bucket) can be imported directly."
         ),
     )
     parser.add_argument(
@@ -859,6 +938,8 @@ def main() -> None:
         parser.error("--k8s-version is required unless --skip-capi is set")
     if args.k8s_version and not VERSION_RE.fullmatch(args.k8s_version):
         parser.error("--k8s-version must look like 1.35, 1.35.4 or v1.35.4")
+    if args.ubuntu_version and args.os != "ubuntu":
+        parser.error("--ubuntu-version only applies to --os ubuntu")
     if args.ubuntu_version and not UBUNTU_VERSION_RE.fullmatch(args.ubuntu_version):
         parser.error("--ubuntu-version must look like 2404")
     if args.gardenlinux_version and not VERSION_RE.fullmatch(args.gardenlinux_version):
@@ -871,9 +952,9 @@ def main() -> None:
 
     print("Connecting to OpenStack ...")
     try:
-        conn = openstack.connect(cloud=args.cloud, insecure=args.insecure)
+        conn: Any = openstack.connect(cloud=args.cloud, insecure=args.insecure)
         conn.authorize()
-    except Exception as exc:
+    except _API_ERRORS as exc:
         sys.exit(
             f"Could not connect to OpenStack ({exc})."
             " Set OS_CLOUD or pass --cloud <name>."
@@ -886,7 +967,7 @@ def main() -> None:
     try:
         import_info = conn.image.get_import_info()
         import_methods = import_info.import_methods.get("value", [])
-    except Exception as exc:  # pre-flight check is best effort
+    except _API_ERRORS as exc:  # pre-flight check is best effort
         import_methods = None
         print(f"Could not query supported import methods ({exc}), skipping check.")
 
@@ -919,6 +1000,7 @@ def main() -> None:
                 args.dry_run,
                 web_download=not args.no_web_download,
                 all_stores=args.all_stores,
+                os_name=args.os,
             )
         )
         ids["capi"] = results[-1][1]
@@ -930,12 +1012,13 @@ def main() -> None:
                 args.gardenlinux_version,
                 args.dry_run,
                 all_stores=args.all_stores,
+                web_download=not args.no_web_download,
             )
         )
         ids["gardenlinux"] = results[-1][1]
 
     if args.ids_file:
-        with open(args.ids_file, "w", encoding="utf-8") as fh:
+        with Path(args.ids_file).open("w", encoding="utf-8") as fh:
             for key, image_id in ids.items():
                 if image_id:
                     fh.write(f"{key}={image_id}\n")
@@ -955,5 +1038,5 @@ if __name__ == "__main__":
         main()
     except KeyboardInterrupt:
         sys.exit("\nAborted.")
-    except Exception as exc:  # top-level guard, report and exit cleanly
+    except (*_SYNC_ERRORS, ET.ParseError, KeyError, ValueError) as exc:
         sys.exit(f"Error: {exc}")

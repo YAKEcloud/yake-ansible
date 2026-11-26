@@ -32,6 +32,10 @@ python3 scripts/update-images.py --cloud mycloud
 python3 scripts/update-images.py
 ```
 
+CAPI images are named `ubuntu-capi-image-v<patch>` or `debian-capi-image-v<patch>`, so both operating systems can live in the same cloud. After uploading, set `clusterapi_cluster_openstack_image_id` and `clusterapi_cluster_openstack_image_name` to the image you want to use.
+
+GardenLinux images come from the assets of the GitHub release. Releases without assets (2150.17.0 and newer) only link to the public release bucket, so the script then takes the `.qcow2` image of the `openstack-gardener_prod` flavor from there. The bucket publishes no checksum, so the image is not verified, the script prints a warning. Since this is a plain qcow2, Glance imports it directly via `web-download` (nothing is downloaded locally). With `--no-web-download` it is downloaded and uploaded as before.
+
 ### Usage
 
 ```bash
@@ -46,6 +50,9 @@ python3 scripts/update-images.py --k8s-version 1.35
 
 # Override the Ubuntu base (default: auto-detected from the series' 'last-X' file)
 python3 scripts/update-images.py --k8s-version 1.37 --ubuntu-version 2604
+
+# Debian 13 instead of Ubuntu (osism publishes Debian images for Kubernetes 1.37 and newer)
+python3 scripts/update-images.py --os debian --k8s-version 1.37
 
 # Only GardenLinux (latest release)
 python3 scripts/update-images.py --skip-capi

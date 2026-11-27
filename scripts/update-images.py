@@ -90,7 +90,13 @@ def find_capi_image(
         if (
             img.status == "active"
             and img.get("kube_version") == kube_version
-            and img.get("os_distro") in (None, os_name)
+            and (
+                img.get("os_distro") == os_name
+                or (
+                    img.get("os_distro") is None
+                    and ("debian" in (img.name or "").lower()) == (os_name == "debian")
+                )
+            )
         ):
             return img, f"kube_version property '{kube_version}'"
 
@@ -699,7 +705,8 @@ def fetch_gardenlinux_release(
         if not asset:
             raise RuntimeError(
                 f"No matching GardenLinux asset for flavor '{GARDENLINUX_FLAVOR}'"
-                f" (amd64) in release {tag}, neither on GitHub nor in the release bucket.\n"
+                f" (amd64) in release {tag}, neither on GitHub nor in the"
+                f" release bucket.\n"
                 f"Set GARDENLINUX_FLAVOR at the top of the script to one of the"
                 f" available variants."
             )
